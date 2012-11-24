@@ -1,9 +1,9 @@
 ---
 layout: post
-title: "install synergy on archlinux"
+title: "Install synergy on Archlinux"
 date: 2012-11-24 15:12
 comments: true
-categories: archlinux,linux,chakra
+categories: archlinux
 ---
 
 synergy 是一个很好的多平台的共享鼠标键盘的开源工具，极大的满足了我在linux,mac,windows 上的对键盘
