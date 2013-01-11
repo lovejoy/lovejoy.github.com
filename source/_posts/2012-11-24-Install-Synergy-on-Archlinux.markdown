@@ -50,4 +50,4 @@ qsynegy ,但是我试了下quicksynergy 后表示其界面真是弱的惨不忍�
 只要改一下上面的2个机器名成自己的就ok了，然后丢到~/.synergy.conf
 然后用synergys -f 启动，可以看到比较详细的信息，或者rc.d start synergys 
 作为服务的方式启动，当然也可以设置成开机启动，在/etc/rc.conf 的DAEMONS=
-(...synergy...) 加入就行了
+(...synergys...) 加入就行了
