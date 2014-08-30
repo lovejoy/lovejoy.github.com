@@ -21,8 +21,6 @@ class names 可以填left或者right 图片的地址是以为source为/ ，所�
 添加代码的方式比较多
 Code Block 的方式
 
-    {% codeblock title lang:language url link text %}
-    {% endcodeblock %}
 
 囧，不想写了，贴官网的URL
 
