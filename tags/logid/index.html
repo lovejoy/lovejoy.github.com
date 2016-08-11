@@ -80,22 +80,15 @@
 
 
 
-<meta name="description" content="wireshark通过/usr/bin/dumpcap 来抓取数据包，这个文件的权限如下1-rwxr-xr-- 1 root wireshark 84524 22.06.2013 23:56 /usr/bin/dumpcap
-所以只需要将自己加入wireshark用户组就可以了
-12sudo gpasswd -a username wiresharksudo usermod -a -G wires">
-<meta property="og:type" content="article">
-<meta property="og:title" content="以普通用户运行wireshark">
-<meta property="og:url" content="http://blog.spider.im/2013/07/07/use-wireshark-as-normal-user/index.html">
+<meta name="description" content="这是个简介">
+<meta property="og:type" content="website">
+<meta property="og:title" content="吐核|Core Dump">
+<meta property="og:url" content="http://blog.spider.im/tags/logid/index.html">
 <meta property="og:site_name" content="吐核|Core Dump">
-<meta property="og:description" content="wireshark通过/usr/bin/dumpcap 来抓取数据包，这个文件的权限如下1-rwxr-xr-- 1 root wireshark 84524 22.06.2013 23:56 /usr/bin/dumpcap
-所以只需要将自己加入wireshark用户组就可以了
-12sudo gpasswd -a username wiresharksudo usermod -a -G wires">
-<meta property="og:updated_time" content="2016-06-16T06:21:51.000Z">
+<meta property="og:description" content="这是个简介">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="以普通用户运行wireshark">
-<meta name="twitter:description" content="wireshark通过/usr/bin/dumpcap 来抓取数据包，这个文件的权限如下1-rwxr-xr-- 1 root wireshark 84524 22.06.2013 23:56 /usr/bin/dumpcap
-所以只需要将自己加入wireshark用户组就可以了
-12sudo gpasswd -a username wiresharksudo usermod -a -G wires">
+<meta name="twitter:title" content="吐核|Core Dump">
+<meta name="twitter:description" content="这是个简介">
 
 
 
@@ -113,7 +106,7 @@
   };
 </script>
 
-  <title> 以普通用户运行wireshark | 吐核|Core Dump </title>
+  <title> 标签: logid | 吐核|Core Dump </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -134,7 +127,7 @@
     
   
 
-  <div class="container one-collumn sidebar-position-right page-post-detail ">
+  <div class="container one-collumn sidebar-position-right  ">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -232,149 +225,46 @@
           <div id="content" class="content">
             
 
-  <div id="posts" class="posts-expand">
-    
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                以普通用户运行wireshark
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2013-07-07T12:13:00+08:00" content="2013-07-07">
-              2013-07-07
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/linux/" itemprop="url" rel="index">
-                    <span itemprop="name">linux</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2013/07/07/use-wireshark-as-normal-user/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2013/07/07/use-wireshark-as-normal-user/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        <p>wireshark通过/usr/bin/dumpcap 来抓取数据包，这个文件的权限如下<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-rwxr-xr-- 1 root wireshark 84524 22.06.2013 23:56 /usr/bin/dumpcap</span><br></pre></td></tr></table></figure></p>
-<p>所以只需要将自己加入wireshark用户组就可以了</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo gpasswd -a username wireshark</span><br><span class="line">sudo usermod -a -G wireshark username</span><br></pre></td></tr></table></figure>
-<p>以上二选一即可，之后<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">getcap /usr/bin/dumpcap</span><br></pre></td></tr></table></figure></p>
-<p>输出的结果是cap_net_admin,cap_net_raw+eip 但是我的却不是，又查了下<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap</span><br></pre></td></tr></table></figure></p>
-<p>手动设置一下，再开启wireshark就OK了</p>
-
-      
-    </div>
-    
-    <div>
-      
-        
-      
+  <div id="posts" class="posts-collapse">
+    <div class="collection-title">
+      <h2 >
+        logid
+        <small>标签</small>
+      </h2>
     </div>
 
-    <div>
+    
       
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      <h1 class="post-title">
         
-      
-    </div>
+            <a class="post-title-link" href="/2016/06/17/logid/" itemprop="url">
+              
+                <span itemprop="name">唯一请求ID</span>
+              
+            </a>
+        
+      </h1>
 
-    <footer class="post-footer">
-      
+      <div class="post-meta">
+        <time class="post-time" itemprop="dateCreated"
+              datetime="2016-06-17T14:23:50+08:00"
+              content="2016-06-17" >
+          06-17
+        </time>
+      </div>
 
-      
-        <div class="post-nav">
-          <div class="post-nav-next post-nav-item">
-            
-              <a href="/2013/05/19/mldonkey-on-raspberry/" rel="next" title="在raspberry上使用mldonkey同时解决移动磁盘权限的问题">
-                <i class="fa fa-chevron-left"></i> 在raspberry上使用mldonkey同时解决移动磁盘权限的问题
-              </a>
-            
-          </div>
-
-          <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2013/09/27/how-to-install-pyzmq/" rel="prev" title="手动安装pyzmq记录">
-                手动安装pyzmq记录 <i class="fa fa-chevron-right"></i>
-              </a>
-            
-          </div>
-        </div>
-      
-
-      
-      
-    </footer>
+    </header>
   </article>
 
 
-
-    <div class="post-spread">
-      
-    </div>
+    
   </div>
+
+  
 
 
           </div>
@@ -382,17 +272,6 @@
 
 
           
-  <div class="comments" id="comments">
-    
-      <div id="disqus_thread">
-        <noscript>
-          Please enable JavaScript to view the
-          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
-        </noscript>
-      </div>
-    
-  </div>
-
 
         </div>
         
@@ -412,17 +291,8 @@
       
 
       
-        <ul class="sidebar-nav motion-element">
-          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
-            文章目录
-          </li>
-          <li class="sidebar-nav-overview" data-target="site-overview">
-            站点概览
-          </li>
-        </ul>
-      
 
-      <section class="site-overview sidebar-panel ">
+      <section class="site-overview sidebar-panel  sidebar-panel-active ">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
           <img class="site-author-image" itemprop="image"
                src="/images/default_avatar.jpg"
@@ -492,17 +362,6 @@
 
       </section>
 
-      
-        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
-          <div class="post-toc">
-            
-              
-            
-            
-              <p class="post-toc-empty">此文章未包含目录</p>
-            
-          </div>
-        </section>
       
 
     </div>
@@ -606,10 +465,6 @@
 
 
   
-  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
-<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
-
-
 
   
 
@@ -626,9 +481,9 @@
 
     <script type="text/javascript">
       var disqus_shortname = 'tucao';
-      var disqus_identifier = '2013/07/07/use-wireshark-as-normal-user/';
-      var disqus_title = '以普通用户运行wireshark';
-      var disqus_url = 'http://blog.spider.im/2013/07/07/use-wireshark-as-normal-user/';
+      var disqus_identifier = 'tags/logid/index.html';
+      var disqus_title = '';
+      var disqus_url = '';
 
       function run_disqus_script(disqus_script){
         var dsq = document.createElement('script');
@@ -639,8 +494,6 @@
       }
 
       run_disqus_script('count.js');
-      
-        run_disqus_script('embed.js');
       
     </script>
   

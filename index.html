@@ -249,8 +249,8 @@
             
               
                 
-                <a class="post-title-link" href="/2016/06/16/logid/" itemprop="url">
-                  logid
+                <a class="post-title-link" href="/2016/06/17/logid/" itemprop="url">
+                  唯一请求ID
                 </a>
               
             
@@ -263,8 +263,8 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-06-16T14:50:59+08:00" content="2016-06-16">
-              2016-06-16
+            <time itemprop="dateCreated" datetime="2016-06-17T14:23:50+08:00" content="2016-06-17">
+              2016-06-17
             </time>
           </span>
 
@@ -274,8 +274,8 @@
             
               <span class="post-comments-count">
                 &nbsp; | &nbsp;
-                <a href="/2016/06/16/logid/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/06/16/logid/" itemprop="commentsCount"></span>
+                <a href="/2016/06/17/logid/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/06/17/logid/" itemprop="commentsCount"></span>
                 </a>
               </span>
             
@@ -300,7 +300,19 @@
       
         
           
-            
+            <h3 id="什么是唯一请求ID"><a href="#什么是唯一请求ID" class="headerlink" title="什么是唯一请求ID"></a>什么是唯一请求ID</h3><p>唯一请求ID简单点说就是标示了一个请求的完整生命周期的ID，目的是为了异常时在多个模块间快速追查问题。</p>
+<h4 id="设计目标"><a href="#设计目标" class="headerlink" title="设计目标"></a>设计目标</h4><ol>
+<li>唯一请求ID需要足够唯一：在一定的条件下不可以重复</li>
+<li>唯一请求ID需要在请求到达的所有模块中传递并且在日志中打印</li>
+<li>能在用户端某个地方记录这次请求的唯一请求ID</li>
+</ol>
+<h4 id="整体思路"><a href="#整体思路" class="headerlink" title="整体思路"></a>整体思路</h4><ol>
+<li>唯一请求ID从web服务器Nginx开始生成然后往下透传打印在access_log中</li>
+<li>唯一请求ID生成算法用unix_timestamp + 随机数，具体之后细想</li>
+<li>唯一请求ID丢在Header里面方便Nginx后面的PHP程序获取<br>4.</li>
+</ol>
+<h3 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h3><h4 id="生成算法"><a href="#生成算法" class="headerlink" title="生成算法"></a>生成算法</h4><p><code>$logId = ((($arr[&#39;sec&#39;]*100000 + $arr[&#39;usec&#39;]/10) &amp; 0x7FFFFFFF) | 0x80000000);</code></p>
+
           
         
       
@@ -1456,7 +1468,7 @@ killall SystemUIServer
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">11</span>
+                <span class="site-state-item-count">13</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1465,7 +1477,7 @@ killall SystemUIServer
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">3</span>
+                <span class="site-state-item-count">4</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

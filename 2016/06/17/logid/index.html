@@ -64,7 +64,7 @@
 <link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="logid," />
 
 
 
@@ -80,22 +80,40 @@
 
 
 
-<meta name="description" content="wireshark通过/usr/bin/dumpcap 来抓取数据包，这个文件的权限如下1-rwxr-xr-- 1 root wireshark 84524 22.06.2013 23:56 /usr/bin/dumpcap
-所以只需要将自己加入wireshark用户组就可以了
-12sudo gpasswd -a username wiresharksudo usermod -a -G wires">
+<meta name="description" content="什么是唯一请求ID唯一请求ID简单点说就是标示了一个请求的完整生命周期的ID，目的是为了异常时在多个模块间快速追查问题。
+设计目标
+唯一请求ID需要足够唯一：在一定的条件下不可以重复
+唯一请求ID需要在请求到达的所有模块中传递并且在日志中打印
+能在用户端某个地方记录这次请求的唯一请求ID
+
+整体思路
+唯一请求ID从web服务器Nginx开始生成然后往下透传打印在access_log中
+唯一请求ID">
 <meta property="og:type" content="article">
-<meta property="og:title" content="以普通用户运行wireshark">
-<meta property="og:url" content="http://blog.spider.im/2013/07/07/use-wireshark-as-normal-user/index.html">
+<meta property="og:title" content="唯一请求ID">
+<meta property="og:url" content="http://blog.spider.im/2016/06/17/logid/index.html">
 <meta property="og:site_name" content="吐核|Core Dump">
-<meta property="og:description" content="wireshark通过/usr/bin/dumpcap 来抓取数据包，这个文件的权限如下1-rwxr-xr-- 1 root wireshark 84524 22.06.2013 23:56 /usr/bin/dumpcap
-所以只需要将自己加入wireshark用户组就可以了
-12sudo gpasswd -a username wiresharksudo usermod -a -G wires">
-<meta property="og:updated_time" content="2016-06-16T06:21:51.000Z">
+<meta property="og:description" content="什么是唯一请求ID唯一请求ID简单点说就是标示了一个请求的完整生命周期的ID，目的是为了异常时在多个模块间快速追查问题。
+设计目标
+唯一请求ID需要足够唯一：在一定的条件下不可以重复
+唯一请求ID需要在请求到达的所有模块中传递并且在日志中打印
+能在用户端某个地方记录这次请求的唯一请求ID
+
+整体思路
+唯一请求ID从web服务器Nginx开始生成然后往下透传打印在access_log中
+唯一请求ID">
+<meta property="og:updated_time" content="2016-08-11T03:59:50.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="以普通用户运行wireshark">
-<meta name="twitter:description" content="wireshark通过/usr/bin/dumpcap 来抓取数据包，这个文件的权限如下1-rwxr-xr-- 1 root wireshark 84524 22.06.2013 23:56 /usr/bin/dumpcap
-所以只需要将自己加入wireshark用户组就可以了
-12sudo gpasswd -a username wiresharksudo usermod -a -G wires">
+<meta name="twitter:title" content="唯一请求ID">
+<meta name="twitter:description" content="什么是唯一请求ID唯一请求ID简单点说就是标示了一个请求的完整生命周期的ID，目的是为了异常时在多个模块间快速追查问题。
+设计目标
+唯一请求ID需要足够唯一：在一定的条件下不可以重复
+唯一请求ID需要在请求到达的所有模块中传递并且在日志中打印
+能在用户端某个地方记录这次请求的唯一请求ID
+
+整体思路
+唯一请求ID从web服务器Nginx开始生成然后往下透传打印在access_log中
+唯一请求ID">
 
 
 
@@ -113,7 +131,7 @@
   };
 </script>
 
-  <title> 以普通用户运行wireshark | 吐核|Core Dump </title>
+  <title> 唯一请求ID | 吐核|Core Dump </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -253,7 +271,7 @@
             
             
               
-                以普通用户运行wireshark
+                唯一请求ID
               
             
           </h1>
@@ -265,38 +283,19 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2013-07-07T12:13:00+08:00" content="2013-07-07">
-              2013-07-07
+            <time itemprop="dateCreated" datetime="2016-06-17T14:23:50+08:00" content="2016-06-17">
+              2016-06-17
             </time>
           </span>
 
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/linux/" itemprop="url" rel="index">
-                    <span itemprop="name">linux</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
           
 
           
             
               <span class="post-comments-count">
                 &nbsp; | &nbsp;
-                <a href="/2013/07/07/use-wireshark-as-normal-user/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2013/07/07/use-wireshark-as-normal-user/" itemprop="commentsCount"></span>
+                <a href="/2016/06/17/logid/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/06/17/logid/" itemprop="commentsCount"></span>
                 </a>
               </span>
             
@@ -319,12 +318,18 @@
       
 
       
-        <p>wireshark通过/usr/bin/dumpcap 来抓取数据包，这个文件的权限如下<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-rwxr-xr-- 1 root wireshark 84524 22.06.2013 23:56 /usr/bin/dumpcap</span><br></pre></td></tr></table></figure></p>
-<p>所以只需要将自己加入wireshark用户组就可以了</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo gpasswd -a username wireshark</span><br><span class="line">sudo usermod -a -G wireshark username</span><br></pre></td></tr></table></figure>
-<p>以上二选一即可，之后<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">getcap /usr/bin/dumpcap</span><br></pre></td></tr></table></figure></p>
-<p>输出的结果是cap_net_admin,cap_net_raw+eip 但是我的却不是，又查了下<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap</span><br></pre></td></tr></table></figure></p>
-<p>手动设置一下，再开启wireshark就OK了</p>
+        <h3 id="什么是唯一请求ID"><a href="#什么是唯一请求ID" class="headerlink" title="什么是唯一请求ID"></a>什么是唯一请求ID</h3><p>唯一请求ID简单点说就是标示了一个请求的完整生命周期的ID，目的是为了异常时在多个模块间快速追查问题。</p>
+<h4 id="设计目标"><a href="#设计目标" class="headerlink" title="设计目标"></a>设计目标</h4><ol>
+<li>唯一请求ID需要足够唯一：在一定的条件下不可以重复</li>
+<li>唯一请求ID需要在请求到达的所有模块中传递并且在日志中打印</li>
+<li>能在用户端某个地方记录这次请求的唯一请求ID</li>
+</ol>
+<h4 id="整体思路"><a href="#整体思路" class="headerlink" title="整体思路"></a>整体思路</h4><ol>
+<li>唯一请求ID从web服务器Nginx开始生成然后往下透传打印在access_log中</li>
+<li>唯一请求ID生成算法用unix_timestamp + 随机数，具体之后细想</li>
+<li>唯一请求ID丢在Header里面方便Nginx后面的PHP程序获取<br>4.</li>
+</ol>
+<h3 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h3><h4 id="生成算法"><a href="#生成算法" class="headerlink" title="生成算法"></a>生成算法</h4><p><code>$logId = ((($arr[&#39;sec&#39;]*100000 + $arr[&#39;usec&#39;]/10) &amp; 0x7FFFFFFF) | 0x80000000);</code></p>
 
       
     </div>
@@ -343,22 +348,24 @@
 
     <footer class="post-footer">
       
+        <div class="post-tags">
+          
+            <a href="/tags/logid/" rel="tag">#logid</a>
+          
+        </div>
+      
 
       
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2013/05/19/mldonkey-on-raspberry/" rel="next" title="在raspberry上使用mldonkey同时解决移动磁盘权限的问题">
-                <i class="fa fa-chevron-left"></i> 在raspberry上使用mldonkey同时解决移动磁盘权限的问题
+              <a href="/2016/04/27/install-hexo/" rel="next" title="安装hexo">
+                <i class="fa fa-chevron-left"></i> 安装hexo
               </a>
             
           </div>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2013/09/27/how-to-install-pyzmq/" rel="prev" title="手动安装pyzmq记录">
-                手动安装pyzmq记录 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -499,7 +506,7 @@
               
             
             
-              <p class="post-toc-empty">此文章未包含目录</p>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#什么是唯一请求ID"><span class="nav-number">1.</span> <span class="nav-text">什么是唯一请求ID</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#设计目标"><span class="nav-number">1.1.</span> <span class="nav-text">设计目标</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#整体思路"><span class="nav-number">1.2.</span> <span class="nav-text">整体思路</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#具体实现"><span class="nav-number">2.</span> <span class="nav-text">具体实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#生成算法"><span class="nav-number">2.1.</span> <span class="nav-text">生成算法</span></a></li></ol></li></ol></div>
             
           </div>
         </section>
@@ -626,9 +633,9 @@
 
     <script type="text/javascript">
       var disqus_shortname = 'tucao';
-      var disqus_identifier = '2013/07/07/use-wireshark-as-normal-user/';
-      var disqus_title = '以普通用户运行wireshark';
-      var disqus_url = 'http://blog.spider.im/2013/07/07/use-wireshark-as-normal-user/';
+      var disqus_identifier = '2016/06/17/logid/';
+      var disqus_title = '唯一请求ID';
+      var disqus_url = 'http://blog.spider.im/2016/06/17/logid/';
 
       function run_disqus_script(disqus_script){
         var dsq = document.createElement('script');
