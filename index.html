@@ -117,6 +117,15 @@
 
 
 
+  <script type="text/javascript">
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//tajs.qq.com/stats?sId=63414042";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
 
 
 
@@ -227,6 +236,114 @@
           <div id="content" class="content">
             
   <section id="posts" class="posts-expand">
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/02/22/php-static-binding/" itemprop="url">
+                  php后期静态绑定
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-02-22T13:29:18+08:00" content="2017-02-22">
+              2017-02-22
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/02/22/php-static-binding/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2017/02/22/php-static-binding/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>在看Yii2代码的时候，有这么一段<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">if (isset(static::$classMap[$className])) &#123;</span><br><span class="line">     $classFile = static::$classMap[$className];</span><br><span class="line">     if ($classFile[0] === &apos;@&apos;) &#123;</span><br><span class="line">         $classFile = static::getAlias($classFile);</span><br><span class="line">     &#125;</span><br><span class="line"> &#125; elseif (strpos($className, &apos;\\&apos;) !== false) &#123;</span><br><span class="line">     $classFile = static::getAlias(&apos;@&apos; . str_replace(&apos;\\&apos;, &apos;/&apos;, $className) . &apos;.php&apos;, false);</span><br><span class="line">     if ($classFile === false || !is_file($classFile)) &#123;</span><br><span class="line">         return;</span><br><span class="line">     &#125;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure></p>
+<p>当时有点困惑，为啥用了个static::$classMap[$className],而不是self::$classMap[$className],细看了下self和static的区别<br>大体可以理解为static定义的function 如果子类又重新实现了的话，会用子类的结果（实际运行的时候的），而self永远是最开始定义的父类的结果</p>
+<p>与self类似的还有 <strong>CLASS</strong> 和get_class() 只会是最开始定义的结果,不过注意get_class($this)会是实际运行时的类的结果</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">class A &#123;</span><br><span class="line">    static $staticString = &quot;A static string&quot;;</span><br><span class="line">    public static function staticFunction() &#123;</span><br><span class="line">        echo self::$staticString;</span><br><span class="line">    &#125;</span><br><span class="line">    public static function foo() &#123;</span><br><span class="line">        echo &quot;Afoo:&quot;.__CLASS__.&quot;\n&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    public static function selfFoo() &#123;</span><br><span class="line">        echo &quot;called class:&quot;.get_called_class().&quot;\n&quot;;</span><br><span class="line">        echo &quot;class:&quot;.get_class().&quot;\n&quot;;</span><br><span class="line">        echo self::foo();</span><br><span class="line">    &#125;</span><br><span class="line">    public static function staticFoo() &#123;</span><br><span class="line">        echo &quot;called class:&quot;.get_called_class().&quot;\n&quot;;</span><br><span class="line">        echo &quot;class:&quot;.get_class().&quot;\n&quot;;</span><br><span class="line">        echo static::foo();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class B extends A &#123;</span><br><span class="line">    static $staticString = &quot;B static string&quot;;</span><br><span class="line">    public static function foo() &#123;</span><br><span class="line">        echo &quot;Bfoo:&quot;.__CLASS__.&quot;\n&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    public static function parent() &#123;</span><br><span class="line">        parent::selfFoo();</span><br><span class="line">        parent::staticFoo();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class C extends B &#123;</span><br><span class="line">    public static function foo() &#123;</span><br><span class="line">        echo __CLASS__;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line">B::selfFoo();</span><br><span class="line">/*</span><br><span class="line">输出结果</span><br><span class="line">called class:B</span><br><span class="line">class:A</span><br><span class="line">Afoo:A</span><br><span class="line">*/</span><br><span class="line">B::staticFoo();</span><br><span class="line">C::parent();</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">&lt;?php</span><br><span class="line"></span><br><span class="line">class base_class</span><br><span class="line">&#123;</span><br><span class="line">    function say_a()</span><br><span class="line">    &#123;</span><br><span class="line">        echo &quot;&apos;a&apos; - said the &quot; . __CLASS__ . &quot;&lt;br/&gt;&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function say_b()</span><br><span class="line">    &#123;</span><br><span class="line">        echo &quot;&apos;b&apos; - said the &quot; . get_class($this) . &quot;&lt;br/&gt;&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class derived_class extends base_class</span><br><span class="line">&#123;</span><br><span class="line">    function say_a()</span><br><span class="line">    &#123;</span><br><span class="line">        parent::say_a();</span><br><span class="line">        echo &quot;&apos;a&apos; - said the &quot; . __CLASS__ . &quot;&lt;br/&gt;&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function say_b()</span><br><span class="line">    &#123;</span><br><span class="line">        parent::say_b();</span><br><span class="line">        echo &quot;&apos;b&apos; - said the &quot; . get_class($this) . &quot;&lt;br/&gt;&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">$obj_b = new derived_class();</span><br><span class="line"></span><br><span class="line">$obj_b-&gt;say_a();</span><br><span class="line">echo &quot;&lt;br/&gt;&quot;;</span><br><span class="line">$obj_b-&gt;say_b();</span><br><span class="line"></span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
+<p>The output should look roughly like this:</p>
+<p>‘a’ - said the base_class<br>‘a’ - said the derived_class</p>
+<p>‘b’ - said the derived_class<br>‘b’ - said the derived_class</p>
+
+          
+        
+      
+    </div>
+    
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
     
       
 
@@ -418,6 +535,123 @@
 <p>初始化环境<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">hexo init blog</span><br><span class="line">cnpm  install hexo-deployer-git --save</span><br></pre></td></tr></table></figure></p>
 <p>修改配置<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim _config.yml</span><br></pre></td></tr></table></figure></p>
 <p>从别的电脑使用<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">1.git clone xxx</span><br><span class="line">2.git checkout hexo</span><br><span class="line">3.hexo xxx</span><br><span class="line">4.git push</span><br></pre></td></tr></table></figure></p>
+
+          
+        
+      
+    </div>
+    
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/04/09/summary-baidu-ops/" itemprop="url">
+                  百度运维工作总结
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-04-09T23:43:06+08:00" content="2016-04-09">
+              2016-04-09
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/04/09/summary-baidu-ops/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/04/09/summary-baidu-ops/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>从运维部transfer去别的部门了，不算那6个月的实习这1000天（刚好RMS显示了）的生涯很值得写点东西纪念下，先流水账式的记录下我这将近3年的工作记录，之后再不断更新下我这些年在百度对运维的一些理解和想法</p>
+<h2 id="为什么选择了运维"><a href="#为什么选择了运维" class="headerlink" title="为什么选择了运维"></a>为什么选择了运维</h2><p>在念初中的时候因为周末没事干，所以经常会去书店看书，当时记得印象比较深的是看了《儒勒凡尔纳》的书，到了高中之后虽然没有电脑，但是开始接触到计算机的东西了，所以看的闲书也开始有了计算机相关的，当时记得看的比较多的是《大众软件》，经常会去报亭买，去书店的话，可能是随手翻到的linux相关的东西，当时主要是被linux起源的故事吸引到了，好牛逼的感觉，正好中二时期很有代入感YY自己是linus，也被某本书里面suse的虚拟桌面立方体的切换效果shock到了（就是早期的ubuntu装完compiz后的那个效果，后来ubuntu切到unity之后我也没再折腾过了，不知道还能不能用），这差不多就是影响我之后对linux充满兴趣的重大原因吧，到了大学之后就开始不断折腾linux相关的各种东西，操作系统，各种软件的配置玩的很溜，但是很不幸的没有非常深入进去，所以到大三的时候想未来干啥，看了下貌似运维挺适合我，所以后来百度在招聘的时候就去了，然后就到现在了。</p>
+<p>不过其实当时我想的运维和我现在做的其实不太像是一个事情，当时想的运维还是偏底层，网络管理啊，系统运维啊，Bgw,BigNat配置（百度的HA系统和NAT系统，后面有空介绍）等等啊，有点像目前百度SYS做的事情，或者有点像外面中小型公司SA干的事情。只怪百度公司太大，分工已经非常明确了，来的时候Noah（百度的运维平台，远远领先于业界，这个得安利下，有空另开文章介绍）也基本差不多该有的都有 ，RMS（百度SYS搞的资产管理，硬件网络相关的，同样有空的时候另开文章介绍）也很完善了，所以来了之后更多的是做基于这2个平台二次开发的运维平台以及非常牛逼的业务运维</p>
+<p>以上差不多就是我入运维这行的前应后果</p>
+<p>另外当时有2个事情后来回忆起来很有意思也说下：当时fedora还叫fedora core，我看的才出到4那本书是讲fedora core4的；后来很火也许当时也很火只是我不知道的《鸟哥的私房菜》我其实也看过，不过当时的想法是我擦这个书好老，内容好陈旧，所以并没有怎么认真看完，以至于后来也不屑于看后来的第三版，主要也是我在几年的折腾中，基本都会了，没必要看了</p>
+<h2 id="在百度运维的工作经历"><a href="#在百度运维的工作经历" class="headerlink" title="在百度运维的工作经历"></a>在百度运维的工作经历</h2><p>12年7月的时候来了百度实习，最开始的时候在NSOP(New Search非网页搜索相关的其他的各种搜索，百科啊知道啊等等）里面的CBD团队（负责运维好几个产品；NS产品线以后介绍PS的时候有空比较下很有趣的，运维做的很不一样），当时主要是了解了下百度的运维体系和架构，在这个团队没待多久，2个月左右吧，开季度会的时候碰到了面了我2次的面试官孙寅，问我有没有兴趣去Noah，我自然是更有兴趣做底层设施的，就去了做Noah的团队（当时团队名叫OPED)，主要工作是写Archer（百度里面持续集成理念的部署系统）以及总监拍下来的变更可视化，4个月后回学校写毕设了，到13年7月再正式入职的时候就到了爱恨纠缠的PSOP（大搜索OP）里面的Spider团队（为啥从noah到了Spider了呢，貌似是因为当时上面的人觉得Noah做的东西不太接地气，所以就把Noah里面的人拆了一部分出来到各个产品线所以我就这么去了Spider）；在Spider干了2年吧，这2年的经历非常不错成长很大，团队里面的人都远优秀于别的团队，尤其是我们出来之后在别的团队再回过来看的话，别的团队好多都弱爆了好吗，有在认真干运维吗。不过每个团队都会遇到的问题，团队里面的人不断的离开，要么回家了，要么调去了别的团队当技术负责人，到我成为资历最老的人的时候身份也转变成和各种人沟通打交道，然而并不是我那个阶段太想做的事情，有点妨碍我技术能力的成长，并且当时有些事情也没处理好，所以调去了PS在线的展现团队，一部分是安排了个速度优化的项目给我，另外一部分猜测是希望我去提升下展现团队的技术水平。在展现待了5个月吧然后就到了我写这篇文章的时候，在PS在线的经历也非常棒，由于是个直接面向用户的系统所以处理问题的要求，思路，方法和PS离线还真不太一样，也是个很不错的经历学到了很多。</p>
+<p>(PS：其实我在11年的时候就很浪的去面过百度，当时三面和徐臻没聊2句就让我滚蛋了，当时才大二下？也不知道三面这种场景聊啥，主要是不会吹牛逼，所以没聊的起来，当然我本来就是去玩玩的）</p>
+<h2 id="为什么离开百度运维部"><a href="#为什么离开百度运维部" class="headerlink" title="为什么离开百度运维部"></a>为什么离开百度运维部</h2><p>和经理聊嘛，直接原因间接原因都得说</p>
+<h3 id="直接原因"><a href="#直接原因" class="headerlink" title="直接原因"></a>直接原因</h3><p>1.速度那个事情没很好的做下去，看了很多东西，学了很多东西，但是在整个团队里面身份很尴尬，一方面level很尴尬，一方面精力有限，所以当时主动和经理说我想放弃这个项目，然而怨我？其实我也在抱怨（我同时还在忙着展现的基础运维的事情，陷在那个太久没好好做带来的坑里面，哪有安排时间给我做速度的事情，我成天忙到死，不放弃这个项目就是坑大家）</p>
+<p>2.团队太low，带不动，并且职级不是最高很尴尬有没有。其实我一直不太适宜下班比较早的团队，2333，在Spider的时候大家都很热火朝天的干活，很有干劲有没有，现在的同学走那么早，回去又不主动想想，得过且过不行啊。业务运维是个很需要主动的活，需要一线的同学主动思考主动去做一些事情，只干被安排的活是不行的。又不是能换血的事情</p>
+<h3 id="间接原因"><a href="#间接原因" class="headerlink" title="间接原因"></a>间接原因</h3><p>1.我做的事情和我的预期不一样了，我本身希望做运维架构，运维平台的事情，在Spider大量的工作变成了业务运维的时候我还可以接受，因为是和一帮给力的同学在一起干活，在快速成长，然而后来成长速度和我的预期不一样了，我还没到完全输出的年龄，我渴望知识，可能告诉成长，然而之后的工作我是陷在泥潭里面，做的事情是重复劳动，对我没有能力提升，并且也没有足够的空闲事情让我学习新的东西进一步成长，所以得赶紧跳出来</p>
+<p>2.知乎上有个帖子很有趣：马云说：员工的离职原因很多，但其实就两点：1、钱，没给到位；2、心，委屈了；我2者都有</p>
+<p>3.不太看好百度的运维，只适合大公司，尤其是我在看了#O的一篇wiki之后（这个之后另开一篇文章描述）</p>
+<h2 id="让我再选择一次的话"><a href="#让我再选择一次的话" class="headerlink" title="让我再选择一次的话"></a>让我再选择一次的话</h2><p>历史不容假设，不过可以YY下</p>
+<p>1.当时碰到拆Noah的人出去的时候应该果断离职，目前看当时那波去了小米的人干的事情我非常向往</p>
+<p>2.我和森森柏宁都聊过，如果让我们再选一次，在百度运维里面选第一份工作的话还是希望在Spider</p>
+<h2 id="后续"><a href="#后续" class="headerlink" title="后续"></a>后续</h2><p>这里只是流水账的记录下，作为一个爱折腾的人以及比较深究问题的人，百度运维无论是Noah还是业务运维各方面的东西我基本都熟悉，之后再不断写下我的体会和最佳实践</p>
 
           
         
@@ -1144,282 +1378,11 @@ USER=root
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2013/05/10/unreadable-codes-with-mail/" itemprop="url">
-                  Mail的乱码问题
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2013-05-10T11:07:00+08:00" content="2013-05-10">
-              2013-05-10
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/mac/" itemprop="url" rel="index">
-                    <span itemprop="name">mac</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2013/05/10/unreadable-codes-with-mail/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2013/05/10/unreadable-codes-with-mail/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>Mail是Mac上的官方邮件客户端</p>
-<p>Mail 的乱码问题是由于发送的邮件是mime格式，outlook/express 等无法正确识别。<br>由于mail的默认编码是 utf8，而 outlook 的默认编码是gb2312/gbk，如果 mail 回复邮件则会使用 utf8，<br>而当 html 的 charset 和实际编码有出入在 IE 中会无法正确识别。这就是为什么同样用 webmail，在 firefox 下显示正常，而 IE 则乱码。<br>虽说是 IE 的问题，但是还是可以解决这个问题的，方法有3:</p>
-<ul>
-<li>使用纯文本方式（ mail 格式里选择制作纯文本）</li>
-<li>在新建邮件或者回复 outlook 类发送的邮件，手工指定编码（在 mail 的邮件－文本编码 选择 utf8 或者简体中文/GBK/GBK18030 等编码 ）</li>
-<li>如果嫌每次如此操作太麻烦，可以修改 mail 的默认值，由于这个选项没有界面可选，我们需要用命令来执行或者直接修改 mail 的 plist 文件：</li>
-</ul>
-<p>退出mail，在终端输入:<br>    defaults write com.apple.mail NSPreferredMailCharset “GBK”    （最好用这个，其它的各有各的问题）<br>或者：<br>    defaults write com.apple.mail NSPreferredMailCharset “UTF-8”<br>    defaults write com.apple.mail NSPreferredMailCharset “EUC”<br>    defaults write com.apple.mail NSPreferredMailCharset “GB18030” 再开启 Mail 收发邮件就正常了。<br>要还原的话，输入：<br>    defaults write com.apple.mail NSPreferredMailCharset “UTF-8”</p>
-<blockquote>
-<p><a href="http://www.son1c.cn/show/1270.html" target="_blank" rel="external">http://www.son1c.cn/show/1270.html</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2013/05/10/awesome-screen-shooter-on-mac/" itemprop="url">
-                  牛B哄哄的Mac截图
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2013-05-10T10:50:00+08:00" content="2013-05-10">
-              2013-05-10
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/mac/" itemprop="url" rel="index">
-                    <span itemprop="name">mac</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2013/05/10/awesome-screen-shooter-on-mac/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2013/05/10/awesome-screen-shooter-on-mac/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>mac原生自带了截图的功能，而且是程序员喜爱的快捷键方式，不是win7上的那个傻逼方式<br>首先来说一下有两种方式</p>
-<ul>
-<li>全屏截图Command＋shift＋3 屏幕回闪一下，然后截图会以屏幕快照xxxx的方式保存到桌面</li>
-<li>区域截图Command＋shift＋4</li>
-</ul>
-<p>关于区域截图<br>按Command＋shift＋4 后 ,画一个抓取的区域，不要松开鼠标，接着</p>
-<ul>
-<li>按住空格可以移动这个区域</li>
-<li>按住 Shift后，将锁定X 或者 Y轴进行拖动</li>
-<li>按住 Option后 将按照区域圆心进行放大.</li>
-</ul>
-<p>最后所有截图将直接显示在桌面上。<br>虽然没有窗口截图等更加复杂的功能，但是这些已经够用了不是吗</p>
-<p>Tips</p>
-<p>你可以以你喜欢的方式来改版mac截图的默认名称，只需在终端输入以下命令即可<br>    defaults write com.apple.screencapture name Screenshot<br>    killall SystemUIServer</p>
-<p>如何弄掉阴影</p>
-<pre><code>defaults write com.apple.screencapture disable-shadow -bool true
-killall SystemUIServer
-</code></pre><p>恢复</p>
-<pre><code>defaults write com.apple.screencapture disable-shadow -bool false
-killall SystemUIServer
-</code></pre><p>想给mac的登陆界面截图，用这个</p>
-<pre><code>/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow
-</code></pre>
-          
-        
-      
-    </div>
-    
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -1460,7 +1423,7 @@ killall SystemUIServer
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">20</span>
+              <span class="site-state-item-count">22</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1468,7 +1431,7 @@ killall SystemUIServer
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">13</span>
+                <span class="site-state-item-count">11</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1477,7 +1440,7 @@ killall SystemUIServer
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-count">6</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
@@ -1534,7 +1497,7 @@ killall SystemUIServer
         <div class="copyright" >
   
   &copy; 
-  <span itemprop="copyrightYear">2016</span>
+  <span itemprop="copyrightYear">2017</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
@@ -1553,6 +1516,22 @@ killall SystemUIServer
 </div>
 
         
+
+<div class="busuanzi-count">
+
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv"><i class="fa fa-user"></i><span class="busuanzi-value" id="busuanzi_value_site_uv"></span></span>
+  
+
+  
+    <span class="site-pv"><i class="fa fa-eye"></i><span class="busuanzi-value" id="busuanzi_value_site_pv"></span></span>
+  
+  
+</div>
+
+
 
         
       </div>
