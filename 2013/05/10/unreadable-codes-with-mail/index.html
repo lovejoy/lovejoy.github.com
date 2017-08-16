@@ -81,18 +81,24 @@
 
 
 <meta name="description" content="Mail是Mac上的官方邮件客户端
-Mail 的乱码问题是由于发送的邮件是mime格式，outlook/express 等无法正确识别。由于mail的默认编码是 utf8，而 outlook 的默认编码是gb2312/gbk，如果 mail 回复邮件则会使用 utf8，而当 html 的 charset 和实际编码有出入在 IE 中会无法正确识别。这就是为什么同样用 webmail，在 firef">
+Mail 的乱码问题是由于发送的邮件是mime格式，outlook/express 等无法正确识别。
+由于mail的默认编码是 utf8，而 outlook 的默认编码是gb2312/gbk，如果 mail 回复邮件则会使用 utf8，
+而当 html 的 charset 和实际编码有出入在 IE 中会无法正确识别。这就是为什么同样用 webmail，在 fir">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Mail的乱码问题">
 <meta property="og:url" content="http://blog.spider.im/2013/05/10/unreadable-codes-with-mail/index.html">
 <meta property="og:site_name" content="吐核|Core Dump">
 <meta property="og:description" content="Mail是Mac上的官方邮件客户端
-Mail 的乱码问题是由于发送的邮件是mime格式，outlook/express 等无法正确识别。由于mail的默认编码是 utf8，而 outlook 的默认编码是gb2312/gbk，如果 mail 回复邮件则会使用 utf8，而当 html 的 charset 和实际编码有出入在 IE 中会无法正确识别。这就是为什么同样用 webmail，在 firef">
+Mail 的乱码问题是由于发送的邮件是mime格式，outlook/express 等无法正确识别。
+由于mail的默认编码是 utf8，而 outlook 的默认编码是gb2312/gbk，如果 mail 回复邮件则会使用 utf8，
+而当 html 的 charset 和实际编码有出入在 IE 中会无法正确识别。这就是为什么同样用 webmail，在 fir">
 <meta property="og:updated_time" content="2016-06-16T06:21:51.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Mail的乱码问题">
 <meta name="twitter:description" content="Mail是Mac上的官方邮件客户端
-Mail 的乱码问题是由于发送的邮件是mime格式，outlook/express 等无法正确识别。由于mail的默认编码是 utf8，而 outlook 的默认编码是gb2312/gbk，如果 mail 回复邮件则会使用 utf8，而当 html 的 charset 和实际编码有出入在 IE 中会无法正确识别。这就是为什么同样用 webmail，在 firef">
+Mail 的乱码问题是由于发送的邮件是mime格式，outlook/express 等无法正确识别。
+由于mail的默认编码是 utf8，而 outlook 的默认编码是gb2312/gbk，如果 mail 回复邮件则会使用 utf8，
+而当 html 的 charset 和实际编码有出入在 IE 中会无法正确识别。这就是为什么同样用 webmail，在 fir">
 
 
 
@@ -331,13 +337,23 @@ Mail 的乱码问题是由于发送的邮件是mime格式，outlook/express 等�
 
       
         <p>Mail是Mac上的官方邮件客户端</p>
-<p>Mail 的乱码问题是由于发送的邮件是mime格式，outlook/express 等无法正确识别。<br>由于mail的默认编码是 utf8，而 outlook 的默认编码是gb2312/gbk，如果 mail 回复邮件则会使用 utf8，<br>而当 html 的 charset 和实际编码有出入在 IE 中会无法正确识别。这就是为什么同样用 webmail，在 firefox 下显示正常，而 IE 则乱码。<br>虽说是 IE 的问题，但是还是可以解决这个问题的，方法有3:</p>
+<p>Mail 的乱码问题是由于发送的邮件是mime格式，outlook/express 等无法正确识别。<br>
+由于mail的默认编码是 utf8，而 outlook 的默认编码是gb2312/gbk，如果 mail 回复邮件则会使用 utf8，<br>
+而当 html 的 charset 和实际编码有出入在 IE 中会无法正确识别。这就是为什么同样用 webmail，在 firefox 下显示正常，而 IE 则乱码。<br>
+虽说是 IE 的问题，但是还是可以解决这个问题的，方法有3:</p>
 <ul>
 <li>使用纯文本方式（ mail 格式里选择制作纯文本）</li>
 <li>在新建邮件或者回复 outlook 类发送的邮件，手工指定编码（在 mail 的邮件－文本编码 选择 utf8 或者简体中文/GBK/GBK18030 等编码 ）</li>
 <li>如果嫌每次如此操作太麻烦，可以修改 mail 的默认值，由于这个选项没有界面可选，我们需要用命令来执行或者直接修改 mail 的 plist 文件：</li>
 </ul>
-<p>退出mail，在终端输入:<br>    defaults write com.apple.mail NSPreferredMailCharset “GBK”    （最好用这个，其它的各有各的问题）<br>或者：<br>    defaults write com.apple.mail NSPreferredMailCharset “UTF-8”<br>    defaults write com.apple.mail NSPreferredMailCharset “EUC”<br>    defaults write com.apple.mail NSPreferredMailCharset “GB18030” 再开启 Mail 收发邮件就正常了。<br>要还原的话，输入：<br>    defaults write com.apple.mail NSPreferredMailCharset “UTF-8”</p>
+<p>退出mail，在终端输入:<br>
+defaults write com.apple.mail NSPreferredMailCharset “GBK”    （最好用这个，其它的各有各的问题）<br>
+或者：<br>
+defaults write com.apple.mail NSPreferredMailCharset &quot;UTF-8&quot;<br>
+defaults write com.apple.mail NSPreferredMailCharset &quot;EUC&quot;<br>
+defaults write com.apple.mail NSPreferredMailCharset “GB18030” 再开启 Mail 收发邮件就正常了。<br>
+要还原的话，输入：<br>
+defaults write com.apple.mail NSPreferredMailCharset “UTF-8”</p>
 <blockquote>
 <p><a href="http://www.son1c.cn/show/1270.html" target="_blank" rel="external">http://www.son1c.cn/show/1270.html</a></p>
 </blockquote>
@@ -449,7 +465,7 @@ Mail 的乱码问题是由于发送的邮件是mime格式，outlook/express 等�
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">22</span>
+              <span class="site-state-item-count">27</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -457,7 +473,7 @@ Mail 的乱码问题是由于发送的邮件是mime格式，outlook/express 等�
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">11</span>
+                <span class="site-state-item-count">13</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -466,7 +482,7 @@ Mail 的乱码问题是由于发送的邮件是mime格式，outlook/express 等�
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-count">8</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

@@ -1,0 +1,754 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.lug.ustc.edu.cn/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="工作记录," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="随着业务的发展，终于要开始搞速度优化了，很久之前以运维的身份参与过一定时间的速度优化项目，现在以研发的身份再参与一次，体会下不同的角度不同的方法
+为什么要进行速度优化
+
+Amazon每增加100ms 收入下降1%;
+Yahoo每降低400ms的加载时间，他们的访问量就提升9%
+Mozilla将他们的页面速度提升了2.2s，每年多获得了1.6亿下载量
+搜索首屏时间每增加300ms 无点击比例上升1%">
+<meta property="og:type" content="article">
+<meta property="og:title" content="速度优化起始篇">
+<meta property="og:url" content="http://blog.spider.im/2016/08/16/speed-kickoff/index.html">
+<meta property="og:site_name" content="吐核|Core Dump">
+<meta property="og:description" content="随着业务的发展，终于要开始搞速度优化了，很久之前以运维的身份参与过一定时间的速度优化项目，现在以研发的身份再参与一次，体会下不同的角度不同的方法
+为什么要进行速度优化
+
+Amazon每增加100ms 收入下降1%;
+Yahoo每降低400ms的加载时间，他们的访问量就提升9%
+Mozilla将他们的页面速度提升了2.2s，每年多获得了1.6亿下载量
+搜索首屏时间每增加300ms 无点击比例上升1%">
+<meta property="og:updated_time" content="2017-08-16T09:20:57.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="速度优化起始篇">
+<meta name="twitter:description" content="随着业务的发展，终于要开始搞速度优化了，很久之前以运维的身份参与过一定时间的速度优化项目，现在以研发的身份再参与一次，体会下不同的角度不同的方法
+为什么要进行速度优化
+
+Amazon每增加100ms 收入下降1%;
+Yahoo每降低400ms的加载时间，他们的访问量就提升9%
+Mozilla将他们的页面速度提升了2.2s，每年多获得了1.6亿下载量
+搜索首屏时间每增加300ms 无点击比例上升1%">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"right","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> 速度优化起始篇 | 吐核|Core Dump </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//tajs.qq.com/stats?sId=63414042";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-right page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">吐核|Core Dump</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">笔记 随想 吐槽</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-th fa-fw"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-tags fa-fw"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-user fa-fw"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                速度优化起始篇
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-08-16T10:58:39+08:00" content="2016-08-16">
+              2016-08-16
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/speed/" itemprop="url" rel="index">
+                    <span itemprop="name">speed</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/08/16/speed-kickoff/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/08/16/speed-kickoff/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+              &nbsp; | &nbsp;
+              <span class="page-pv"><i class="fa fa-file-o"></i> 浏览
+              <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>次
+              </span>
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>随着业务的发展，终于要开始搞速度优化了，很久之前以运维的身份参与过一定时间的速度优化项目，现在以研发的身份再参与一次，体会下不同的角度不同的方法</p>
+<h1>为什么要进行速度优化</h1>
+<ul>
+<li>Amazon每增加100ms 收入下降1%;</li>
+<li>Yahoo每降低400ms的加载时间，他们的访问量就提升9%</li>
+<li>Mozilla将他们的页面速度提升了2.2s，每年多获得了1.6亿下载量</li>
+<li>搜索首屏时间每增加300ms 无点击比例上升1%</li>
+</ul>
+<p>一般情况下认为移动端用户对访问速度的比PC端高，但是也有界限<br>
+用户体验：&lt;2s，响应快；2<sub>5s，还可以；5</sub>8s，慢，还可以接受；&gt;8s，流失</p>
+<p>总结下就是</p>
+<ol>
+<li>用户访问速度对用户体验至关重要</li>
+<li>用户访问速度快慢影响收入</li>
+</ol>
+<h1>优化的目标是什么</h1>
+<p>对于PC产品速度指标以1s为界限，移动端产品速度如上所述至少在2s内，最好能在1.5s内，能达到1s内就是完美</p>
+<pre><code>这里指的时间都是按80分位值计算
+</code></pre>
+<h1>面临的挑战是什么</h1>
+<ul>
+<li>移动网络复杂不稳定的网络情况会带来很多不可控因素</li>
+<li>业务早期粗放的发展模式积累了大量性能低下的代码</li>
+<li>投入人力有限运维配合程度低，能获取到系统资源有限</li>
+</ul>
+<h1>速度优化被安排的职责</h1>
+<ol>
+<li>负责团队用户可见组件(及其依赖)的性能评判</li>
+<li>负责性能优化方案的调研和制定，并逐步在实践中形成一些 <strong>设计和开发规范</strong></li>
+<li>负责定期CR线上服务代码，及时发现可优化的代码段，并发起优化流程直至优化完成</li>
+<li>参与核心模块和所有C端模块的设计评审，发现问题并给出指导意见</li>
+<li>组织定期的学习和分享(每个Q一次，在评判结果announce之后），提升整个团队的性能优化能力</li>
+<li>配合QA制定性能测试方案，根据测试结果提出优化方案，并跟进到底直至落地到线上</li>
+<li>带领所有同学养成看性能数据的日常习惯，根据服务性能的各项指标及早的发现和解决问题，避免问题放大</li>
+</ol>
+<p>杂七杂八的事情不少呵呵。</p>
+<h1>速度优化任务拆解</h1>
+<p>全盘摸底，只知道慢，有多慢，慢在什么环节，要尽快分析下，并且建立速度的监控体系，速度性能要直观可见，速度优化结果要有理可依，TODO：</p>
+<ul>
+<li>指定性能评判标准</li>
+<li>建立速度指标监控</li>
+<li>对目前问题作出详尽的分析</li>
+</ul>
+<p>快速调研下各种优化方案，这个公司内部做过的太多了，各种前后端方案能快速迁移的方案就快速迁移，TODO：</p>
+<ul>
+<li>公司内外速度优化方案调研</li>
+</ul>
+<p>流程规范下，之前更多的关注的是业务层面的事情，性能问题除非异常恶劣，研发测试都很少关注，要改变下流程和制度:</p>
+<ul>
+<li>梳理前后端重要页面接口，QA加入性能测试</li>
+<li>系统设计过评审</li>
+</ul>
+<p>起始篇到此为止，后续记录具体的工作</p>
+
+      
+    </div>
+    
+    <div>
+      
+        
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/工作记录/" rel="tag">#工作记录</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/08/15/time-machine-on-samba/" rel="next" title="用Samba把TimeMachine备份在windows服务器上">
+                <i class="fa fa-chevron-left"></i> 用Samba把TimeMachine备份在windows服务器上
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/08/21/speed-investigate-and-survey/" rel="prev" title="速度优化相关调研">
+                速度优化相关调研 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/default_avatar.jpg"
+               alt="lovejoy" />
+          <p class="site-author-name" itemprop="name">lovejoy</p>
+          <p class="site-description motion-element" itemprop="description">这是个简介</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">27</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">13</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/lovejoy" target="_blank" title="Github">
+                  
+                    <i class="fa fa-globe"></i>
+                  
+                  Github
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/liangyongqing" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#undefined"><span class="nav-number">1.</span> <span class="nav-text">为什么要进行速度优化</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#undefined"><span class="nav-number">2.</span> <span class="nav-text">优化的目标是什么</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#undefined"><span class="nav-number">3.</span> <span class="nav-text">面临的挑战是什么</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#undefined"><span class="nav-number">4.</span> <span class="nav-text">速度优化被安排的职责</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#undefined"><span class="nav-number">5.</span> <span class="nav-text">速度优化任务拆解</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lovejoy</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+<div class="busuanzi-count">
+
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv"><i class="fa fa-user"></i><span class="busuanzi-value" id="busuanzi_value_site_uv"></span></span>
+  
+
+  
+    <span class="site-pv"><i class="fa fa-eye"></i><span class="busuanzi-value" id="busuanzi_value_site_pv"></span></span>
+  
+  
+</div>
+
+
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'tucao';
+      var disqus_identifier = '2016/08/16/speed-kickoff/';
+      var disqus_title = '速度优化起始篇';
+      var disqus_url = 'http://blog.spider.im/2016/08/16/speed-kickoff/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+  
+  
+  
+
+  
+
+  
+
+</body>
+</html>

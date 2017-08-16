@@ -309,14 +309,18 @@
       
         
           
-            <p>在看Yii2代码的时候，有这么一段<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">if (isset(static::$classMap[$className])) &#123;</span><br><span class="line">     $classFile = static::$classMap[$className];</span><br><span class="line">     if ($classFile[0] === &apos;@&apos;) &#123;</span><br><span class="line">         $classFile = static::getAlias($classFile);</span><br><span class="line">     &#125;</span><br><span class="line"> &#125; elseif (strpos($className, &apos;\\&apos;) !== false) &#123;</span><br><span class="line">     $classFile = static::getAlias(&apos;@&apos; . str_replace(&apos;\\&apos;, &apos;/&apos;, $className) . &apos;.php&apos;, false);</span><br><span class="line">     if ($classFile === false || !is_file($classFile)) &#123;</span><br><span class="line">         return;</span><br><span class="line">     &#125;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure></p>
-<p>当时有点困惑，为啥用了个static::$classMap[$className],而不是self::$classMap[$className],细看了下self和static的区别<br>大体可以理解为static定义的function 如果子类又重新实现了的话，会用子类的结果（实际运行的时候的），而self永远是最开始定义的父类的结果</p>
+            <p>在看Yii2代码的时候，有这么一段</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">if (isset(static::$classMap[$className])) &#123;</span><br><span class="line">     $classFile = static::$classMap[$className];</span><br><span class="line">     if ($classFile[0] === &apos;@&apos;) &#123;</span><br><span class="line">         $classFile = static::getAlias($classFile);</span><br><span class="line">     &#125;</span><br><span class="line"> &#125; elseif (strpos($className, &apos;\\&apos;) !== false) &#123;</span><br><span class="line">     $classFile = static::getAlias(&apos;@&apos; . str_replace(&apos;\\&apos;, &apos;/&apos;, $className) . &apos;.php&apos;, false);</span><br><span class="line">     if ($classFile === false || !is_file($classFile)) &#123;</span><br><span class="line">         return;</span><br><span class="line">     &#125;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>当时有点困惑，为啥用了个static::$classMap[$className],而不是self::$classMap[$className],细看了下self和static的区别<br>
+大体可以理解为static定义的function 如果子类又重新实现了的话，会用子类的结果（实际运行的时候的），而self永远是最开始定义的父类的结果</p>
 <p>与self类似的还有 <strong>CLASS</strong> 和get_class() 只会是最开始定义的结果,不过注意get_class($this)会是实际运行时的类的结果</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">class A &#123;</span><br><span class="line">    static $staticString = &quot;A static string&quot;;</span><br><span class="line">    public static function staticFunction() &#123;</span><br><span class="line">        echo self::$staticString;</span><br><span class="line">    &#125;</span><br><span class="line">    public static function foo() &#123;</span><br><span class="line">        echo &quot;Afoo:&quot;.__CLASS__.&quot;\n&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    public static function selfFoo() &#123;</span><br><span class="line">        echo &quot;called class:&quot;.get_called_class().&quot;\n&quot;;</span><br><span class="line">        echo &quot;class:&quot;.get_class().&quot;\n&quot;;</span><br><span class="line">        echo self::foo();</span><br><span class="line">    &#125;</span><br><span class="line">    public static function staticFoo() &#123;</span><br><span class="line">        echo &quot;called class:&quot;.get_called_class().&quot;\n&quot;;</span><br><span class="line">        echo &quot;class:&quot;.get_class().&quot;\n&quot;;</span><br><span class="line">        echo static::foo();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class B extends A &#123;</span><br><span class="line">    static $staticString = &quot;B static string&quot;;</span><br><span class="line">    public static function foo() &#123;</span><br><span class="line">        echo &quot;Bfoo:&quot;.__CLASS__.&quot;\n&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    public static function parent() &#123;</span><br><span class="line">        parent::selfFoo();</span><br><span class="line">        parent::staticFoo();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class C extends B &#123;</span><br><span class="line">    public static function foo() &#123;</span><br><span class="line">        echo __CLASS__;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line">B::selfFoo();</span><br><span class="line">/*</span><br><span class="line">输出结果</span><br><span class="line">called class:B</span><br><span class="line">class:A</span><br><span class="line">Afoo:A</span><br><span class="line">*/</span><br><span class="line">B::staticFoo();</span><br><span class="line">C::parent();</span><br></pre></td></tr></table></figure>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">&lt;?php</span><br><span class="line"></span><br><span class="line">class base_class</span><br><span class="line">&#123;</span><br><span class="line">    function say_a()</span><br><span class="line">    &#123;</span><br><span class="line">        echo &quot;&apos;a&apos; - said the &quot; . __CLASS__ . &quot;&lt;br/&gt;&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function say_b()</span><br><span class="line">    &#123;</span><br><span class="line">        echo &quot;&apos;b&apos; - said the &quot; . get_class($this) . &quot;&lt;br/&gt;&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class derived_class extends base_class</span><br><span class="line">&#123;</span><br><span class="line">    function say_a()</span><br><span class="line">    &#123;</span><br><span class="line">        parent::say_a();</span><br><span class="line">        echo &quot;&apos;a&apos; - said the &quot; . __CLASS__ . &quot;&lt;br/&gt;&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function say_b()</span><br><span class="line">    &#123;</span><br><span class="line">        parent::say_b();</span><br><span class="line">        echo &quot;&apos;b&apos; - said the &quot; . get_class($this) . &quot;&lt;br/&gt;&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">$obj_b = new derived_class();</span><br><span class="line"></span><br><span class="line">$obj_b-&gt;say_a();</span><br><span class="line">echo &quot;&lt;br/&gt;&quot;;</span><br><span class="line">$obj_b-&gt;say_b();</span><br><span class="line"></span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
 <p>The output should look roughly like this:</p>
-<p>‘a’ - said the base_class<br>‘a’ - said the derived_class</p>
-<p>‘b’ - said the derived_class<br>‘b’ - said the derived_class</p>
+<p>‘a’ - said the base_class<br>
+’a’ - said the derived_class</p>
+<p>‘b’ - said the derived_class<br>
+’b’ - said the derived_class</p>
 
           
         
@@ -366,8 +370,8 @@
             
               
                 
-                <a class="post-title-link" href="/2016/06/17/logid/" itemprop="url">
-                  唯一请求ID
+                <a class="post-title-link" href="/2016/10/15/api-security/" itemprop="url">
+                  API接口签名验证方案
                 </a>
               
             
@@ -380,8 +384,8 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-06-17T14:23:50+08:00" content="2016-06-17">
-              2016-06-17
+            <time itemprop="dateCreated" datetime="2016-10-15T11:23:45+08:00" content="2016-10-15">
+              2016-10-15
             </time>
           </span>
 
@@ -391,8 +395,8 @@
             
               <span class="post-comments-count">
                 &nbsp; | &nbsp;
-                <a href="/2016/06/17/logid/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/06/17/logid/" itemprop="commentsCount"></span>
+                <a href="/2016/10/15/api-security/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/10/15/api-security/" itemprop="commentsCount"></span>
                 </a>
               </span>
             
@@ -417,18 +421,874 @@
       
         
           
-            <h3 id="什么是唯一请求ID"><a href="#什么是唯一请求ID" class="headerlink" title="什么是唯一请求ID"></a>什么是唯一请求ID</h3><p>唯一请求ID简单点说就是标示了一个请求的完整生命周期的ID，目的是为了异常时在多个模块间快速追查问题。</p>
-<h4 id="设计目标"><a href="#设计目标" class="headerlink" title="设计目标"></a>设计目标</h4><ol>
-<li>唯一请求ID需要足够唯一：在一定的条件下不可以重复</li>
-<li>唯一请求ID需要在请求到达的所有模块中传递并且在日志中打印</li>
-<li>能在用户端某个地方记录这次请求的唯一请求ID</li>
+            <p>主要是和外部合作的时候需要考虑的安全性问题，首先是必须走HTTPS不多说，其次是接口上需要添加相应的校验，基本思路是给请求的参数添加个校验参数，不过实际做法各不一样，这里记录下我碰到的几种模式以及我自己的思考</p>
+<h2 id="参数签名模式"><a class="header-anchor" href="#参数签名模式">¶</a>参数签名模式</h2>
+<p>通用接口，仅仅添加一个校验参数，sign值是其他所有参数按照校验算法计算出来的（需要要加个不在URL参数里面带的密钥）这种对 GET 和 POST 都是类似的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 密钥生成算法</span><br><span class="line"> * @param array $params 需要加密的参数对(一般是url的参数)</span><br><span class="line"> *        string $sha1 密钥</span><br><span class="line"> * @return string</span><br><span class="line"> */</span><br><span class="line">public static function getIntSign($params, $sha1) &#123;</span><br><span class="line">    ksort ( $params, SORT_STRING ); // 对参数的key以字母顺序排序</span><br><span class="line">    $paramsArr = array ();</span><br><span class="line">    foreach ( $params as $pkey =&gt; $pval ) &#123;</span><br><span class="line">        if ($pkey == &quot;token&quot; || $pkey == &quot;log_id&quot;) &#123;</span><br><span class="line">            continue;</span><br><span class="line">        &#125;</span><br><span class="line">        array_push ( $paramsArr, ($pkey . &quot;:&quot; . $pval) ); // 用冒号连结参数的key和val</span><br><span class="line">    &#125;</span><br><span class="line">    $hashString = implode ( &quot;_&quot;, $paramsArr ); // 用下划线连结各参数(key,val)对</span><br><span class="line">    $hashString = $hashString . &quot;_&quot; . $sha1; // 在最后加上有效的sha1值</span><br><span class="line">    $intSign = sha1 ( $hashString );</span><br><span class="line">    return $intSign;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>校验也很简单，把所有参数丢到生成算法里面，计算下和sign值结果是不是一样的就行了</p>
+<p>还看到一个微服务提供给不同的app，略有不同</p>
+<ol>
+<li>URL参数里面带上分配的appkey</li>
+<li>对于post的请求，需要对post体进行校验比如md5下生成checkStr</li>
+<li>同样需要个sign值 对get的参数进行 appkey+checkStr 生成sign</li>
 </ol>
-<h4 id="整体思路"><a href="#整体思路" class="headerlink" title="整体思路"></a>整体思路</h4><ol>
-<li>唯一请求ID从web服务器Nginx开始生成然后往下透传打印在access_log中</li>
-<li>唯一请求ID生成算法用unix_timestamp + 随机数，具体之后细想</li>
-<li>唯一请求ID丢在Header里面方便Nginx后面的PHP程序获取<br>4.</li>
+<h2 id="唯一性保证"><a class="header-anchor" href="#唯一性保证">¶</a>唯一性保证</h2>
+<p>在上面的基础上添加timestamp，服务端看这个timestamp 不能超过指定时间长度，超过失效。这个对更新类的请求有用，别人不能重复发请求获取最新数据。</p>
+
+          
+        
+      
+    </div>
+    
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/08/21/speed-hhvm/" itemprop="url">
+                  速度优化HHVM篇
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-08-21T22:47:49+08:00" content="2016-08-21">
+              2016-08-21
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/08/21/speed-hhvm/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/08/21/speed-hhvm/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>确定的第一个速度优化的项目:</p>
+<p>从PHP5.4切换到HHVM<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>，为什么？因为这个方案效果是已知的好，省CPU，明显提升速度！实践起来简单（不用改代码就能有提升），并且在公司内部也已经经过多年使用，兼容性会有但问题不大。</p>
+<p>HHVM是什么，介绍的文章太多了，这里就不叙述了，参见多益大神<sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup>的<a href="http://wuduoyi.com/note/hhvm/" target="_blank" rel="external">文章</a>，另外厂内HHVM维护者志广的<a href="http://saiyaren.iteye.com/" target="_blank" rel="external">博客</a> 也可以看看，虽然不怎么更新了。</p>
+<h1>HHVM的使用情况</h1>
+<p>HHVM在百度内部的情况使用这篇<a href="http://lamp.baidu.com/2014/11/04/hhvm-in-baidu/" target="_blank" rel="external">博客</a>有介绍，<br>
+最重要的几个产品线在13年末14年初基本都实现了PHP到HHVM的切换工作,并且有大量的产品线正在使用。好奇我们为啥当时没用，建议以后都默认使用HHVM除了PHP7之外都不要考虑Zend-PHP了。</p>
+<h1>HHVM能带来什么提升</h1>
+<p>一个词形容就是“节省”，省时间（php执行速度加快）、省内存、省CPU。</p>
+<p>这里罗列下基础调研数据</p>
+<p>外部情况</p>
+<ol>
+<li>Wikimedia：维基百科部署了 HHVM 后，CPU 的负载从50%降到了10%，用户提交编辑时的平均响应时间减少到原来的一半，页面的平均加载时间从原来的1.3秒降到了0.9秒。</li>
+<li>Etsy: Etsy 的工程师对比了HHVM 和 PHP5.4 的性能，发现 HHVM 每秒可以处理280个服务器请求，而对于 PHP5.4，如果每秒的请求数超过了190次，服务器的响应时间就会急剧增加。</li>
 </ol>
-<h3 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h3><h4 id="生成算法"><a href="#生成算法" class="headerlink" title="生成算法"></a>生成算法</h4><p><code>$logId = ((($arr[&#39;sec&#39;]*100000 + $arr[&#39;usec&#39;]/10) &amp; 0x7FFFFFFF) | 0x80000000);</code></p>
+<p>内部情况</p>
+<ol>
+<li>检索模板渲染用HHVM处理，处理时间减少一半(对比PHP-FPM+eAccelerator)，资源消耗上PHP-CGI用3.2G，HHVM用1G</li>
+<li>广告模板系统渲染时间下降60%，整体响应时间下降50%</li>
+</ol>
+<p>我们自己的实践数据</p>
+<ol>
+<li>栋哥在优化后端接口性能的时候发现，发现始终有20ms不知道哪占的，最后发现是框架占的，使用HHVM之后，这20ms被压缩到1ms，效果明显</li>
+</ol>
+<h1>HHVM的问题</h1>
+<ol>
+<li>我所知道的最大的问题是有内存泄露问题，流量大的情况下，需要定期重启，不然HHVM自己重启，流量又没切走，会造成拒绝的问题，这个虽然在不断修复，不过今年在搜索还是有</li>
+<li>插件的问题，插件不兼容，需要重新开放，不过常用的插件都有HHVM的版本了，我们没有这个问题</li>
+<li>不兼容的问题，HHVM和PHP还不是100%兼容，虽然主流的PHP项目都对HHVM做了兼容，但是那也是针对官方HHVM而言，公司内的HHVM可能还有问题</li>
+</ol>
+<h1>HHVM和PHP的DIFF问题</h1>
+<h2 id="hhvm传超过一个参数时精度丢失的问题"><a class="header-anchor" href="#hhvm传超过一个参数时精度丢失的问题">¶</a>hhvm传超过一个参数时精度丢失的问题</h2>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">    $a1 = array(&apos;rate&apos;=&gt;4/3);</span><br><span class="line">    $a2 = array(&apos;col&apos;=&gt;4,&apos;rate&apos;=&gt;4/3);</span><br><span class="line"></span><br><span class="line">    function getit($r) &#123;</span><br><span class="line">        echo ( 4 * (6+17) - 17 ) * $r[&apos;rate&apos;] ;</span><br><span class="line">        echo &quot;\n&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    getit($a1);</span><br><span class="line">    getit($a2);</span><br></pre></td></tr></table></figure>
+<p>HHVM输出</p>
+<pre><code>100
+99.999999997
+</code></pre>
+<p>PHP输出</p>
+<pre><code>100
+100
+</code></pre>
+<h2 id="hhvm-htmlspecialchars对传参的限制问题"><a class="header-anchor" href="#hhvm-htmlspecialchars对传参的限制问题">¶</a>hhvm htmlspecialchars对传参的限制问题</h2>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">  $string = array(&apos;str&apos;=&gt;&apos;aaa&apos;);</span><br><span class="line">  $str = htmlspecialchars($string, ENT_QUOTES, &apos;UTF-8&apos;);</span><br><span class="line">  echo ( $str );</span><br></pre></td></tr></table></figure>
+<p>HHVM输出</p>
+<pre><code>Array
+</code></pre>
+<p>PHP无输出</p>
+<h2 id="mb库默认编码问题"><a class="header-anchor" href="#mb库默认编码问题">¶</a>mb库默认编码问题</h2>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">  $search = &quot;日&quot;;</span><br><span class="line">  $subject = &quot;21日&quot;;</span><br><span class="line">  $replace = &quot;&quot;;</span><br><span class="line"></span><br><span class="line">  #mb_regex_encoding(&apos;UTF-8&apos;);</span><br><span class="line">  #mb_internal_encoding(&quot;UTF-8&quot;);</span><br><span class="line">  $parts = mb_split(preg_quote($search), $subject);</span><br><span class="line">  $subject = implode($replace, $parts);</span><br><span class="line">  echo $subject.&quot;\n&quot;;</span><br></pre></td></tr></table></figure>
+<p>HHVM输出</p>
+<pre><code>21日
+</code></pre>
+<p>PHP输出</p>
+<pre><code>21
+</code></pre>
+<h2 id="preg-match和魔术函数共用导致的死循环问题"><a class="header-anchor" href="#preg-match和魔术函数共用导致的死循环问题">¶</a>preg_match和魔术函数共用导致的死循环问题</h2>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">class MM&#123;</span><br><span class="line">  function getVar()&#123;</span><br><span class="line">    return $this;</span><br><span class="line">  &#125;</span><br><span class="line">  function __get($name)&#123;</span><br><span class="line">    return NULL;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">$t = new MM();</span><br><span class="line">echo preg_match_all(&quot;/./&quot;, &apos;some&apos;, $t-&gt;getVar()-&gt;value);</span><br><span class="line">echo &quot;\n&quot;;</span><br></pre></td></tr></table></figure>
+<h2 id="rawurlencode-转义-线的问题"><a class="header-anchor" href="#rawurlencode-转义-线的问题">¶</a>rawurlencode 转义~线的问题</h2>
+<p>HHVM支持的是PHP5.4，所以使用rawurlencode时不将<sub>转义为%7E保持原有的</sub>（PHP5.3以上都是如此支持），我们公司默认使用的是php 5.2.17,5.2.17将~转义为%7E，为了保持一致公司的HHVM Patch掉了这个，所以和我们用PHP5.4的又不兼容了。。。</p>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p>其实还有个选择是PHP7，业界也有<a href="http://www.iteye.com/news/31607" target="_blank" rel="external">使用案例</a>,不过百度内部还没release，所以不太好使用，暂时不太想第一个吃螃蟹 <a href="#fnref1" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn2" class="footnote-item"><p>多益大神本身是个FE哦，牛逼人物基本都是FullStack <a href="#fnref2" class="footnote-backref">↩</a></p>
+</li>
+</ol>
+</section>
+
+          
+        
+      
+    </div>
+    
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/08/21/speed-investigate-and-survey/" itemprop="url">
+                  速度优化相关调研
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-08-21T18:53:12+08:00" content="2016-08-21">
+              2016-08-21
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/speed/" itemprop="url" rel="index">
+                    <span itemprop="name">speed</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/08/21/speed-investigate-and-survey/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/08/21/speed-investigate-and-survey/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>主要记录下速度优化相关的调研</p>
+<h1>速度指标定义与监控方案</h1>
+<h2 id="速度指标定义"><a class="header-anchor" href="#速度指标定义">¶</a>速度指标定义</h2>
+<p>如上文所述，做速度优化，需要给速度进行量化定义</p>
+<p>调研了下速度指标的定义方式</p>
+<ol>
+<li>网页类产品：比如搜索，其实相对比较简单只有2个页面：首页、结果页，速度指标都是以首屏时间80分位来定义，这个首屏时间指核心DOM加载时间，比如搜索结果页就是网页中部，不包含右边和最底下推荐的搜索结果主体部分，而不是指占满整个屏幕的时间；但是移动端又不一样，移动端由于屏幕大小的限制以及操作方式，整个屏幕都是正文，这个首屏时间又变成了真正的首屏时间，就是占据屏幕的时间，不过一般打点都会往下打，防止用户快速下滑，这个</li>
+<li>端上产品：端上情况比较复杂</li>
+</ol>
+<ul>
+<li>第一种 其实还是网页，比如京东和美团不少页面<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>，定义方法类似1</li>
+<li>第二种 是个网页但又不仅仅是个网页，这种主要是通过JS来调用APP本身的能力来进行渲染展现，可以理解成是个本地的网页，然后后端主要是输出接口</li>
+<li>第三种 完全是Native实现</li>
+</ul>
+<p>上面第二种和第三种大体还是类似于网页但是又不太是，还依赖端的一些能力，所以端本身也要消耗一些时间</p>
+<p>理想的速度指标应该反映出用户的浏览速度体验，我看到有一个指标很不错，叫做用户可操作时间，最终还是需要结合业务进行制定。</p>
+<h2 id="监控方案"><a class="header-anchor" href="#监控方案">¶</a>监控方案</h2>
+<p>网页类的产品监控方式2种</p>
+<ol>
+<li>多地采集点进行页面性能监控，早年这个东西做的最好的是基调网络（主要是采集点多）后来出现不少此类产品，监控宝、各种云（阿里云 百度BCE）里面都自带类似工具；不过这个方案其实只适合做网站可用性监控，页面性能监控基本被淘汰了，毕竟一方面配置的页面不可能太全，覆盖面有限，另外一方面这种东西实现方式不一，很多前端优化在这个上面体现不出来。</li>
+<li>网页自身JS打点，把所有需要的信息带在参数里面去访问一个空图片，然后后端统计日志，计算出来，再做个展示的平台，这个虽然看上去要做的事情比用现成的方案多，但是这个基本是目前的主流，另外百度内部也有现成的做好的平台，直接引用JS再设置下就行，另外JS打点的逻辑也值得说下，见脚注<sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup></li>
+</ol>
+<p>APP类的产品监控方式也有2种</p>
+<ol>
+<li>类似上面网页监控方式的1，代表产品是听云、博瑞、oneAPM等，和网页监控的区别就是这个是走的移动网络的监控点，可能是一堆手机在那监控。。。这个事情其实类似上面的问题，做过的基本都是以失败告终，意义实在不大，不是说APM意义不大，APM是另外一个概念，是在APP里面嵌入SDK</li>
+<li>客户端日志回传，自己的东西还是自己清楚，利用客户端本身的能力去记录</li>
+</ol>
+<h1>速度优化方案</h1>
+<p>看到的一些常见的速度优化方案，这里聚合罗列下，冒号后面是我的理解和解释</p>
+<h2 id="基础网络"><a class="header-anchor" href="#基础网络">¶</a>基础网络</h2>
+<ol>
+<li>全国多接入点：移动网络下，网络传输时间占据了相当大的一个比例，所以接入点越多离用户越近速度越快，这里要具体分析下自己业务的用户群体以及网络情况</li>
+<li>BGP接入：由于跨运营商的问题，对于移动应用，3大运营商接入点必须有，否则会出现各种奇怪的现象（移动会对跨网流量随机丢包）</li>
+<li>动态代理加速？</li>
+</ol>
+<h2 id="基础层协议参数"><a class="header-anchor" href="#基础层协议参数">¶</a>基础层协议参数</h2>
+<ol>
+<li>优化拥塞窗口</li>
+<li>TFO TLP</li>
+<li>长连接</li>
+<li>Chunked：http 流式异步传输协议；服务端收到请求后分段返回，浏览器立即渲染。</li>
+</ol>
+<h2 id="应用层协议"><a class="header-anchor" href="#应用层协议">¶</a>应用层协议</h2>
+<ol>
+<li>Head压缩：这里指发送请求的头部大小，有实验证明发送请求的头部大小会强烈影响首字节，基本结论是在1000字节以下，请求时间随头部大小增加变化明显，在1000字节之上，呈缓慢的上升趋势，后续详细实验下</li>
+<li>HttpDns IP方式访问后端 : 这个腾讯写的一个<a href="http://mp.weixin.qq.com/s?__biz=MzA3ODgyNzcwMw==&amp;mid=201837080&amp;idx=1&amp;sn=b2a152b84df1c7dbd294ea66037cf262&amp;scene=2&amp;from=timeline&amp;isappinstalled=0" target="_blank" rel="external">文章</a>介绍的比较详细，DNSPOD也有现成的<a href="https://www.dnspod.cn/httpdns/guide" target="_blank" rel="external">产品</a>。百度看资料实际很早之前也有了，然而又是秘而不发。最早可能是为了防止DNS劫持，不过也可以用来提速，把DNS解析时间干掉，实现成端预请求获得所有APP要访问的域名和IP列表，请求都走IP（不过这个可能有限制，可能需要全部改成POST请求，不然依赖域名的接入服务，就没有办法路由请求了)</li>
+<li>Spdy Quic：Spdy是HTTPS的多路复用，介绍HTTPS握手时间（考虑到我们已经全部是HTTPS了） QUIC是用UDP承载HTTPS的流量，不过这些都处于调研阶段，需要端上配合，服务端使用也不是太普遍，没看到内部实践例子，可能比较难实践</li>
+</ol>
+<h2 id="前端页面优化"><a class="header-anchor" href="#前端页面优化">¶</a>前端页面优化</h2>
+<ol>
+<li>理想页面布局：css前置，js后置尾部，html的js回调</li>
+<li>理想页面内容：gzip 压缩页面size，减少js，减少图片数和size。</li>
+<li>DNS预解析：和HttpDns目的类似，干掉DNS解析时间，毕竟移动网络DNS解析要几十ms呢</li>
+<li>资源预测加载：提前加载图片资源，图片预取，资源预取</li>
+<li>页面分块加载：这个我们用不到，指PC网页的，移动网页没有那么多块，顶多是把首屏下面的分块加载</li>
+<li>异步化：这个提醒在搜索引擎上就是instant search，具体可以google 谷歌的实现</li>
+</ol>
+<h2 id="服务端优化"><a class="header-anchor" href="#服务端优化">¶</a>服务端优化</h2>
+<h3 id="服务端前端"><a class="header-anchor" href="#服务端前端">¶</a>服务端前端</h3>
+<ol>
+<li>并行渲染：不懂，应该是smarty相关的，我们都是接口不出页面用不到</li>
+<li>HHVM：HHVM方案已经比较成熟了，对于CPU和速度都有很显著的提升，这个是在多个产品上有过证明的，当然HHVM本身会代理一些兼容性问题，可能需要修改PHP代码</li>
+<li>调度串行改并行：服务端前端基本是调用一堆后端，PHP程序员的思维基本是串行写逻辑，这个需要改下，把所有请求改成并行的，建议是先并行请求需要的数据，然后根据返回的数据在串行写自己的逻辑，可能会导致代码的可读性变差些，就看怎么实现的优雅点了。</li>
+<li>图片压缩 Base64编码：移动端不需要过大的图，毕竟屏幕大小在那，而且很多图根本不会让用户放大了看，所以适当的压缩下图片大小，可以结合用户的网络制式和屏幕大小来动态调整，至于不是外链的图，自己产生的图可以直接base64返回，不变的图，前端直接放在前端代码里。</li>
+<li>慢速识别，简版展现：这个之前管过，叫做速度适配，基本思路是根据用户的网络情况，展现不一样的网页，慢速的展现简版的网页，快速的展现元素多比较炫的网页，不过我们是服务端是不渲染HTML的，都是前端渲染的，而且这个得跟PM和UE聊聊，不一定同意。</li>
+</ol>
+<h3 id="服务端后端"><a class="header-anchor" href="#服务端后端">¶</a>服务端后端</h3>
+<ol>
+<li>全局全机房Cache：全机房统一全局Cache可以明显提升命中率，但是也有稳定性风险，异常就没有备份了</li>
+<li>预充Cache：预充预取是移动端提速2大法宝，先模拟用户访问，预充下Cache，真正用户访问时就已经在Cache里面了</li>
+<li>并行计算</li>
+</ol>
+<h2 id="预取架构"><a class="header-anchor" href="#预取架构">¶</a>预取架构</h2>
+<p>这个有一套大的架构，并且有很多有趣的策略，不过都是很个性化的，这里不方便说，主要方法是提前把用户可能要访问的东西请求回来，用户真正点的时候直接加载了</p>
+<p>这个网页通过JS就可以弄，但是App里面还依赖App本身，感觉我们App的实现不一定能搞预取的事情。</p>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p>区别1和2最好的判断方式是在移动访问下查看页面有没有被插入运营商的流量球。。。经常看到京东和美团的APP内部被插入运营商流量球，感觉好low，即是个网页还没有HTTPS <a href="#fnref1" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn2" class="footnote-item"><p>要监控的数据: 白屏时间、首屏时间、用户可操作时间、Timing API数据（DNS TCP连接 首字节 传输完成 domComplete loadEventEnd) 白屏时间监控放在head底部（因为浏览器只有加载并解析完头部才会真正开始渲染页面,可以通过这个来监控白屏时间)，首屏时间（放在HTML代码渲染时，浏览器上首屏末尾处DOM元素所在的代码位置处，会计算首屏内图片加载的耗时当成首屏时间），用户可操作时间（在domready的地方标记） <a href="#fnref2" class="footnote-backref">↩</a></p>
+</li>
+</ol>
+</section>
+
+          
+        
+      
+    </div>
+    
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/08/16/speed-kickoff/" itemprop="url">
+                  速度优化起始篇
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-08-16T10:58:39+08:00" content="2016-08-16">
+              2016-08-16
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/speed/" itemprop="url" rel="index">
+                    <span itemprop="name">speed</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/08/16/speed-kickoff/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/08/16/speed-kickoff/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>随着业务的发展，终于要开始搞速度优化了，很久之前以运维的身份参与过一定时间的速度优化项目，现在以研发的身份再参与一次，体会下不同的角度不同的方法</p>
+<h1>为什么要进行速度优化</h1>
+<ul>
+<li>Amazon每增加100ms 收入下降1%;</li>
+<li>Yahoo每降低400ms的加载时间，他们的访问量就提升9%</li>
+<li>Mozilla将他们的页面速度提升了2.2s，每年多获得了1.6亿下载量</li>
+<li>搜索首屏时间每增加300ms 无点击比例上升1%</li>
+</ul>
+<p>一般情况下认为移动端用户对访问速度的比PC端高，但是也有界限<br>
+用户体验：&lt;2s，响应快；2<sub>5s，还可以；5</sub>8s，慢，还可以接受；&gt;8s，流失</p>
+<p>总结下就是</p>
+<ol>
+<li>用户访问速度对用户体验至关重要</li>
+<li>用户访问速度快慢影响收入</li>
+</ol>
+<h1>优化的目标是什么</h1>
+<p>对于PC产品速度指标以1s为界限，移动端产品速度如上所述至少在2s内，最好能在1.5s内，能达到1s内就是完美</p>
+<pre><code>这里指的时间都是按80分位值计算
+</code></pre>
+<h1>面临的挑战是什么</h1>
+<ul>
+<li>移动网络复杂不稳定的网络情况会带来很多不可控因素</li>
+<li>业务早期粗放的发展模式积累了大量性能低下的代码</li>
+<li>投入人力有限运维配合程度低，能获取到系统资源有限</li>
+</ul>
+<h1>速度优化被安排的职责</h1>
+<ol>
+<li>负责团队用户可见组件(及其依赖)的性能评判</li>
+<li>负责性能优化方案的调研和制定，并逐步在实践中形成一些 <strong>设计和开发规范</strong></li>
+<li>负责定期CR线上服务代码，及时发现可优化的代码段，并发起优化流程直至优化完成</li>
+<li>参与核心模块和所有C端模块的设计评审，发现问题并给出指导意见</li>
+<li>组织定期的学习和分享(每个Q一次，在评判结果announce之后），提升整个团队的性能优化能力</li>
+<li>配合QA制定性能测试方案，根据测试结果提出优化方案，并跟进到底直至落地到线上</li>
+<li>带领所有同学养成看性能数据的日常习惯，根据服务性能的各项指标及早的发现和解决问题，避免问题放大</li>
+</ol>
+<p>杂七杂八的事情不少呵呵。</p>
+<h1>速度优化任务拆解</h1>
+<p>全盘摸底，只知道慢，有多慢，慢在什么环节，要尽快分析下，并且建立速度的监控体系，速度性能要直观可见，速度优化结果要有理可依，TODO：</p>
+<ul>
+<li>指定性能评判标准</li>
+<li>建立速度指标监控</li>
+<li>对目前问题作出详尽的分析</li>
+</ul>
+<p>快速调研下各种优化方案，这个公司内部做过的太多了，各种前后端方案能快速迁移的方案就快速迁移，TODO：</p>
+<ul>
+<li>公司内外速度优化方案调研</li>
+</ul>
+<p>流程规范下，之前更多的关注的是业务层面的事情，性能问题除非异常恶劣，研发测试都很少关注，要改变下流程和制度:</p>
+<ul>
+<li>梳理前后端重要页面接口，QA加入性能测试</li>
+<li>系统设计过评审</li>
+</ul>
+<p>起始篇到此为止，后续记录具体的工作</p>
+
+          
+        
+      
+    </div>
+    
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/08/15/time-machine-on-samba/" itemprop="url">
+                  用Samba把TimeMachine备份在windows服务器上
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-08-15T20:11:18+08:00" content="2016-08-15">
+              2016-08-15
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/mac/" itemprop="url" rel="index">
+                    <span itemprop="name">mac</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/08/15/time-machine-on-samba/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/08/15/time-machine-on-samba/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>Mac的TimeMachine备份只支持AFP协议，所以默认情况下是没有办法备份在windows共享里面的，不过可以曲线救国下，通过备份在磁盘镜像<a href="https://zh.wikipedia.org/wiki/%E7%A8%80%E7%96%8F%E7%A3%81%E7%9B%98%E6%98%A0%E5%83%8F" target="_blank" rel="external">稀疏磁盘</a>的方式，备份在windows上</p>
+<h1>创建磁盘镜像</h1>
+<p>这里要创建的不是常见的DMG镜像，而是稀疏捆绑磁盘镜像<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>，目的是稀疏捆绑磁盘镜像是随着使用占用的空间而逐渐增大，不用一下子就把空间分好了，另外后期也可以动态调整大小，另外还有个分不清的叫稀疏磁盘镜像也可以，不过我选择的是稀疏磁盘捆绑镜像<sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup></p>
+<p>有2种方式来创建稀疏捆绑磁盘镜像</p>
+<ul>
+<li>命令行方式</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd ~</span><br><span class="line">hdiutil create -size 600g -type SPARSEBUNDLE -fs &quot;HFS+J&quot; TimeMachine.sparsebundle</span><br></pre></td></tr></table></figure>
+<ul>
+<li>通过磁盘工具</li>
+</ul>
+<p>打开磁盘工具(spotlight搜下磁盘就出来了)，在文件新建-&gt;新建空白映像里面新建个，需要修改映像格式为稀疏捆绑磁盘映像，大小修改下自己写个数字可以写500gb这种mac会自动识别</p>
+<h1>把磁盘镜像拷贝到网络驱动上</h1>
+<p>打开finder CMD+K smb://你的ip地址，然后把生成的镜像拷贝到你的windows共享中，并且双击下镜像文件mount下</p>
+<h1>把这个镜像设置成你的TimeMachine备份设备</h1>
+<p>开个终端</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo tmutil setdestination /Volumes/TimeMachine</span><br></pre></td></tr></table></figure>
+<p>注意看你的volume目录是不是这个目录，可以cd到volume目录里面查看，替换成自己的</p>
+<h1>设置成开机自动连接</h1>
+<p>通过applescript的方式实现：<br>
+打开脚本编辑器(spotlight 搜applescript)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">try</span><br><span class="line">	mount volume &quot;smb://readyshare/TimeMachine&quot;</span><br><span class="line">end try</span><br><span class="line"></span><br><span class="line">do shell script &quot;hdiutil attach -mountpoint /Volumes/TimeMachine/ /Volumes/TimeMachine/TimeMachine.sparsebundle&quot;</span><br></pre></td></tr></table></figure>
+<h1>不足之处</h1>
+<p>这种方式不能使用可以恢复到任意时刻的<a href="https://support.apple.com/zh-cn/HT201314" target="_blank" rel="external">OSX的恢复功能</a>，只能先重装个系统，然后mount上镜像，再恢复，当然可以把镜像拷贝到移动硬盘上，插到mac上这样应该也可以使用OSX的恢复功能</p>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p><a href="https://zh.wikipedia.org/wiki/%E7%A8%80%E7%96%8F%E7%A3%81%E7%9B%98%E6%98%A0%E5%83%8F" target="_blank" rel="external">https://zh.wikipedia.org/wiki/稀疏磁盘映像</a> <a href="#fnref1" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn2" class="footnote-item"><p><a href="https://www.v2ex.com/t/240799" target="_blank" rel="external">https://www.v2ex.com/t/240799</a> <a href="#fnref2" class="footnote-backref">↩</a></p>
+</li>
+</ol>
+</section>
+
+          
+        
+      
+    </div>
+    
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/08/12/xhprof/" itemprop="url">
+                  使用xhprof进行性能分析
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-08-12T15:18:11+08:00" content="2016-08-12">
+              2016-08-12
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/性能/" itemprop="url" rel="index">
+                    <span itemprop="name">性能</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/08/12/xhprof/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/08/12/xhprof/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1>XHProf 简介</h1>
+<p>XHProf 是一个轻量级的分层性能测量分析器。 可以追踪一个请求程序内部各函数的调用次数，消耗时间以及资源占用等信息，是我们进行性能分析的利器。<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup></p>
+<h1>XHProf 安装</h1>
+<p>首先要安装个extension <a href="http://xhprof.so" target="_blank" rel="external">xhprof.so</a> 并且配置启用，由于我用的环境默认带了，这里不具体描述</p>
+<p>装完so之后还要down下xhprof的php lib 文件，可以直接</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/phacility/xhprof.git</span><br></pre></td></tr></table></figure>
+<p>把这个目录丢到webroot里面(便于之后访问分析结果文件)或者其他地方都行</p>
+<h1>XHProf 使用</h1>
+<p>主要是在需要进行性能分析的地方 include xhprof的代码，enable 然后disable下，记录下调用情况；AP程序可以残暴点 直接写在index.php 里面，具体示例代码如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">xhprof_enable(XHPROF_FLAGS_CPU + XHPROF_FLAGS_MEMORY);</span><br><span class="line">//your code</span><br><span class="line">//$objResponse = $objApplication-&gt;bootstrap()-&gt;run();</span><br><span class="line">$data = xhprof_disable(); //返回运行数据</span><br><span class="line"></span><br><span class="line">// xhprof_lib在下载的包里存在这个目录,记得将目录包含到运行的php代码中</span><br><span class="line">$XHPROF_ROOT = __DIR__ . &apos;/../vendor/facebook/xhprof/&apos;; //设置成自己的地址</span><br><span class="line">include_once $XHPROF_ROOT . &apos;/xhprof_lib/utils/xhprof_lib.php&apos;;</span><br><span class="line">include_once $XHPROF_ROOT . &apos;/xhprof_lib/utils/xhprof_runs.php&apos;;</span><br><span class="line">$objXhprofRun = new XHProfRuns_Default();</span><br><span class="line">// 第一个参数j是xhprof_disable()函数返回的运行信息</span><br><span class="line">// 第二个参数是自定义的命名空间字符串(任意字符串),</span><br><span class="line">// 返回运行ID,用这个ID查看相关的运行结果</span><br><span class="line">$run_id = $objXhprofRun-&gt;save_run($data, &quot;xhprof&quot;);</span><br><span class="line">//var_dump($run_id);</span><br><span class="line">echo &quot;http://localhost/xhprof/xhprof_html/index.php?run=&#123;$run_id&#125;&amp;source=xhprof_testing\n&quot;</span><br></pre></td></tr></table></figure>
+<h1>XHProf结果分析</h1>
+<p>直接在浏览器里面打开xhprof_html的页面，如果不是用web服务器配置的话，可以简单点直接在xhprof 同层目录里面 php -S 0.0.0.0:8888 然后访问 <a href="http://hostname:8888/xhprof/xhprof_html/" target="_blank" rel="external">http://hostname:8888/xhprof/xhprof_html/</a></p>
+<p>下面是页面中各字段解释：<br>
+我主要用于速度调忧，所以看的比较多的是前几个，调用次数 消耗时间等另外可以看看生成的graph 函数的调用逻辑以及消耗时间，帮助定位问题</p>
+<blockquote><p>Function Name 函数名<br>
+Calls 调用次数<br>
+Calls% 调用百分比<br>
+Incl. Wall Time (microsec) 调用的包括子函数所有花费时间 以微秒算(一百万分之一秒)<br>
+IWall% 调用的包括子函数所有花费时间的百分比<br>
+Excl. Wall Time (microsec) 函数执行本身花费的时间，不包括子树执行时间,以微秒算(一百万分之一秒)<br>
+EWall% 函数执行本身花费的时间的百分比，不包括子树执行时间<br>
+Incl. CPU(microsecs) 调用的包括子函数所有花费的cpu时间。减Incl. Wall Time即为等待cpu的时间<br>
+减Excl. Wall Time即为等待cpu的时间<br>
+ICpu% Incl. CPU(microsecs)的百分比<br>
+Excl. CPU(microsec) 函数执行本身花费的cpu时间，不包括子树执行时间,以微秒算(一百万分之一秒)。<br>
+ECPU% Excl. CPU(microsec)的百分比<br>
+Incl.MemUse(bytes) 包括子函数执行使用的内存。<br>
+IMemUse% Incl.MemUse(bytes)的百分比<br>
+Excl.MemUse(bytes) 函数执行本身内存,以字节算<br>
+EMemUse% Excl.MemUse(bytes)的百分比<br>
+Incl.PeakMemUse(bytes) Incl.MemUse的峰值<br>
+IPeakMemUse% Incl.PeakMemUse(bytes) 的峰值百分比<br>
+Excl.PeakMemUse(bytes) Excl.MemUse的峰值<br>
+EPeakMemUse% EMemUse% 峰值百分比</p>
+</blockquote>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p>具体介绍见 <a href="http://php.net/manual/zh/book.xhprof.php" target="_blank" rel="external">PHP官方文档</a> <a href="#fnref1" class="footnote-backref">↩</a></p>
+</li>
+</ol>
+</section>
 
           
         
@@ -529,12 +1389,20 @@
       
         
           
-            <p>安装npm<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ wget -qO- https://raw.github.com/creationix/nvm/master/install.sh | sh</span><br><span class="line">$ NVM_NODEJS_ORG_MIRROR=https://npm.taobao.org/mirrors/node nvm install 4.3.1</span><br></pre></td></tr></table></figure></p>
-<p>安装hexo<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install -g hexo-cli --registry=https://registry.npm.taobao.org --disturl=https://npm.taobao.org/mirrors/node</span><br></pre></td></tr></table></figure></p>
-<p>安装cnpm<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm --registry=https://registry.npm.taobao.org install cnpm -g</span><br></pre></td></tr></table></figure></p>
-<p>初始化环境<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">hexo init blog</span><br><span class="line">cnpm  install hexo-deployer-git --save</span><br></pre></td></tr></table></figure></p>
-<p>修改配置<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim _config.yml</span><br></pre></td></tr></table></figure></p>
-<p>从别的电脑使用<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">1.git clone xxx</span><br><span class="line">2.git checkout hexo</span><br><span class="line">3.hexo xxx</span><br><span class="line">4.git push</span><br></pre></td></tr></table></figure></p>
+            <p>安装npm</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ wget -qO- https://raw.github.com/creationix/nvm/master/install.sh | sh</span><br><span class="line">$ NVM_NODEJS_ORG_MIRROR=https://npm.taobao.org/mirrors/node nvm install 4.3.1</span><br></pre></td></tr></table></figure>
+<p>安装hexo</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install -g hexo-cli --registry=https://registry.npm.taobao.org --disturl=https://npm.taobao.org/mirrors/node</span><br></pre></td></tr></table></figure>
+<p>安装cnpm</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm --registry=https://registry.npm.taobao.org install cnpm -g</span><br></pre></td></tr></table></figure>
+<p>初始化环境</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">hexo init blog</span><br><span class="line">cnpm  install hexo-deployer-git --save</span><br></pre></td></tr></table></figure>
+<p>安装必要插件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">npm un hexo-renderer-marked --save</span><br><span class="line">npm i hexo-renderer-markdown-it --save</span><br><span class="line"></span><br><span class="line">cd node_modules/hexo-renderer-markdown-it/</span><br><span class="line">npm install markdown-it-footnote --save #添加脚注</span><br><span class="line">npm install markdown-it-emoji --save #添加 Eomji</span><br><span class="line">npm install markdown-it-sub --save #添加下标</span><br><span class="line">npm install markdown-it-sup --save #添加下标</span><br></pre></td></tr></table></figure>
+<p>修改配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">vim _config.yml</span><br><span class="line">markdown:</span><br><span class="line">  render:</span><br><span class="line">    html: true</span><br><span class="line">    xhtmlOut: false</span><br><span class="line">    breaks: true</span><br><span class="line">    linkify: true</span><br><span class="line">    typographer: true</span><br><span class="line">    quotes: &apos;“”‘’&apos;</span><br><span class="line">  plugins:</span><br><span class="line">    - markdown-it-abbr</span><br><span class="line">    - markdown-it-footnote</span><br><span class="line">    - markdown-it-ins</span><br><span class="line">    - markdown-it-sub</span><br><span class="line">    - markdown-it-sup</span><br><span class="line">  anchors:</span><br><span class="line">    level: 2</span><br><span class="line">    collisionSuffix: &apos;v&apos;</span><br><span class="line">    permalink: true</span><br><span class="line">    permalinkClass: header-anchor</span><br><span class="line">    permalinkSymbol: ¶</span><br></pre></td></tr></table></figure>
+<p>从别的电脑使用</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">1.git clone xxx</span><br><span class="line">2.git checkout hexo</span><br><span class="line">3.hexo xxx</span><br><span class="line">4.git push</span><br></pre></td></tr></table></figure>
 
           
         
@@ -636,22 +1504,29 @@
         
           
             <p>从运维部transfer去别的部门了，不算那6个月的实习这1000天（刚好RMS显示了）的生涯很值得写点东西纪念下，先流水账式的记录下我这将近3年的工作记录，之后再不断更新下我这些年在百度对运维的一些理解和想法</p>
-<h2 id="为什么选择了运维"><a href="#为什么选择了运维" class="headerlink" title="为什么选择了运维"></a>为什么选择了运维</h2><p>在念初中的时候因为周末没事干，所以经常会去书店看书，当时记得印象比较深的是看了《儒勒凡尔纳》的书，到了高中之后虽然没有电脑，但是开始接触到计算机的东西了，所以看的闲书也开始有了计算机相关的，当时记得看的比较多的是《大众软件》，经常会去报亭买，去书店的话，可能是随手翻到的linux相关的东西，当时主要是被linux起源的故事吸引到了，好牛逼的感觉，正好中二时期很有代入感YY自己是linus，也被某本书里面suse的虚拟桌面立方体的切换效果shock到了（就是早期的ubuntu装完compiz后的那个效果，后来ubuntu切到unity之后我也没再折腾过了，不知道还能不能用），这差不多就是影响我之后对linux充满兴趣的重大原因吧，到了大学之后就开始不断折腾linux相关的各种东西，操作系统，各种软件的配置玩的很溜，但是很不幸的没有非常深入进去，所以到大三的时候想未来干啥，看了下貌似运维挺适合我，所以后来百度在招聘的时候就去了，然后就到现在了。</p>
+<h2 id="为什么选择了运维"><a class="header-anchor" href="#为什么选择了运维">¶</a>为什么选择了运维</h2>
+<p>在念初中的时候因为周末没事干，所以经常会去书店看书，当时记得印象比较深的是看了《儒勒凡尔纳》的书，到了高中之后虽然没有电脑，但是开始接触到计算机的东西了，所以看的闲书也开始有了计算机相关的，当时记得看的比较多的是《大众软件》，经常会去报亭买，去书店的话，可能是随手翻到的linux相关的东西，当时主要是被linux起源的故事吸引到了，好牛逼的感觉，正好中二时期很有代入感YY自己是linus，也被某本书里面suse的虚拟桌面立方体的切换效果shock到了（就是早期的ubuntu装完compiz后的那个效果，后来ubuntu切到unity之后我也没再折腾过了，不知道还能不能用），这差不多就是影响我之后对linux充满兴趣的重大原因吧，到了大学之后就开始不断折腾linux相关的各种东西，操作系统，各种软件的配置玩的很溜，但是很不幸的没有非常深入进去，所以到大三的时候想未来干啥，看了下貌似运维挺适合我，所以后来百度在招聘的时候就去了，然后就到现在了。</p>
 <p>不过其实当时我想的运维和我现在做的其实不太像是一个事情，当时想的运维还是偏底层，网络管理啊，系统运维啊，Bgw,BigNat配置（百度的HA系统和NAT系统，后面有空介绍）等等啊，有点像目前百度SYS做的事情，或者有点像外面中小型公司SA干的事情。只怪百度公司太大，分工已经非常明确了，来的时候Noah（百度的运维平台，远远领先于业界，这个得安利下，有空另开文章介绍）也基本差不多该有的都有 ，RMS（百度SYS搞的资产管理，硬件网络相关的，同样有空的时候另开文章介绍）也很完善了，所以来了之后更多的是做基于这2个平台二次开发的运维平台以及非常牛逼的业务运维</p>
 <p>以上差不多就是我入运维这行的前应后果</p>
 <p>另外当时有2个事情后来回忆起来很有意思也说下：当时fedora还叫fedora core，我看的才出到4那本书是讲fedora core4的；后来很火也许当时也很火只是我不知道的《鸟哥的私房菜》我其实也看过，不过当时的想法是我擦这个书好老，内容好陈旧，所以并没有怎么认真看完，以至于后来也不屑于看后来的第三版，主要也是我在几年的折腾中，基本都会了，没必要看了</p>
-<h2 id="在百度运维的工作经历"><a href="#在百度运维的工作经历" class="headerlink" title="在百度运维的工作经历"></a>在百度运维的工作经历</h2><p>12年7月的时候来了百度实习，最开始的时候在NSOP(New Search非网页搜索相关的其他的各种搜索，百科啊知道啊等等）里面的CBD团队（负责运维好几个产品；NS产品线以后介绍PS的时候有空比较下很有趣的，运维做的很不一样），当时主要是了解了下百度的运维体系和架构，在这个团队没待多久，2个月左右吧，开季度会的时候碰到了面了我2次的面试官孙寅，问我有没有兴趣去Noah，我自然是更有兴趣做底层设施的，就去了做Noah的团队（当时团队名叫OPED)，主要工作是写Archer（百度里面持续集成理念的部署系统）以及总监拍下来的变更可视化，4个月后回学校写毕设了，到13年7月再正式入职的时候就到了爱恨纠缠的PSOP（大搜索OP）里面的Spider团队（为啥从noah到了Spider了呢，貌似是因为当时上面的人觉得Noah做的东西不太接地气，所以就把Noah里面的人拆了一部分出来到各个产品线所以我就这么去了Spider）；在Spider干了2年吧，这2年的经历非常不错成长很大，团队里面的人都远优秀于别的团队，尤其是我们出来之后在别的团队再回过来看的话，别的团队好多都弱爆了好吗，有在认真干运维吗。不过每个团队都会遇到的问题，团队里面的人不断的离开，要么回家了，要么调去了别的团队当技术负责人，到我成为资历最老的人的时候身份也转变成和各种人沟通打交道，然而并不是我那个阶段太想做的事情，有点妨碍我技术能力的成长，并且当时有些事情也没处理好，所以调去了PS在线的展现团队，一部分是安排了个速度优化的项目给我，另外一部分猜测是希望我去提升下展现团队的技术水平。在展现待了5个月吧然后就到了我写这篇文章的时候，在PS在线的经历也非常棒，由于是个直接面向用户的系统所以处理问题的要求，思路，方法和PS离线还真不太一样，也是个很不错的经历学到了很多。</p>
+<h2 id="在百度运维的工作经历"><a class="header-anchor" href="#在百度运维的工作经历">¶</a>在百度运维的工作经历</h2>
+<p>12年7月的时候来了百度实习，最开始的时候在NSOP(New Search非网页搜索相关的其他的各种搜索，百科啊知道啊等等）里面的CBD团队（负责运维好几个产品；NS产品线以后介绍PS的时候有空比较下很有趣的，运维做的很不一样），当时主要是了解了下百度的运维体系和架构，在这个团队没待多久，2个月左右吧，开季度会的时候碰到了面了我2次的面试官孙寅，问我有没有兴趣去Noah，我自然是更有兴趣做底层设施的，就去了做Noah的团队（当时团队名叫OPED)，主要工作是写Archer（百度里面持续集成理念的部署系统）以及总监拍下来的变更可视化，4个月后回学校写毕设了，到13年7月再正式入职的时候就到了爱恨纠缠的PSOP（大搜索OP）里面的Spider团队（为啥从noah到了Spider了呢，貌似是因为当时上面的人觉得Noah做的东西不太接地气，所以就把Noah里面的人拆了一部分出来到各个产品线所以我就这么去了Spider）；在Spider干了2年吧，这2年的经历非常不错成长很大，团队里面的人都远优秀于别的团队，尤其是我们出来之后在别的团队再回过来看的话，别的团队好多都弱爆了好吗，有在认真干运维吗。不过每个团队都会遇到的问题，团队里面的人不断的离开，要么回家了，要么调去了别的团队当技术负责人，到我成为资历最老的人的时候身份也转变成和各种人沟通打交道，然而并不是我那个阶段太想做的事情，有点妨碍我技术能力的成长，并且当时有些事情也没处理好，所以调去了PS在线的展现团队，一部分是安排了个速度优化的项目给我，另外一部分猜测是希望我去提升下展现团队的技术水平。在展现待了5个月吧然后就到了我写这篇文章的时候，在PS在线的经历也非常棒，由于是个直接面向用户的系统所以处理问题的要求，思路，方法和PS离线还真不太一样，也是个很不错的经历学到了很多。</p>
 <p>(PS：其实我在11年的时候就很浪的去面过百度，当时三面和徐臻没聊2句就让我滚蛋了，当时才大二下？也不知道三面这种场景聊啥，主要是不会吹牛逼，所以没聊的起来，当然我本来就是去玩玩的）</p>
-<h2 id="为什么离开百度运维部"><a href="#为什么离开百度运维部" class="headerlink" title="为什么离开百度运维部"></a>为什么离开百度运维部</h2><p>和经理聊嘛，直接原因间接原因都得说</p>
-<h3 id="直接原因"><a href="#直接原因" class="headerlink" title="直接原因"></a>直接原因</h3><p>1.速度那个事情没很好的做下去，看了很多东西，学了很多东西，但是在整个团队里面身份很尴尬，一方面level很尴尬，一方面精力有限，所以当时主动和经理说我想放弃这个项目，然而怨我？其实我也在抱怨（我同时还在忙着展现的基础运维的事情，陷在那个太久没好好做带来的坑里面，哪有安排时间给我做速度的事情，我成天忙到死，不放弃这个项目就是坑大家）</p>
+<h2 id="为什么离开百度运维部"><a class="header-anchor" href="#为什么离开百度运维部">¶</a>为什么离开百度运维部</h2>
+<p>和经理聊嘛，直接原因间接原因都得说</p>
+<h3 id="直接原因"><a class="header-anchor" href="#直接原因">¶</a>直接原因</h3>
+<p>1.速度那个事情没很好的做下去，看了很多东西，学了很多东西，但是在整个团队里面身份很尴尬，一方面level很尴尬，一方面精力有限，所以当时主动和经理说我想放弃这个项目，然而怨我？其实我也在抱怨（我同时还在忙着展现的基础运维的事情，陷在那个太久没好好做带来的坑里面，哪有安排时间给我做速度的事情，我成天忙到死，不放弃这个项目就是坑大家）</p>
 <p>2.团队太low，带不动，并且职级不是最高很尴尬有没有。其实我一直不太适宜下班比较早的团队，2333，在Spider的时候大家都很热火朝天的干活，很有干劲有没有，现在的同学走那么早，回去又不主动想想，得过且过不行啊。业务运维是个很需要主动的活，需要一线的同学主动思考主动去做一些事情，只干被安排的活是不行的。又不是能换血的事情</p>
-<h3 id="间接原因"><a href="#间接原因" class="headerlink" title="间接原因"></a>间接原因</h3><p>1.我做的事情和我的预期不一样了，我本身希望做运维架构，运维平台的事情，在Spider大量的工作变成了业务运维的时候我还可以接受，因为是和一帮给力的同学在一起干活，在快速成长，然而后来成长速度和我的预期不一样了，我还没到完全输出的年龄，我渴望知识，可能告诉成长，然而之后的工作我是陷在泥潭里面，做的事情是重复劳动，对我没有能力提升，并且也没有足够的空闲事情让我学习新的东西进一步成长，所以得赶紧跳出来</p>
+<h3 id="间接原因"><a class="header-anchor" href="#间接原因">¶</a>间接原因</h3>
+<p>1.我做的事情和我的预期不一样了，我本身希望做运维架构，运维平台的事情，在Spider大量的工作变成了业务运维的时候我还可以接受，因为是和一帮给力的同学在一起干活，在快速成长，然而后来成长速度和我的预期不一样了，我还没到完全输出的年龄，我渴望知识，可能告诉成长，然而之后的工作我是陷在泥潭里面，做的事情是重复劳动，对我没有能力提升，并且也没有足够的空闲事情让我学习新的东西进一步成长，所以得赶紧跳出来</p>
 <p>2.知乎上有个帖子很有趣：马云说：员工的离职原因很多，但其实就两点：1、钱，没给到位；2、心，委屈了；我2者都有</p>
 <p>3.不太看好百度的运维，只适合大公司，尤其是我在看了#O的一篇wiki之后（这个之后另开一篇文章描述）</p>
-<h2 id="让我再选择一次的话"><a href="#让我再选择一次的话" class="headerlink" title="让我再选择一次的话"></a>让我再选择一次的话</h2><p>历史不容假设，不过可以YY下</p>
+<h2 id="让我再选择一次的话"><a class="header-anchor" href="#让我再选择一次的话">¶</a>让我再选择一次的话</h2>
+<p>历史不容假设，不过可以YY下</p>
 <p>1.当时碰到拆Noah的人出去的时候应该果断离职，目前看当时那波去了小米的人干的事情我非常向往</p>
 <p>2.我和森森柏宁都聊过，如果让我们再选一次，在百度运维里面选第一份工作的话还是希望在Spider</p>
-<h2 id="后续"><a href="#后续" class="headerlink" title="后续"></a>后续</h2><p>这里只是流水账的记录下，作为一个爱折腾的人以及比较深究问题的人，百度运维无论是Noah还是业务运维各方面的东西我基本都熟悉，之后再不断写下我的体会和最佳实践</p>
+<h2 id="后续"><a class="header-anchor" href="#后续">¶</a>后续</h2>
+<p>这里只是流水账的记录下，作为一个爱折腾的人以及比较深究问题的人，百度运维无论是Noah还是业务运维各方面的东西我基本都熟悉，之后再不断写下我的体会和最佳实践</p>
 
           
         
@@ -752,606 +1627,14 @@
       
         
           
-            <p>如何更新octopress<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">git remote add octopress https://github.com/imathis/octopress.git</span><br><span class="line">git pull octopress master     # Get the latest Octopress</span><br><span class="line">bundle update                # Keep gems updated #我试了用bundle install 结果说Bundler could not find compatible versions for gem &quot;sass&quot;</span><br><span class="line">rake update_source            # update the template&apos;s source</span><br><span class="line">rake update_style             # update the template&apos;s style</span><br></pre></td></tr></table></figure></p>
-<p>对于在新机器上运行<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">curl -L https://get.rvm.io | bash -s stable --ruby</span><br><span class="line">cd some_dir &amp;&amp; rvm install 提示你安装的</span><br><span class="line">bundle install</span><br></pre></td></tr></table></figure></p>
-<p>日常注意保存<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git push　＃提交octopress相关改动</span><br><span class="line">git push origin source　#提交博客内容改动</span><br></pre></td></tr></table></figure></p>
+            <p>如何更新octopress</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">git remote add octopress https://github.com/imathis/octopress.git</span><br><span class="line">git pull octopress master     # Get the latest Octopress</span><br><span class="line">bundle update                # Keep gems updated #我试了用bundle install 结果说Bundler could not find compatible versions for gem &quot;sass&quot;</span><br><span class="line">rake update_source            # update the template&apos;s source</span><br><span class="line">rake update_style             # update the template&apos;s style</span><br></pre></td></tr></table></figure>
+<p>对于在新机器上运行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">curl -L https://get.rvm.io | bash -s stable --ruby</span><br><span class="line">cd some_dir &amp;&amp; rvm install 提示你安装的</span><br><span class="line">bundle install</span><br></pre></td></tr></table></figure>
+<p>日常注意保存</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git push　＃提交octopress相关改动</span><br><span class="line">git push origin source　#提交博客内容改动</span><br></pre></td></tr></table></figure>
 
           
-        
-      
-    </div>
-    
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2013/11/03/raspberry-baidu-wifi/" itemprop="url">
-                  raspberry使用小度wifi
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2013-11-03T20:04:00+08:00" content="2013-11-03">
-              2013-11-03
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2013/11/03/raspberry-baidu-wifi/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2013/11/03/raspberry-baidu-wifi/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>编译网卡驱动，需要内核代码<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">sudo rpi-update</span><br><span class="line">git clone --depth 1 https://github.com/raspberrypi/linux.git</span><br><span class="line">sudo ln -s linux /lib/modules/3.6.11+/build</span><br><span class="line">make mrproper</span><br><span class="line">gzip -dc /proc/config.gz &gt; .config</span><br><span class="line">make oldconfig</span><br><span class="line">make prepare</span><br><span class="line">make modules_prepare</span><br><span class="line">wget https://github.com/raspberrypi/firmware/raw/master/extra/Module.symvers</span><br></pre></td></tr></table></figure></p>
-<p>去驱动代码路径执行<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">make</span><br><span class="line">sudo make install </span><br><span class="line">You can stop this by editing the os/linux/rt_linux.c</span><br><span class="line"></span><br><span class="line">Change the line</span><br><span class="line">ULONG RTDebugLevel = RT_DEBUG_TRACE;</span><br><span class="line">to</span><br><span class="line">ULONG RTDebugLevel = RT_DEBUG_ERROR;</span><br><span class="line">allow-hotplug ra0</span><br><span class="line">iface ra0 inet dhcp</span><br><span class="line">    wpa-ssid meow</span><br><span class="line">        wpa-psk &quot;miaolegemide&quot;</span><br><span class="line">        #wpa-roam /etc/wpa_supplicant/wpa_supplicant.conf</span><br></pre></td></tr></table></figure></p>
-
-          
-        
-      
-    </div>
-    
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2013/09/27/how-to-install-pyzmq/" itemprop="url">
-                  手动安装pyzmq记录
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2013-09-27T10:27:00+08:00" content="2013-09-27">
-              2013-09-27
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2013/09/27/how-to-install-pyzmq/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2013/09/27/how-to-install-pyzmq/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>##Zeromq是什么<br>Zeromq是一个简单好用的传输层，像框架一样的一个 socket library,也是一个消息处理队列库,</p>
-<p>但是它并不是像rabbitmq一样是传统意义上的消息队列，而更像是一个现代化的网络通讯编程的接口。</p>
-<p>##如何安装zeromq<br>zeromq 比较简单，直接编译安装就好了<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">wget http://download.zeromq.org/zeromq-3.2.4.tar.gz</span><br><span class="line">./configure CC=$JUMBO_ROOT/opt/gcc46/gcc --prefix=$JUMBO_ROOT</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure></p>
-<p>##如何安装pyzmq</p>
-<p>默认情况下可以直接pip install pyzmq</p>
-<p>但是出了bundled/zeromq/src/ip.cpp: In function `zmq::fd_t zmq::open_socket(int, int, int)’:</p>
-<p>bundled/zeromq/src/ip.cpp:45: error: `SOCK_CLOEXEC’ was not declared in this scope</p>
-<p>error: command ‘gcc’ failed with exit status 1`’的错误</p>
-<p>所以想办法直接从源码安装<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/zeromq/pyzmq.git</span><br><span class="line"></span><br><span class="line">pip install cython #dev版需要用cython`</span><br><span class="line"></span><br><span class="line">python setup.py config --cc=JUMBO_ROOT/opt/gcc46/bin/gcc</span><br><span class="line"></span><br><span class="line">python setup.py  configure --zmq=$JUMBO_ROOT</span><br><span class="line"></span><br><span class="line">python setup.py install</span><br></pre></td></tr></table></figure></p>
-
-          
-        
-      
-    </div>
-    
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2013/07/07/use-wireshark-as-normal-user/" itemprop="url">
-                  以普通用户运行wireshark
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2013-07-07T12:13:00+08:00" content="2013-07-07">
-              2013-07-07
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/linux/" itemprop="url" rel="index">
-                    <span itemprop="name">linux</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2013/07/07/use-wireshark-as-normal-user/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2013/07/07/use-wireshark-as-normal-user/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>wireshark通过/usr/bin/dumpcap 来抓取数据包，这个文件的权限如下<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-rwxr-xr-- 1 root wireshark 84524 22.06.2013 23:56 /usr/bin/dumpcap</span><br></pre></td></tr></table></figure></p>
-<p>所以只需要将自己加入wireshark用户组就可以了</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo gpasswd -a username wireshark</span><br><span class="line">sudo usermod -a -G wireshark username</span><br></pre></td></tr></table></figure>
-<p>以上二选一即可，之后<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">getcap /usr/bin/dumpcap</span><br></pre></td></tr></table></figure></p>
-<p>输出的结果是cap_net_admin,cap_net_raw+eip 但是我的却不是，又查了下<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap</span><br></pre></td></tr></table></figure></p>
-<p>手动设置一下，再开启wireshark就OK了</p>
-
-          
-        
-      
-    </div>
-    
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2013/05/19/mldonkey-on-raspberry/" itemprop="url">
-                  在raspberry上使用mldonkey同时解决移动磁盘权限的问题
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2013-05-19T00:18:00+08:00" content="2013-05-19">
-              2013-05-19
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/rpi/" itemprop="url" rel="index">
-                    <span itemprop="name">rpi</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2013/05/19/mldonkey-on-raspberry/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2013/05/19/mldonkey-on-raspberry/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>在树莓派上用mldonkey本来应该是一件很简单的事情，但是用上外挂硬盘之后，就各种蛋疼的问题了。<br>首先安装<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install mldonkey</span><br></pre></td></tr></table></figure></p>
-<p>安装完成之后修改配置文件<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /var/lib/mldonkey/downloads.ini</span><br><span class="line">修改allowed_ips为0.0.0.0/0</span><br><span class="line">然后自己看情况修改下载目录</span><br><span class="line">shared_directories</span><br></pre></td></tr></table></figure></p>
-<p>正常这样访问raspberry pi 的4080端口就可以看到mldonkey的web界面，可以使用了。<br>但是我的移动硬盘的分区是fat32格式的，mldonkey就没有权限写文件了，这点可以通过<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ps -ef |grep mlnet</span><br><span class="line">sudo cat /etc/passwd</span><br></pre></td></tr></table></figure></p>
-<p>看出来,有一个uid为109,名为mldonkey的用户,然后mldonkey会以这个用户启动，WTF</p>
-<p>照着之前处理transmission时的经验，尝试将mldonkey的进程以root用户执行，仔细读一下/etc/init.d/mldonkey-server同时观察/var/log/mldonkey/mlnet.log的日志就可以发现，用户的指定在<br>/etc/default/mldonkey-server文件<br>所以更改下mldonkey的启动账户<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /etc/default/mldonkey</span><br><span class="line">将原来的3个字段改成下面这样</span><br><span class="line">MLDONKEY_DIR=/root/.mldonkey</span><br><span class="line">MLDONKEY_USER=root</span><br><span class="line">MLDONKEY_GROUP=root</span><br></pre></td></tr></table></figure></p>
-<p>然后把默认的配置文件移动到root帐号的home目录下<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo cp -r /var/lib/mldonkey /root/.mldonkey/</span><br></pre></td></tr></table></figure></p>
-<p>这样就可以正常使用啦<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo service mldonkey-server restart</span><br></pre></td></tr></table></figure></p>
-<p>如果你不需要外挂磁盘的话就不需要这样玩</p>
-
-          
-        
-      
-    </div>
-    
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2013/05/18/transmission-on-raspberry/" itemprop="url">
-                  在raspberry pi上使用transmission
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2013-05-18T20:07:00+08:00" content="2013-05-18">
-              2013-05-18
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/rpi/" itemprop="url" rel="index">
-                    <span itemprop="name">rpi</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2013/05/18/transmission-on-raspberry/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2013/05/18/transmission-on-raspberry/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>先安装transmission-daemon<br>    sudo apt-get install transmission-daemon</p>
-<p>默认会自己启动，为了改配置文件，需要先手动关闭服务</p>
-<pre><code>sudo service transmission-daemon stop
-</code></pre><p>然后更改在/etc/transmission-daemon/ 下的配置文件settings.json</p>
-<p>有几个地方需要改，下载目录download-dir改为你自己的下载目录,port-forwarding-enabled改为true,这个<br>是控制upnp的，开了端口才能有用（找了半天才找到这个问题，默认居然是关闭的），还有rpc-username，rpc-password<br>自己看着改一下，是登录web界面的用户名密码，另外rpc-whitelist-enabled改为false，不然外网无法访问web界面<br>另外在树莓派上使用外接硬盘或者U盘，作为下载目录的，碰到Permission denied 的时候，需要改下transmission的启动脚本</p>
-<pre><code>sudo vim /etc/init.d/transmission-daemon
-把
-USER=debian-transmission
-改为
-USER=root
-</code></pre><p>这也是个坑爹的地方，transmission原来的下载目录是/var/lib/transmission-daemon 这下面的目录的用户是debian-transmission的<br>(搞不懂干嘛弄个专门给transmission用的用户),但是又不方便在外挂硬盘上chown改变目录的用户权限，改不了，还有能改的话，别的软件又会出问题。</p>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2013/05/18/transmission-on-raspberry/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
         
       
     </div>
@@ -1423,7 +1706,7 @@ USER=root
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">22</span>
+              <span class="site-state-item-count">27</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1431,7 +1714,7 @@ USER=root
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">11</span>
+                <span class="site-state-item-count">13</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1440,7 +1723,7 @@ USER=root
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-count">8</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

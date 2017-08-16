@@ -258,6 +258,650 @@
             
               
                 
+                <a class="post-title-link" href="/2013/05/10/change-bt5-to-chinese/" itemprop="url">
+                  BT5R2汉化，装中文语言包
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2013-05-10T09:51:00+08:00" content="2013-05-10">
+              2013-05-10
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/linux/" itemprop="url" rel="index">
+                    <span itemprop="name">linux</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2013/05/10/change-bt5-to-chinese/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2013/05/10/change-bt5-to-chinese/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>Gentoo 被ko了，所以打算用bt5做主力系统，bt5装完是没有中文的，虽然可以显示中文。<br>
+首先去mirrors.163.com下载一下源地址列表，下载10.04的，因为bt5r2是基于10.04.03的<br>
+<a href="http://mirrors.163.com/.help/sources.list.lucid" target="_blank" rel="external">http://mirrors.163.com/.help/sources.list.lucid</a></p>
+<p>在终端中输入<br>
+gedit  /etc/apt/source.list<br>
+同时双击打开从163下载的，把163的复制进系统里面的，注意不要覆盖原有的。<br>
+apt-get install language-support-zh language-pack-zh<br>
+apt-get install language-selector<br>
+然后正常去切换成中文就行了</p>
+
+          
+        
+      
+    </div>
+    
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2013/01/11/my-git-config/" itemprop="url">
+                  我的一些git配置以及平时碰到的git相关问题
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2013-01-11T16:20:00+08:00" content="2013-01-11">
+              2013-01-11
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/git/" itemprop="url" rel="index">
+                    <span itemprop="name">git</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2013/01/11/my-git-config/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2013/01/11/my-git-config/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>我的~/.gitconfig文件</p>
+<script src="//gist.github.com/4508928.js"></script>
+<p>直接写配置文件就好了，命令党自重:-)<br>
+实现的功能：<br>
+git difftool 可以直接调用meld来显示diff<br>
+git diff 还是原来的那个，不过把默认把语法高亮加上了<br>
+git st 表示git status的意思，少敲几个字母</p>
+<p>一些日常遇到的git的问题</p>
+<p>merge相关<br>
+git merge lovejoy 最正常的merge lovejoy分支<br>
+git merge lovejoy hash数字 merge lovejoy分支该hash的那一次commit<br>
+git merge --abort 后悔了，回到merge前的状态<br>
+diff相关<br>
+我的配置中difftool很好的解决了diff2个分支的情况<br>
+git difftool lovejoy master<br>
+git difftool lovejoy master xxx.php 只看一个文件</p>
+<p>meld 需要安装pygtksourceview2来显示语法高亮,在设置中自行开启</p>
+
+          
+        
+      
+    </div>
+    
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2013/01/11/insert-sql-in-yii/" itemprop="url">
+                  Yii中比较好的insert语句
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2013-01-11T15:44:00+08:00" content="2013-01-11">
+              2013-01-11
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/Yii/" itemprop="url" rel="index">
+                    <span itemprop="name">Yii</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2013/01/11/insert-sql-in-yii/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2013/01/11/insert-sql-in-yii/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>虽然yii提供有插入数据库的功能，但性能上不确定，所以一般我还是自己抽象个出来</p>
+<pre><code>public static function insert($tblName,$props = array()){
+    $sql = 'insert into '.$tblName.'(';
+    $valuesSql = 'values(';
+    foreach($props as $field=&gt;$val){
+        $sql .= $field.',';
+        $tmp = addslashes($val);
+        $valuesSql .= &quot;'$tmp',&quot;;
+    }
+    $sql = rtrim($sql,',');
+    $sql .= ') ';
+    $valuesSql = rtrim($valuesSql,',');
+    $valuesSql .=')';
+    $sql .= $valuesSql;
+    return Yii::app()-&gt;db-&gt;createCommand($sql)-&gt;execute();
+}
+</code></pre>
+<p>上面的代码基本解决了常见的问题，这里用了addslashes来加转义符号,需要你先用<br>
+get_magic_quotes_gpc()函数来看下你自己服务器的配置，为1是用加上转义的操作。</p>
+
+          
+        
+      
+    </div>
+    
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2012/11/25/usescript-in-opera/" itemprop="url">
+                  usescript in opera
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2012-11-25T16:40:00+08:00" content="2012-11-25">
+              2012-11-25
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2012/11/25/usescript-in-opera/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2012/11/25/usescript-in-opera/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>opera的自定义性还是比较差的，userscripts上面的脚本的支持藏在一个小角落中</p>
+<img src="http://i.imgur.com/kOfA9.png">
+<p>勾选上支持javascript，然后点旁边的那个javascript选项</p>
+<img src="http://i.imgur.com/HmEaJ.png">
+<p>选择个文件夹</p>
+<p>然后把js文件丢到上面这个目录下就行了。</p>
+
+          
+        
+      
+    </div>
+    
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2012/11/24/official-plugin-tag-usage/" itemprop="url">
+                  octopress中常用的标记语法
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2012-11-24T22:42:00+08:00" content="2012-11-24">
+              2012-11-24
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/octopress/" itemprop="url" rel="index">
+                    <span itemprop="name">octopress</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2012/11/24/official-plugin-tag-usage/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2012/11/24/official-plugin-tag-usage/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>这里记录下octopress的图片，视频，代码的引用的方式,</p>
+<pre><code>{% img [class names] /path/to/image [width] [height] [title text [alt text]] %}
+</code></pre>
+<p>class names 可以填left或者right 图片的地址是以为source为/ ，所以source/img/a.png 应该<br>
+写成/img/a.png 不过不推荐把图片丢到代码库中，一般建议丢到有cdn的图床上，比如又拍云，<br>
+或者sae之类的地方，然后</p>
+<pre><code>{%img http://1.sinapp.com/1.png 某图片 浮动显示 %}
+</code></pre>
+<p>就这么简单</p>
+<p>添加代码的方式比较多<br>
+Code Block 的方式</p>
+<p>囧，不想写了，贴官网的URL</p>
+<p><a href="http://octopress.org/docs/plugins/include-code/" target="_blank" rel="external">http://octopress.org/docs/plugins/include-code/</a></p>
+<p><a href="http://octopress.org/docs/plugins/backtick-codeblock/" target="_blank" rel="external">http://octopress.org/docs/plugins/backtick-codeblock/</a></p>
+<p><a href="http://octopress.org/docs/plugins/gist-tag/" target="_blank" rel="external">http://octopress.org/docs/plugins/gist-tag/</a></p>
+<p>video的</p>
+<p><a href="http://octopress.org/docs/plugins/video-tag/" target="_blank" rel="external">http://octopress.org/docs/plugins/video-tag/</a></p>
+
+          
+        
+      
+    </div>
+    
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2012/11/24/ack-fast-code-seach-tool/" itemprop="url">
                   Ack更加快速的代码搜索工具
                 </a>
@@ -329,10 +973,12 @@
         
           <p>通常我们搜代码是这么玩的</p>
 <pre><code>grep -R xxx .
-</code></pre><p>速度慢不说，返回的结果还没有高亮,而ack的返回结果是这样的:</p>
+</code></pre>
+<p>速度慢不说，返回的结果还没有高亮,而ack的返回结果是这样的:</p>
 <img src="http://bcs.duapp.com/picstore/GitbGsLhsc.png">
 <p>既有高亮还有行号,ack其实是一个perl的脚本，代码如下</p>
-<p>各linux发行版应该都有这个软件包了，自行安装就行了，<br>代码有5000多行，不想看的请勿点击阅读全文</p>
+<p>各linux发行版应该都有这个软件包了，自行安装就行了，<br>
+代码有5000多行，不想看的请勿点击阅读全文</p>
           <div class="post-more-link text-center">
             <a class="btn" href="/2012/11/24/ack-fast-code-seach-tool/#more" rel="contents">
               阅读全文 &raquo;
@@ -455,7 +1101,11 @@
       
         
           
-            <p>synergy 是一个很好的多平台的共享鼠标键盘的开源工具，极大的满足了我在linux,mac,windows 上的对键盘<br>和鼠标共享的需求。其早期的版本在linux和mac上是没有图形化界面的，但是到最新的1.4.10已经有了很好的<br>统一的图形化界面了,但是我在archlinux的官方仓库中安装的这个版本却还是没有界面的，与此同时官方提供<br>的rpm和deb的安装包却是有界面的。虽然archlinux的aur中也有第三方的图形化的配置工具如quicksynergy和<br>qsynegy ,但是我试了下quicksynergy 后表示其界面真是弱的惨不忍睹.无奈只能手动配置了，记录如下</p>
+            <p>synergy 是一个很好的多平台的共享鼠标键盘的开源工具，极大的满足了我在linux,mac,windows 上的对键盘<br>
+和鼠标共享的需求。其早期的版本在linux和mac上是没有图形化界面的，但是到最新的1.4.10已经有了很好的<br>
+统一的图形化界面了,但是我在archlinux的官方仓库中安装的这个版本却还是没有界面的，与此同时官方提供<br>
+的rpm和deb的安装包却是有界面的。虽然archlinux的aur中也有第三方的图形化的配置工具如quicksynergy和<br>
+qsynegy ,但是我试了下quicksynergy 后表示其界面真是弱的惨不忍睹.无奈只能手动配置了，记录如下</p>
 <pre><code>section: screens
     linux-t0sv:
             halfDuplexCapsLock = false
@@ -490,7 +1140,11 @@ section: options
         switchCorners = none 
         switchCornerSize = 0
 end
-</code></pre><p>只要改一下上面的2个机器名成自己的就ok了，然后丢到~/.synergy.conf<br>然后用synergys -f 启动，可以看到比较详细的信息，或者rc.d start synergys<br>作为服务的方式启动，当然也可以设置成开机启动，在/etc/rc.conf 的DAEMONS=<br>(…synergys…) 加入就行了</p>
+</code></pre>
+<p>只要改一下上面的2个机器名成自己的就ok了，然后丢到~/.synergy.conf<br>
+然后用synergys -f 启动，可以看到比较详细的信息，或者rc.d start synergys<br>
+作为服务的方式启动，当然也可以设置成开机启动，在/etc/rc.conf 的DAEMONS=<br>
+(…synergys…) 加入就行了</p>
 
           
         
@@ -564,7 +1218,7 @@ end
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">22</span>
+              <span class="site-state-item-count">27</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -572,7 +1226,7 @@ end
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">11</span>
+                <span class="site-state-item-count">13</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -581,7 +1235,7 @@ end
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-count">8</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

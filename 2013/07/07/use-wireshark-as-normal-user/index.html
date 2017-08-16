@@ -80,22 +80,25 @@
 
 
 
-<meta name="description" content="wireshark通过/usr/bin/dumpcap 来抓取数据包，这个文件的权限如下1-rwxr-xr-- 1 root wireshark 84524 22.06.2013 23:56 /usr/bin/dumpcap
+<meta name="description" content="wireshark通过/usr/bin/dumpcap 来抓取数据包，这个文件的权限如下
+1-rwxr-xr-- 1 root wireshark 84524 22.06.2013 23:56 /usr/bin/dumpcap
 所以只需要将自己加入wireshark用户组就可以了
-12sudo gpasswd -a username wiresharksudo usermod -a -G wires">
+12sudo gpasswd -a username wiresharksudo usermod -a -G wire">
 <meta property="og:type" content="article">
 <meta property="og:title" content="以普通用户运行wireshark">
 <meta property="og:url" content="http://blog.spider.im/2013/07/07/use-wireshark-as-normal-user/index.html">
 <meta property="og:site_name" content="吐核|Core Dump">
-<meta property="og:description" content="wireshark通过/usr/bin/dumpcap 来抓取数据包，这个文件的权限如下1-rwxr-xr-- 1 root wireshark 84524 22.06.2013 23:56 /usr/bin/dumpcap
+<meta property="og:description" content="wireshark通过/usr/bin/dumpcap 来抓取数据包，这个文件的权限如下
+1-rwxr-xr-- 1 root wireshark 84524 22.06.2013 23:56 /usr/bin/dumpcap
 所以只需要将自己加入wireshark用户组就可以了
-12sudo gpasswd -a username wiresharksudo usermod -a -G wires">
+12sudo gpasswd -a username wiresharksudo usermod -a -G wire">
 <meta property="og:updated_time" content="2016-06-16T06:21:51.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="以普通用户运行wireshark">
-<meta name="twitter:description" content="wireshark通过/usr/bin/dumpcap 来抓取数据包，这个文件的权限如下1-rwxr-xr-- 1 root wireshark 84524 22.06.2013 23:56 /usr/bin/dumpcap
+<meta name="twitter:description" content="wireshark通过/usr/bin/dumpcap 来抓取数据包，这个文件的权限如下
+1-rwxr-xr-- 1 root wireshark 84524 22.06.2013 23:56 /usr/bin/dumpcap
 所以只需要将自己加入wireshark用户组就可以了
-12sudo gpasswd -a username wiresharksudo usermod -a -G wires">
+12sudo gpasswd -a username wiresharksudo usermod -a -G wire">
 
 
 
@@ -333,11 +336,14 @@
       
 
       
-        <p>wireshark通过/usr/bin/dumpcap 来抓取数据包，这个文件的权限如下<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-rwxr-xr-- 1 root wireshark 84524 22.06.2013 23:56 /usr/bin/dumpcap</span><br></pre></td></tr></table></figure></p>
+        <p>wireshark通过/usr/bin/dumpcap 来抓取数据包，这个文件的权限如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-rwxr-xr-- 1 root wireshark 84524 22.06.2013 23:56 /usr/bin/dumpcap</span><br></pre></td></tr></table></figure>
 <p>所以只需要将自己加入wireshark用户组就可以了</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo gpasswd -a username wireshark</span><br><span class="line">sudo usermod -a -G wireshark username</span><br></pre></td></tr></table></figure>
-<p>以上二选一即可，之后<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">getcap /usr/bin/dumpcap</span><br></pre></td></tr></table></figure></p>
-<p>输出的结果是cap_net_admin,cap_net_raw+eip 但是我的却不是，又查了下<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap</span><br></pre></td></tr></table></figure></p>
+<p>以上二选一即可，之后</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">getcap /usr/bin/dumpcap</span><br></pre></td></tr></table></figure>
+<p>输出的结果是cap_net_admin,cap_net_raw+eip 但是我的却不是，又查了下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap</span><br></pre></td></tr></table></figure>
 <p>手动设置一下，再开启wireshark就OK了</p>
 
       
@@ -447,7 +453,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">22</span>
+              <span class="site-state-item-count">27</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -455,7 +461,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">11</span>
+                <span class="site-state-item-count">13</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -464,7 +470,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-count">8</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

@@ -80,16 +80,19 @@
 
 
 
-<meta name="description" content="在看Yii2代码的时候，有这么一段1234567891011if (isset(static::$classMap[$className])) &amp;#123;     $classFile = static::$classMap[$className];     if ($classFile[0] === &amp;apos;@&amp;apos;) &amp;#123;         $classFile = stat">
+<meta name="description" content="在看Yii2代码的时候，有这么一段
+1234567891011if (isset(static::$classMap[$className])) &amp;#123;     $classFile = static::$classMap[$className];     if ($classFile[0] === &amp;apos;@&amp;apos;) &amp;#123;         $classFile = sta">
 <meta property="og:type" content="article">
 <meta property="og:title" content="php后期静态绑定">
 <meta property="og:url" content="http://blog.spider.im/2017/02/22/php-static-binding/index.html">
 <meta property="og:site_name" content="吐核|Core Dump">
-<meta property="og:description" content="在看Yii2代码的时候，有这么一段1234567891011if (isset(static::$classMap[$className])) &amp;#123;     $classFile = static::$classMap[$className];     if ($classFile[0] === &amp;apos;@&amp;apos;) &amp;#123;         $classFile = stat">
+<meta property="og:description" content="在看Yii2代码的时候，有这么一段
+1234567891011if (isset(static::$classMap[$className])) &amp;#123;     $classFile = static::$classMap[$className];     if ($classFile[0] === &amp;apos;@&amp;apos;) &amp;#123;         $classFile = sta">
 <meta property="og:updated_time" content="2017-02-22T06:42:16.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="php后期静态绑定">
-<meta name="twitter:description" content="在看Yii2代码的时候，有这么一段1234567891011if (isset(static::$classMap[$className])) &amp;#123;     $classFile = static::$classMap[$className];     if ($classFile[0] === &amp;apos;@&amp;apos;) &amp;#123;         $classFile = stat">
+<meta name="twitter:description" content="在看Yii2代码的时候，有这么一段
+1234567891011if (isset(static::$classMap[$className])) &amp;#123;     $classFile = static::$classMap[$className];     if ($classFile[0] === &amp;apos;@&amp;apos;) &amp;#123;         $classFile = sta">
 
 
 
@@ -308,14 +311,18 @@
       
 
       
-        <p>在看Yii2代码的时候，有这么一段<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">if (isset(static::$classMap[$className])) &#123;</span><br><span class="line">     $classFile = static::$classMap[$className];</span><br><span class="line">     if ($classFile[0] === &apos;@&apos;) &#123;</span><br><span class="line">         $classFile = static::getAlias($classFile);</span><br><span class="line">     &#125;</span><br><span class="line"> &#125; elseif (strpos($className, &apos;\\&apos;) !== false) &#123;</span><br><span class="line">     $classFile = static::getAlias(&apos;@&apos; . str_replace(&apos;\\&apos;, &apos;/&apos;, $className) . &apos;.php&apos;, false);</span><br><span class="line">     if ($classFile === false || !is_file($classFile)) &#123;</span><br><span class="line">         return;</span><br><span class="line">     &#125;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure></p>
-<p>当时有点困惑，为啥用了个static::$classMap[$className],而不是self::$classMap[$className],细看了下self和static的区别<br>大体可以理解为static定义的function 如果子类又重新实现了的话，会用子类的结果（实际运行的时候的），而self永远是最开始定义的父类的结果</p>
+        <p>在看Yii2代码的时候，有这么一段</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">if (isset(static::$classMap[$className])) &#123;</span><br><span class="line">     $classFile = static::$classMap[$className];</span><br><span class="line">     if ($classFile[0] === &apos;@&apos;) &#123;</span><br><span class="line">         $classFile = static::getAlias($classFile);</span><br><span class="line">     &#125;</span><br><span class="line"> &#125; elseif (strpos($className, &apos;\\&apos;) !== false) &#123;</span><br><span class="line">     $classFile = static::getAlias(&apos;@&apos; . str_replace(&apos;\\&apos;, &apos;/&apos;, $className) . &apos;.php&apos;, false);</span><br><span class="line">     if ($classFile === false || !is_file($classFile)) &#123;</span><br><span class="line">         return;</span><br><span class="line">     &#125;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>当时有点困惑，为啥用了个static::$classMap[$className],而不是self::$classMap[$className],细看了下self和static的区别<br>
+大体可以理解为static定义的function 如果子类又重新实现了的话，会用子类的结果（实际运行的时候的），而self永远是最开始定义的父类的结果</p>
 <p>与self类似的还有 <strong>CLASS</strong> 和get_class() 只会是最开始定义的结果,不过注意get_class($this)会是实际运行时的类的结果</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">class A &#123;</span><br><span class="line">    static $staticString = &quot;A static string&quot;;</span><br><span class="line">    public static function staticFunction() &#123;</span><br><span class="line">        echo self::$staticString;</span><br><span class="line">    &#125;</span><br><span class="line">    public static function foo() &#123;</span><br><span class="line">        echo &quot;Afoo:&quot;.__CLASS__.&quot;\n&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    public static function selfFoo() &#123;</span><br><span class="line">        echo &quot;called class:&quot;.get_called_class().&quot;\n&quot;;</span><br><span class="line">        echo &quot;class:&quot;.get_class().&quot;\n&quot;;</span><br><span class="line">        echo self::foo();</span><br><span class="line">    &#125;</span><br><span class="line">    public static function staticFoo() &#123;</span><br><span class="line">        echo &quot;called class:&quot;.get_called_class().&quot;\n&quot;;</span><br><span class="line">        echo &quot;class:&quot;.get_class().&quot;\n&quot;;</span><br><span class="line">        echo static::foo();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class B extends A &#123;</span><br><span class="line">    static $staticString = &quot;B static string&quot;;</span><br><span class="line">    public static function foo() &#123;</span><br><span class="line">        echo &quot;Bfoo:&quot;.__CLASS__.&quot;\n&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    public static function parent() &#123;</span><br><span class="line">        parent::selfFoo();</span><br><span class="line">        parent::staticFoo();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class C extends B &#123;</span><br><span class="line">    public static function foo() &#123;</span><br><span class="line">        echo __CLASS__;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line">B::selfFoo();</span><br><span class="line">/*</span><br><span class="line">输出结果</span><br><span class="line">called class:B</span><br><span class="line">class:A</span><br><span class="line">Afoo:A</span><br><span class="line">*/</span><br><span class="line">B::staticFoo();</span><br><span class="line">C::parent();</span><br></pre></td></tr></table></figure>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">&lt;?php</span><br><span class="line"></span><br><span class="line">class base_class</span><br><span class="line">&#123;</span><br><span class="line">    function say_a()</span><br><span class="line">    &#123;</span><br><span class="line">        echo &quot;&apos;a&apos; - said the &quot; . __CLASS__ . &quot;&lt;br/&gt;&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function say_b()</span><br><span class="line">    &#123;</span><br><span class="line">        echo &quot;&apos;b&apos; - said the &quot; . get_class($this) . &quot;&lt;br/&gt;&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class derived_class extends base_class</span><br><span class="line">&#123;</span><br><span class="line">    function say_a()</span><br><span class="line">    &#123;</span><br><span class="line">        parent::say_a();</span><br><span class="line">        echo &quot;&apos;a&apos; - said the &quot; . __CLASS__ . &quot;&lt;br/&gt;&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function say_b()</span><br><span class="line">    &#123;</span><br><span class="line">        parent::say_b();</span><br><span class="line">        echo &quot;&apos;b&apos; - said the &quot; . get_class($this) . &quot;&lt;br/&gt;&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">$obj_b = new derived_class();</span><br><span class="line"></span><br><span class="line">$obj_b-&gt;say_a();</span><br><span class="line">echo &quot;&lt;br/&gt;&quot;;</span><br><span class="line">$obj_b-&gt;say_b();</span><br><span class="line"></span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
 <p>The output should look roughly like this:</p>
-<p>‘a’ - said the base_class<br>‘a’ - said the derived_class</p>
-<p>‘b’ - said the derived_class<br>‘b’ - said the derived_class</p>
+<p>‘a’ - said the base_class<br>
+’a’ - said the derived_class</p>
+<p>‘b’ - said the derived_class<br>
+’b’ - said the derived_class</p>
 
       
     </div>
@@ -345,8 +352,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/06/17/logid/" rel="next" title="唯一请求ID">
-                <i class="fa fa-chevron-left"></i> 唯一请求ID
+              <a href="/2016/10/15/api-security/" rel="next" title="API接口签名验证方案">
+                <i class="fa fa-chevron-left"></i> API接口签名验证方案
               </a>
             
           </div>
@@ -426,7 +433,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">22</span>
+              <span class="site-state-item-count">27</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -434,7 +441,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">11</span>
+                <span class="site-state-item-count">13</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -443,7 +450,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-count">8</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

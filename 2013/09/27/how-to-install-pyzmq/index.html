@@ -80,22 +80,31 @@
 
 
 
-<meta name="description" content="##Zeromq是什么Zeromq是一个简单好用的传输层，像框架一样的一个 socket library,也是一个消息处理队列库,
+<meta name="description" content="##Zeromq是什么
+Zeromq是一个简单好用的传输层，像框架一样的一个 socket library,也是一个消息处理队列库,
 但是它并不是像rabbitmq一样是传统意义上的消息队列，而更像是一个现代化的网络通讯编程的接口。
-##如何安装zeromqzeromq 比较简单，直接编译安装就好了1234wget http://download.zeromq.org/zeromq-3.2.4.ta">
+##如何安装zeromq
+zeromq 比较简单，直接编译安装就好了
+1234wget http://download.zeromq.org/zeromq-3.2.4">
 <meta property="og:type" content="article">
 <meta property="og:title" content="手动安装pyzmq记录">
 <meta property="og:url" content="http://blog.spider.im/2013/09/27/how-to-install-pyzmq/index.html">
 <meta property="og:site_name" content="吐核|Core Dump">
-<meta property="og:description" content="##Zeromq是什么Zeromq是一个简单好用的传输层，像框架一样的一个 socket library,也是一个消息处理队列库,
+<meta property="og:description" content="##Zeromq是什么
+Zeromq是一个简单好用的传输层，像框架一样的一个 socket library,也是一个消息处理队列库,
 但是它并不是像rabbitmq一样是传统意义上的消息队列，而更像是一个现代化的网络通讯编程的接口。
-##如何安装zeromqzeromq 比较简单，直接编译安装就好了1234wget http://download.zeromq.org/zeromq-3.2.4.ta">
+##如何安装zeromq
+zeromq 比较简单，直接编译安装就好了
+1234wget http://download.zeromq.org/zeromq-3.2.4">
 <meta property="og:updated_time" content="2016-06-16T06:21:51.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="手动安装pyzmq记录">
-<meta name="twitter:description" content="##Zeromq是什么Zeromq是一个简单好用的传输层，像框架一样的一个 socket library,也是一个消息处理队列库,
+<meta name="twitter:description" content="##Zeromq是什么
+Zeromq是一个简单好用的传输层，像框架一样的一个 socket library,也是一个消息处理队列库,
 但是它并不是像rabbitmq一样是传统意义上的消息队列，而更像是一个现代化的网络通讯编程的接口。
-##如何安装zeromqzeromq 比较简单，直接编译安装就好了1234wget http://download.zeromq.org/zeromq-3.2.4.ta">
+##如何安装zeromq
+zeromq 比较简单，直接编译安装就好了
+1234wget http://download.zeromq.org/zeromq-3.2.4">
 
 
 
@@ -314,15 +323,19 @@
       
 
       
-        <p>##Zeromq是什么<br>Zeromq是一个简单好用的传输层，像框架一样的一个 socket library,也是一个消息处理队列库,</p>
+        <p>##Zeromq是什么<br>
+Zeromq是一个简单好用的传输层，像框架一样的一个 socket library,也是一个消息处理队列库,</p>
 <p>但是它并不是像rabbitmq一样是传统意义上的消息队列，而更像是一个现代化的网络通讯编程的接口。</p>
-<p>##如何安装zeromq<br>zeromq 比较简单，直接编译安装就好了<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">wget http://download.zeromq.org/zeromq-3.2.4.tar.gz</span><br><span class="line">./configure CC=$JUMBO_ROOT/opt/gcc46/gcc --prefix=$JUMBO_ROOT</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure></p>
+<p>##如何安装zeromq<br>
+zeromq 比较简单，直接编译安装就好了</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">wget http://download.zeromq.org/zeromq-3.2.4.tar.gz</span><br><span class="line">./configure CC=$JUMBO_ROOT/opt/gcc46/gcc --prefix=$JUMBO_ROOT</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
 <p>##如何安装pyzmq</p>
 <p>默认情况下可以直接pip install pyzmq</p>
 <p>但是出了bundled/zeromq/src/ip.cpp: In function `zmq::fd_t zmq::open_socket(int, int, int)’:</p>
 <p>bundled/zeromq/src/ip.cpp:45: error: `SOCK_CLOEXEC’ was not declared in this scope</p>
-<p>error: command ‘gcc’ failed with exit status 1`’的错误</p>
-<p>所以想办法直接从源码安装<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/zeromq/pyzmq.git</span><br><span class="line"></span><br><span class="line">pip install cython #dev版需要用cython`</span><br><span class="line"></span><br><span class="line">python setup.py config --cc=JUMBO_ROOT/opt/gcc46/bin/gcc</span><br><span class="line"></span><br><span class="line">python setup.py  configure --zmq=$JUMBO_ROOT</span><br><span class="line"></span><br><span class="line">python setup.py install</span><br></pre></td></tr></table></figure></p>
+<p>error: command ‘gcc’ failed with exit status 1`'的错误</p>
+<p>所以想办法直接从源码安装</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/zeromq/pyzmq.git</span><br><span class="line"></span><br><span class="line">pip install cython #dev版需要用cython`</span><br><span class="line"></span><br><span class="line">python setup.py config --cc=JUMBO_ROOT/opt/gcc46/bin/gcc</span><br><span class="line"></span><br><span class="line">python setup.py  configure --zmq=$JUMBO_ROOT</span><br><span class="line"></span><br><span class="line">python setup.py install</span><br></pre></td></tr></table></figure>
 
       
     </div>
@@ -431,7 +444,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">22</span>
+              <span class="site-state-item-count">27</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -439,7 +452,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">11</span>
+                <span class="site-state-item-count">13</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -448,7 +461,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-count">8</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

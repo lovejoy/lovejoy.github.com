@@ -80,16 +80,25 @@
 
 
 
-<meta name="description" content="synergy 是一个很好的多平台的共享鼠标键盘的开源工具，极大的满足了我在linux,mac,windows 上的对键盘和鼠标共享的需求。其早期的版本在linux和mac上是没有图形化界面的，但是到最新的1.4.10已经有了很好的统一的图形化界面了,但是我在archlinux的官方仓库中安装的这个版本却还是没有界面的，与此同时官方提供的rpm和deb的安装包却是有界面的。虽然archlinux的">
+<meta name="description" content="synergy 是一个很好的多平台的共享鼠标键盘的开源工具，极大的满足了我在linux,mac,windows 上的对键盘
+和鼠标共享的需求。其早期的版本在linux和mac上是没有图形化界面的，但是到最新的1.4.10已经有了很好的
+统一的图形化界面了,但是我在archlinux的官方仓库中安装的这个版本却还是没有界面的，与此同时官方提供
+的rpm和deb的安装包却是有界面的。虽然archlin">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Install synergy on Archlinux">
 <meta property="og:url" content="http://blog.spider.im/2012/11/24/Install-Synergy-on-Archlinux/index.html">
 <meta property="og:site_name" content="吐核|Core Dump">
-<meta property="og:description" content="synergy 是一个很好的多平台的共享鼠标键盘的开源工具，极大的满足了我在linux,mac,windows 上的对键盘和鼠标共享的需求。其早期的版本在linux和mac上是没有图形化界面的，但是到最新的1.4.10已经有了很好的统一的图形化界面了,但是我在archlinux的官方仓库中安装的这个版本却还是没有界面的，与此同时官方提供的rpm和deb的安装包却是有界面的。虽然archlinux的">
+<meta property="og:description" content="synergy 是一个很好的多平台的共享鼠标键盘的开源工具，极大的满足了我在linux,mac,windows 上的对键盘
+和鼠标共享的需求。其早期的版本在linux和mac上是没有图形化界面的，但是到最新的1.4.10已经有了很好的
+统一的图形化界面了,但是我在archlinux的官方仓库中安装的这个版本却还是没有界面的，与此同时官方提供
+的rpm和deb的安装包却是有界面的。虽然archlin">
 <meta property="og:updated_time" content="2016-06-16T06:21:51.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Install synergy on Archlinux">
-<meta name="twitter:description" content="synergy 是一个很好的多平台的共享鼠标键盘的开源工具，极大的满足了我在linux,mac,windows 上的对键盘和鼠标共享的需求。其早期的版本在linux和mac上是没有图形化界面的，但是到最新的1.4.10已经有了很好的统一的图形化界面了,但是我在archlinux的官方仓库中安装的这个版本却还是没有界面的，与此同时官方提供的rpm和deb的安装包却是有界面的。虽然archlinux的">
+<meta name="twitter:description" content="synergy 是一个很好的多平台的共享鼠标键盘的开源工具，极大的满足了我在linux,mac,windows 上的对键盘
+和鼠标共享的需求。其早期的版本在linux和mac上是没有图形化界面的，但是到最新的1.4.10已经有了很好的
+统一的图形化界面了,但是我在archlinux的官方仓库中安装的这个版本却还是没有界面的，与此同时官方提供
+的rpm和deb的安装包却是有界面的。虽然archlin">
 
 
 
@@ -327,7 +336,11 @@
       
 
       
-        <p>synergy 是一个很好的多平台的共享鼠标键盘的开源工具，极大的满足了我在linux,mac,windows 上的对键盘<br>和鼠标共享的需求。其早期的版本在linux和mac上是没有图形化界面的，但是到最新的1.4.10已经有了很好的<br>统一的图形化界面了,但是我在archlinux的官方仓库中安装的这个版本却还是没有界面的，与此同时官方提供<br>的rpm和deb的安装包却是有界面的。虽然archlinux的aur中也有第三方的图形化的配置工具如quicksynergy和<br>qsynegy ,但是我试了下quicksynergy 后表示其界面真是弱的惨不忍睹.无奈只能手动配置了，记录如下</p>
+        <p>synergy 是一个很好的多平台的共享鼠标键盘的开源工具，极大的满足了我在linux,mac,windows 上的对键盘<br>
+和鼠标共享的需求。其早期的版本在linux和mac上是没有图形化界面的，但是到最新的1.4.10已经有了很好的<br>
+统一的图形化界面了,但是我在archlinux的官方仓库中安装的这个版本却还是没有界面的，与此同时官方提供<br>
+的rpm和deb的安装包却是有界面的。虽然archlinux的aur中也有第三方的图形化的配置工具如quicksynergy和<br>
+qsynegy ,但是我试了下quicksynergy 后表示其界面真是弱的惨不忍睹.无奈只能手动配置了，记录如下</p>
 <pre><code>section: screens
     linux-t0sv:
             halfDuplexCapsLock = false
@@ -362,7 +375,11 @@ section: options
         switchCorners = none 
         switchCornerSize = 0
 end
-</code></pre><p>只要改一下上面的2个机器名成自己的就ok了，然后丢到~/.synergy.conf<br>然后用synergys -f 启动，可以看到比较详细的信息，或者rc.d start synergys<br>作为服务的方式启动，当然也可以设置成开机启动，在/etc/rc.conf 的DAEMONS=<br>(…synergys…) 加入就行了</p>
+</code></pre>
+<p>只要改一下上面的2个机器名成自己的就ok了，然后丢到~/.synergy.conf<br>
+然后用synergys -f 启动，可以看到比较详细的信息，或者rc.d start synergys<br>
+作为服务的方式启动，当然也可以设置成开机启动，在/etc/rc.conf 的DAEMONS=<br>
+(…synergys…) 加入就行了</p>
 
       
     </div>
@@ -473,7 +490,7 @@ end
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">22</span>
+              <span class="site-state-item-count">27</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -481,7 +498,7 @@ end
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">11</span>
+                <span class="site-state-item-count">13</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -490,7 +507,7 @@ end
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-count">8</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
