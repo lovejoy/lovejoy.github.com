@@ -258,6 +258,112 @@
             
               
                 
+                <a class="post-title-link" href="/2014/08/30/update-octopress/" itemprop="url">
+                  更新 octopress
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2014-08-30T15:28:25+08:00" content="2014-08-30">
+              2014-08-30
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2014/08/30/update-octopress/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2014/08/30/update-octopress/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>如何更新octopress</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">git remote add octopress https://github.com/imathis/octopress.git</span><br><span class="line">git pull octopress master     # Get the latest Octopress</span><br><span class="line">bundle update                # Keep gems updated #我试了用bundle install 结果说Bundler could not find compatible versions for gem &quot;sass&quot;</span><br><span class="line">rake update_source            # update the template&apos;s source</span><br><span class="line">rake update_style             # update the template&apos;s style</span><br></pre></td></tr></table></figure>
+<p>对于在新机器上运行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">curl -L https://get.rvm.io | bash -s stable --ruby</span><br><span class="line">cd some_dir &amp;&amp; rvm install 提示你安装的</span><br><span class="line">bundle install</span><br></pre></td></tr></table></figure>
+<p>日常注意保存</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git push　＃提交octopress相关改动</span><br><span class="line">git push origin source　#提交博客内容改动</span><br></pre></td></tr></table></figure>
+
+          
+        
+      
+    </div>
+    
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2013/11/03/raspberry-baidu-wifi/" itemprop="url">
                   raspberry使用小度wifi
                 </a>
@@ -1415,129 +1521,6 @@ C 语言中，指针和整数之间的转换经常用到（多用于需要精确
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2013/05/10/no-install-command-in-chakra/" itemprop="url">
-                  chakra或者arch中没有/bin/install的问题
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2013-05-10T10:25:00+08:00" content="2013-05-10">
-              2013-05-10
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/linux-chakra/" itemprop="url" rel="index">
-                    <span itemprop="name">linux chakra</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2013/05/10/no-install-command-in-chakra/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2013/05/10/no-install-command-in-chakra/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>刚在chakra中装meraspolit 提示 make: /bin/install：命令未找到 不知道arch中有没有这个问题<br>
-这个install 命令没有就搞笑了。这个是coreutils中的东西怎么可能没有？which install 了一下，<br>
-好嘛在/usr/bin/install 中ruby装东西的时候掉的是/bin/install 就不能直接调install吗,<br>
-建个软链接过去 sudo ln -s /usr/bin/install /bin/install 再用ccr装的时候就搞定了</p>
-
-          
-        
-      
-    </div>
-    
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1583,7 +1566,7 @@ C 语言中，指针和整数之间的转换经常用到（多用于需要精确
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">27</span>
+              <span class="site-state-item-count">28</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
