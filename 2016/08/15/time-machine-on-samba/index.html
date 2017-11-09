@@ -90,7 +90,7 @@
 <meta property="og:description" content="Mac的TimeMachine备份只支持AFP协议，所以默认情况下是没有办法备份在windows共享里面的，不过可以曲线救国下，通过备份在磁盘镜像稀疏磁盘的方式，备份在windows上
 创建磁盘镜像
 这里要创建的不是常见的DMG镜像，而是稀疏捆绑磁盘镜像[1]，目的是稀疏捆绑磁盘镜像是随着使用占用的空间而逐渐增大，不用一下子就把空间分好了，另外后期也可以动态调整大小，另外还有个分不清的叫稀疏磁盘镜">
-<meta property="og:updated_time" content="2017-08-16T14:29:26.000Z">
+<meta property="og:updated_time" content="2017-11-09T10:46:53.616Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="用Samba把TimeMachine备份在windows服务器上">
 <meta name="twitter:description" content="Mac的TimeMachine备份只支持AFP协议，所以默认情况下是没有办法备份在windows共享里面的，不过可以曲线救国下，通过备份在磁盘镜像稀疏磁盘的方式，备份在windows上
@@ -349,7 +349,7 @@
 <ul>
 <li>命令行方式</li>
 </ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd ~</span><br><span class="line">hdiutil create -size 600g -type SPARSEBUNDLE -fs &quot;HFS+J&quot; TimeMachine.sparsebundle</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> ~</span><br><span class="line">hdiutil create -size 600g -type SPARSEBUNDLE -fs <span class="string">"HFS+J"</span> TimeMachine.sparsebundle</span><br></pre></td></tr></table></figure>
 <ul>
 <li>通过磁盘工具</li>
 </ul>
@@ -363,7 +363,7 @@
 <h1>设置成开机自动连接</h1>
 <p>通过applescript的方式实现：<br>
 打开脚本编辑器(spotlight 搜applescript)</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">try</span><br><span class="line">	mount volume &quot;smb://readyshare/TimeMachine&quot;</span><br><span class="line">end try</span><br><span class="line"></span><br><span class="line">do shell script &quot;hdiutil attach -mountpoint /Volumes/TimeMachine/ /Volumes/TimeMachine/TimeMachine.sparsebundle&quot;</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">try</span><br><span class="line">	mount volume <span class="string">"smb://readyshare/TimeMachine"</span></span><br><span class="line">end try</span><br><span class="line"></span><br><span class="line"><span class="keyword">do</span> shell script <span class="string">"hdiutil attach -mountpoint /Volumes/TimeMachine/ /Volumes/TimeMachine/TimeMachine.sparsebundle"</span></span><br></pre></td></tr></table></figure>
 <h1>不足之处</h1>
 <p>这种方式不能使用可以恢复到任意时刻的<a href="https://support.apple.com/zh-cn/HT201314" target="_blank" rel="external">OSX的恢复功能</a>，只能先重装个系统，然后mount上镜像，再恢复，当然可以把镜像拷贝到移动硬盘上，插到mac上这样应该也可以使用OSX的恢复功能</p>
 <hr class="footnotes-sep">

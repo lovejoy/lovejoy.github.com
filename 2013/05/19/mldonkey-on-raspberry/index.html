@@ -96,7 +96,7 @@
 安装完成之后修改配置文件
 1234sudo vim /var/lib/mldonkey/downloads.ini修改allowed_ips为0.0.0.0/0然后自己看情况修改下载目录shared_directories
 正常">
-<meta property="og:updated_time" content="2017-08-16T14:29:26.000Z">
+<meta property="og:updated_time" content="2017-11-09T10:49:21.584Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="在raspberry上使用mldonkey同时解决移动磁盘权限的问题">
 <meta name="twitter:description" content="在树莓派上用mldonkey本来应该是一件很简单的事情，但是用上外挂硬盘之后，就各种蛋疼的问题了。
@@ -353,21 +353,19 @@
       
         <p>在树莓派上用mldonkey本来应该是一件很简单的事情，但是用上外挂硬盘之后，就各种蛋疼的问题了。<br>
 首先安装</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install mldonkey</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install mldonkey</span><br></pre></td></tr></table></figure>
 <p>安装完成之后修改配置文件</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /var/lib/mldonkey/downloads.ini</span><br><span class="line">修改allowed_ips为0.0.0.0/0</span><br><span class="line">然后自己看情况修改下载目录</span><br><span class="line">shared_directories</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /var/lib/mldonkey/downloads.ini</span><br><span class="line">修改allowed_ips为0.0.0.0/0</span><br><span class="line">然后自己看情况修改下载目录</span><br><span class="line">shared_directories</span><br></pre></td></tr></table></figure>
 <p>正常这样访问raspberry pi 的4080端口就可以看到mldonkey的web界面，可以使用了。<br>
 但是我的移动硬盘的分区是fat32格式的，mldonkey就没有权限写文件了，这点可以通过</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ps -ef |grep mlnet</span><br><span class="line">sudo cat /etc/passwd</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ps -ef |grep mlnet</span><br><span class="line">sudo cat /etc/passwd</span><br></pre></td></tr></table></figure>
 <p>看出来,有一个uid为109,名为mldonkey的用户,然后mldonkey会以这个用户启动，WTF</p>
 <p>照着之前处理transmission时的经验，尝试将mldonkey的进程以root用户执行，仔细读一下/etc/init.d/mldonkey-server同时观察/var/log/mldonkey/mlnet.log的日志就可以发现，用户的指定在<br>
 /etc/default/mldonkey-server文件<br>
 所以更改下mldonkey的启动账户</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /etc/default/mldonkey</span><br><span class="line">将原来的3个字段改成下面这样</span><br><span class="line">MLDONKEY_DIR=/root/.mldonkey</span><br><span class="line">MLDONKEY_USER=root</span><br><span class="line">MLDONKEY_GROUP=root</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /etc/default/mldonkey</span><br><span class="line">将原来的3个字段改成下面这样</span><br><span class="line">MLDONKEY_DIR=/root/.mldonkey</span><br><span class="line">MLDONKEY_USER=root</span><br><span class="line">MLDONKEY_GROUP=root</span><br></pre></td></tr></table></figure>
 <p>然后把默认的配置文件移动到root帐号的home目录下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo cp -r /var/lib/mldonkey /root/.mldonkey/</span><br></pre></td></tr></table></figure>
-<p>这样就可以正常使用啦</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo service mldonkey-server restart</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">sudo cp -r /var/lib/mldonkey /root/.mldonkey/</span><br><span class="line">``` </span><br><span class="line">这样就可以正常使用啦</span><br><span class="line">``` bash</span><br><span class="line">sudo service mldonkey-server restart</span><br></pre></td></tr></table></figure>
 <p>如果你不需要外挂磁盘的话就不需要这样玩</p>
 
       
