@@ -1,0 +1,692 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.lug.ustc.edu.cn/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="由于centos7 默认的3.10内核在cgroup使用cpu limit并且压力比较大的时候有kernal panic的 bug , 看了下是4.2某个版本后修复了这个问题，所以干脆我们升级了系统的内核到mainline版本4.13, 带来的问题是需要升kubelet到1.7（我们用的是1.7.8这个版本），注意升级kubelet最好机器上没有容器的情况下升级如果可能直接重装就好，人工升级的话需">
+<meta property="og:type" content="article">
+<meta property="og:title" content="升级kubelet到1.7后PostStartHook的错误消息丢失问题追查">
+<meta property="og:url" content="http://blog.spider.im/2017/11/08/lack-post-start-hook-error-message/index.html">
+<meta property="og:site_name" content="吐核|Core Dump">
+<meta property="og:description" content="由于centos7 默认的3.10内核在cgroup使用cpu limit并且压力比较大的时候有kernal panic的 bug , 看了下是4.2某个版本后修复了这个问题，所以干脆我们升级了系统的内核到mainline版本4.13, 带来的问题是需要升kubelet到1.7（我们用的是1.7.8这个版本），注意升级kubelet最好机器上没有容器的情况下升级如果可能直接重装就好，人工升级的话需">
+<meta property="og:updated_time" content="2017-11-09T10:35:40.452Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="升级kubelet到1.7后PostStartHook的错误消息丢失问题追查">
+<meta name="twitter:description" content="由于centos7 默认的3.10内核在cgroup使用cpu limit并且压力比较大的时候有kernal panic的 bug , 看了下是4.2某个版本后修复了这个问题，所以干脆我们升级了系统的内核到mainline版本4.13, 带来的问题是需要升kubelet到1.7（我们用的是1.7.8这个版本），注意升级kubelet最好机器上没有容器的情况下升级如果可能直接重装就好，人工升级的话需">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"right","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> 升级kubelet到1.7后PostStartHook的错误消息丢失问题追查 | 吐核|Core Dump </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-36548399-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//tajs.qq.com/stats?sId=63414042";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-right page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">吐核|Core Dump</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">笔记 随想 吐槽</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-th fa-fw"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-tags fa-fw"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-user fa-fw"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                升级kubelet到1.7后PostStartHook的错误消息丢失问题追查
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-11-08T15:48:13+08:00" content="2017-11-08">
+              2017-11-08
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/11/08/lack-post-start-hook-error-message/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2017/11/08/lack-post-start-hook-error-message/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+              &nbsp; | &nbsp;
+              <span class="page-pv"><i class="fa fa-file-o"></i> 浏览
+              <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>次
+              </span>
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>由于centos7 默认的3.10内核在cgroup使用cpu limit并且压力比较大的时候有kernal panic的 <a href="https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1687512" target="_blank" rel="external">bug</a> , 看了下是4.2某个版本后修复了这个问题，所以干脆我们升级了系统的内核到mainline版本4.13, 带来的问题是需要升kubelet到1.7（我们用的是1.7.8这个版本），注意升级kubelet最好机器上没有容器的情况下升级如果可能直接重装就好，人工升级的话需要自行创建/sys/fs/cgroup/rdma/kubepods 目录（这个也是查代码查了半天发现的具体就不说了）</p>
+<p>由于我们的业务逻辑上，容器内的服务启动其实是通过PostStartHook实现的，所以非常依赖相关的Event日志来排查问题，结果发现升级到1.7.8版本后，event中的message字段变空的，并且kubelet日志中也没有相关的信息,猜测是版本变动，代码上有所变化所以就去追了下</p>
+<p>核心代码在<a href="https://github.com/kubernetes/kubernetes/blob/release-1.7/pkg/kubelet/kuberuntime/kuberuntime_container.go#L143,L157" target="_blank" rel="external">pkg/kubelet/kuberruntime/kuberuntime_container.go</a></p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Step 4: execute the post start hook.</span></span><br><span class="line"><span class="keyword">if</span> container.Lifecycle != <span class="literal">nil</span> &amp;&amp; container.Lifecycle.PostStart != <span class="literal">nil</span> &#123;</span><br><span class="line">	kubeContainerID := kubecontainer.ContainerID&#123;</span><br><span class="line">		Type: m.runtimeName,</span><br><span class="line">		ID:   containerID,</span><br><span class="line">	&#125;</span><br><span class="line">	msg, handlerErr := m.runner.Run(kubeContainerID, pod, container, container.Lifecycle.PostStart)</span><br><span class="line">	<span class="keyword">if</span> handlerErr != <span class="literal">nil</span> &#123;</span><br><span class="line">		m.recordContainerEvent(pod, container, kubeContainerID.ID, v1.EventTypeWarning, events.FailedPostStartHook, msg)</span><br><span class="line">		m.killContainer(pod, kubeContainerID, container.Name, <span class="string">"FailedPostStartHook"</span>, <span class="literal">nil</span>)</span><br><span class="line">		<span class="keyword">return</span> <span class="string">"PostStart Hook Failed"</span>, err</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到Event里面记录的是msg字段，那么很自然的想到应该是msg里面的东西变了，所以一路追下去。PS: 注意这段最后的函数return的地方，return的是个err 但是怎么看也应该是handlerErr，这个直觉给后面查问题带来了帮助</p>
+<p>k8s的代码里面interface用的太多，IDE都不能很好的支持，不能直接跳到实际的代码的地方，费劲人肉看找了一圈，Run的函数实际代码就在这个文件下面</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// RunInContainer synchronously executes the command in the container, and returns the output.</span></span><br><span class="line"><span class="keyword">func</span> (m *kubeGenericRuntimeManager) RunInContainer(id kubecontainer.ContainerID, cmd []<span class="keyword">string</span>, timeout time.Duration) ([]<span class="keyword">byte</span>, error) &#123;</span><br><span class="line">	stdout, stderr, err := m.runtimeService.ExecSync(id.ID, cmd, <span class="number">0</span>)</span><br><span class="line">	<span class="comment">// NOTE(timstclair): This does not correctly interleave stdout &amp; stderr, but should be sufficient</span></span><br><span class="line">	<span class="comment">// for logging purposes. A combined output option will need to be added to the ExecSyncRequest</span></span><br><span class="line">	<span class="comment">// if more precise output ordering is ever required.</span></span><br><span class="line">	<span class="keyword">return</span> <span class="built_in">append</span>(stdout, stderr...), err</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意这个里面的注释：This does not correctly interleave stdout &amp; stderr</p>
+<p>然后ExecSync的代码实际在[pkg/kubelet/dockershim/docker_streaming.go]</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">func</span> (r *streamingRuntime) Exec(containerID <span class="keyword">string</span>, cmd []<span class="keyword">string</span>, in io.Reader, out, err io.WriteCloser, tty <span class="keyword">bool</span>, resize &lt;-<span class="keyword">chan</span> remotecommand.TerminalSize) error &#123;</span><br><span class="line">	<span class="keyword">return</span> r.exec(containerID, cmd, in, out, err, tty, resize, <span class="number">0</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Internal version of Exec adds a timeout.</span></span><br><span class="line"><span class="keyword">func</span> (r *streamingRuntime) exec(containerID <span class="keyword">string</span>, cmd []<span class="keyword">string</span>, in io.Reader, out, errw io.WriteCloser, tty <span class="keyword">bool</span>, resize &lt;-<span class="keyword">chan</span> remotecommand.TerminalSize, timeout time.Duration) error &#123;</span><br><span class="line">	container, err := checkContainerStatus(r.client, containerID)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> r.execHandler.ExecInContainer(r.client, container, cmd, in, out, errw, tty, resize, timeout)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">func</span> (r *streamingRuntime) Attach(containerID <span class="keyword">string</span>, in io.Reader, out, errw io.WriteCloser, tty <span class="keyword">bool</span>, resize &lt;-<span class="keyword">chan</span> remotecommand.TerminalSize) error &#123;</span><br><span class="line">	_, err := checkContainerStatus(r.client, containerID)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> attachContainer(r.client, containerID, in, out, errw, tty, resize)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到这段代码是进到docker容器中类似于exec的方式执行了hook脚本，并且把标准输入和标准输出获取了出来。所以Msg应该是脚本的标准输出和标准错误，这里看了半天，感觉没有半毛钱毛病，并且试了下让脚本输出点东西到1和2里面，但是也没Get到任何信息</p>
+<p>然后想起了2件事情：</p>
+<ol>
+<li>那个注释：貌似这段代码根本就没成功实现把1和2拿出来的功能</li>
+<li>感觉写错的那个err字段，应该是handlerErr的，并且平常获取到的错误信息command ‘/xxxxxx’ exited with 1: Hook do errexit, this is stderr</li>
+</ol>
+<p>觉得应该return的和丢到event里面的应该是handlerErr ，找了下1.6的代码，发现</p>
+<p>有一段</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">err := fmt.Errorf(<span class="string">"PostStart handler: %v"</span>, handlerErr)</span><br></pre></td></tr></table></figure>
+<p>然后去了找了下发现有个大哥在这个代码里面删了，2333<br>
+<a href="https://github.com/kubernetes/kubernetes/commit/a02f10fa3a956a2fc1fe0328f58b7b1cea548264" target="_blank" rel="external">https://github.com/kubernetes/kubernetes/commit/a02f10fa3a956a2fc1fe0328f58b7b1cea548264</a></p>
+<p>我自行改了下代码编译了个kubelet跑了试了下，发现确实是这么个问题。<br>
+去提了个Issue <a href="https://github.com/kubernetes/kubernetes/issues/54671" target="_blank" rel="external">https://github.com/kubernetes/kubernetes/issues/54671</a> 想说之后的版本能修下来着，<br>
+但是可惜的是k8s master的代码和分支已经很不一样了，并且社区也不修1.7这个系列的问题，再发小版本了。</p>
+<p>后续：</p>
+<ol>
+<li>本来我打算是自己编译kubelet自己维护的，但是组内的同学不太同意，毕竟我们人少，未来维护是问题</li>
+<li>发现业务逻辑依赖这个有点风险，所以我们最终改成了hook脚本自己把错误汇报上来的机制</li>
+</ol>
+
+      
+    </div>
+    
+    <div>
+      
+        
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/08/16/mid-year-summary/" rel="next" title="2017年中总结">
+                <i class="fa fa-chevron-left"></i> 2017年中总结
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/default_avatar.jpg"
+               alt="lovejoy" />
+          <p class="site-author-name" itemprop="name">lovejoy</p>
+          <p class="site-description motion-element" itemprop="description">这是个简介</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">29</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">13</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/lovejoy" target="_blank" title="Github">
+                  
+                    <i class="fa fa-globe"></i>
+                  
+                  Github
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/liangyongqing" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lovejoy</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+<div class="busuanzi-count">
+
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv"><i class="fa fa-user"></i> UV<span class="busuanzi-value" id="busuanzi_value_site_uv"></span></span>
+  
+
+  
+    <span class="site-pv"><i class="fa fa-eye"></i> PV<span class="busuanzi-value" id="busuanzi_value_site_pv"></span></span>
+  
+  
+</div>
+
+
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'tucao';
+      var disqus_identifier = '2017/11/08/lack-post-start-hook-error-message/';
+      var disqus_title = '升级kubelet到1.7后PostStartHook的错误消息丢失问题追查';
+      var disqus_url = 'http://blog.spider.im/2017/11/08/lack-post-start-hook-error-message/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+  
+  
+  
+
+  
+
+  
+
+</body>
+</html>
