@@ -267,6 +267,280 @@
             
               
                 
+                <a class="post-title-link" href="/2018/05/25/cka-related/" itemprop="url">
+                  kubernetes cka考试认证相关介绍
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-05-25T14:24:12+08:00" content="2018-05-25">
+              2018-05-25
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2018/05/25/cka-related/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2018/05/25/cka-related/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>CKA考试相关内容</p>
+<p>在3小时内用命令行进行排障，一共有24题（都是应用题，没有选择填空题）</p>
+<h1>需要提前准备的东西</h1>
+<ol>
+<li>官方认证证件：需要有照片和Latin字母写的全名（所以看起来可能得是护照，caicloud的人用的是护照）</li>
+<li>考试为在线考试，有监考官，电脑需要有摄像头和麦克风，监考官会和你沟通，让你展示护照之类</li>
+<li>一个没有其他人的空房间，空桌子，不能带手机，不能有书本，监考官会让你拿着电脑展示你周围的所有环境</li>
+</ol>
+<h1>检查是否满足硬件要求</h1>
+<ol>
+<li>使用Chrome浏览器访问https://www.examslocal.com/ScheduleExam/Home/CompatibilityCheck 选择&quot;Linux Foundation&quot; as the Exam Sponsor and &quot;CKA&quot; as the Exam根据提示安装一个chrome插件（实测有项网速的检查一直不过，翻墙就好了，所以可能需要有个稳定的翻墙工具）</li>
+</ol>
+<h1>考试中能查阅的资源</h1>
+<ol>
+<li>桌面上除了浏览器什么app都不能打开！</li>
+<li>打开的chrome浏览器，一个标签页是考试网站，<a href="http://xn--kubernetes-pf2pypt29w.io" target="_blank" rel="external">一个是kubernetes.io</a>，不能有其他标签页了，另外k8s.io中可能有外链，不能点击！所以k8s.io这个网站里面内容大概在什么地方需要熟悉，另外本身网站有搜索功能，学会怎么搜适合的关键词</li>
+</ol>
+<h1>需要提前学习的（重要）</h1>
+<p>K8s.io里面tasks相关的东西都需要自己实践下，还是有些日常没怎么用到的,最好把整个文档都看一遍。另外网上找到一些考试相关资料</p>
+<ol>
+<li><a href="https://github.com/walidshaari/Kubernetes-Certified-Administrator" target="_blank" rel="external">https://github.com/walidshaari/Kubernetes-Certified-Administrator</a></li>
+<li><a href="http://yunlzheng.github.io/2017/12/13/about-cncf-cka-exam/" target="_blank" rel="external">http://yunlzheng.github.io/2017/12/13/about-cncf-cka-exam/</a></li>
+<li><a href="https://github.com/mstrzele/cka-exam-prep" target="_blank" rel="external">https://github.com/mstrzele/cka-exam-prep</a>（这个感觉是真题）</li>
+</ol>
+<p>介于国内环境问题，可以在 gce <a href="https://cloud.google.com/free/" target="_blank" rel="external">https://cloud.google.com/free/</a> 或者aws上自建最新集群实验，都提供了免费试用</p>
+<h1>考试大纲</h1>
+<ul>
+<li>Installation, Configuration &amp; Validation 安装，配置和验证12%
+<ul>
+<li>设计一个k8s 集群</li>
+<li>安装k8s master 和 nodes</li>
+<li>配置安全的集群通信</li>
+<li>配置高可用的k8s集群</li>
+<li>知道如何获取k8s的发行的二进制文件</li>
+<li>提供底层的基础措施来部署一个集群</li>
+<li>选择一个网络方案</li>
+<li>选择你的基础设施配置</li>
+<li>在你的集群上配置端对端的测试</li>
+<li>分析端对端测试结果</li>
+<li>运行节点的端对端测试</li>
+</ul>
+</li>
+<li>Core Concepts 核心概念 19%
+<ul>
+<li>理解k8s api原语</li>
+<li>理解k8s 架构</li>
+<li>理解services和其它网络相关原语</li>
+</ul>
+</li>
+<li>Application Lifecycle Management 应用生命周期管理 8%
+<ul>
+<li>理解Deployment，并知道如何进行rolling update 和 rollback</li>
+<li>知道各种配置应用的方式</li>
+<li>知道如何为应用扩容</li>
+<li>理解基本的应用自愈相关的内容</li>
+</ul>
+</li>
+<li>Networking 网络 11%
+<ul>
+<li>理解在集群节点上配置网络</li>
+<li>理解pod的网络概念</li>
+<li>理解service networking</li>
+<li>部署和配置网络负载均衡器</li>
+<li>知道如何使用ingress 规则</li>
+<li>知道如何使用和配置cluster dns</li>
+<li>理解CNI</li>
+</ul>
+</li>
+<li>Storage 存储 7%
+<ul>
+<li>理解持久化卷（pv），并知道如何创建它们</li>
+<li>理解卷（volumes）的access mode</li>
+<li>理解持久化卷声明（pvc）的原语</li>
+<li>理解k8s的存储对象（kubernetes storage objects）</li>
+<li>知道如何为应用配置持久化存储</li>
+</ul>
+</li>
+<li>Scheduling 调度 5%
+<ul>
+<li>使用label选择器来调度pods</li>
+<li>理解Daemonset的角色</li>
+<li>理解resource limit 会如何影响pod 调度</li>
+<li>理解如何运行多个调度器，以及如何配置pod使用它们</li>
+<li>不使用调度器，手动调度一个pod</li>
+<li>查看和显示调度事件events</li>
+<li>知道如何配置kubernetes scheduler</li>
+</ul>
+</li>
+<li>Security 安全 12%
+<ul>
+<li>知道如何配置认证和授权</li>
+<li>理解k8s安全相关原语</li>
+<li>理解如何配置网络策略（network policies）</li>
+<li>配合使用镜像的安全性</li>
+<li>定义安全上下文</li>
+<li>安全的持久化保存键值</li>
+</ul>
+</li>
+<li>Cluster Maintenance 集群维护 11%
+<ul>
+<li>理解k8s的集群升级过程</li>
+<li>促进操作系统的升级</li>
+<li>补充备份和还原的方法论</li>
+</ul>
+</li>
+<li>Logging / Monitoring 日志/监控 5%
+<ul>
+<li>理解如何监控所有的集群组件</li>
+<li>理解如何监控应用</li>
+<li>管理集群组件日志</li>
+<li>管理应用日志</li>
+</ul>
+</li>
+<li>Troubleshooting 问题排查 10%
+<ul>
+<li>排查应用失败故障</li>
+<li>排查控制层（control panel）故障</li>
+<li>排查工作节点（work node）故障</li>
+<li>排查网络故障</li>
+</ul>
+</li>
+</ul>
+<p>这个PDF需要看下，有最新版的大纲</p>
+<p><a href="https://raw.githubusercontent.com/cncf/curriculum/master/certified_kubernetes_administrator_exam_v1.9.0.pdf" target="_blank" rel="external">https://raw.githubusercontent.com/cncf/curriculum/master/certified_kubernetes_administrator_exam_v1.9.0.pdf</a></p>
+<p>考试环境</p>
+<table>
+<thead>
+<tr>
+<th><strong>CKA CLUSTERS</strong></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Cluster</strong></td>
+<td><strong>Members</strong></td>
+</tr>
+<tr>
+<td>k8s</td>
+<td>1 etcd, 1 master, 2 worker</td>
+</tr>
+<tr>
+<td>hk8s</td>
+<td>1 etcd, 1 master, 2 worker</td>
+</tr>
+<tr>
+<td>bk8s</td>
+<td>1 etcd, 1 master, 1 worker</td>
+</tr>
+<tr>
+<td>wk8s</td>
+<td>1 etcd, 1 master, 2 worker</td>
+</tr>
+<tr>
+<td>ek8s</td>
+<td>1 etcd, 1 master, 2 worker</td>
+</tr>
+<tr>
+<td>ik8s</td>
+<td>1 etcd, 1 master, 1 base node</td>
+</tr>
+</tbody>
+</table>
+<p><em>$ kubectl config use-context k8s</em> <em>用这个命令来切换不同的环境</em></p>
+<p>每个机器都可以直接ssh k8s-node-0（机器名）的方式连接，用sudo -i切到root权限</p>
+<p>每次连接都得退回到node-1的中控机上，不能嵌套ssh</p>
+<p>考试的k8s的版本永远是最新的，目前为1.10.2</p>
+<h1>考试流程</h1>
+<ol>
+<li>注册考试https://www.cncf.io/certification/expert/  这里需要填信用卡支付300刀</li>
+<li>预定时间，官方会有个时间表未来60天，自己预定要考试的时间，早点选个好的实际比较好，有时区的问题，caicloud的人考完已经凌晨了，可以改期。</li>
+<li>实际考试，先和监考官沟通，确认身份之类，然后监控管会把你的浏览器里面的内容切到考试界面，有问题问监控官</li>
+</ol>
+<p><a href="https://www.cncf.io/certification/candidate-handbook" target="_blank" rel="external">https://www.cncf.io/certification/candidate-handbook</a> 这个文档中讲了实际操作上一些细节，需要提前看下</p>
+
+          
+        
+      
+    </div>
+    
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/01/20/go-flock-fnctl-getlock/" itemprop="url">
                   go语言中判断一个文件是否被flock上了
                 </a>
@@ -1525,172 +1799,11 @@ syscall.Flock_t{Type:2, Whence:0, Pad_cgo_0:[4]uint8{0x0, 0x0, 0x0, 0x0}, Start:
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/08/12/xhprof/" itemprop="url">
-                  使用xhprof进行性能分析
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-08-12T15:18:11+08:00" content="2016-08-12">
-              2016-08-12
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/性能/" itemprop="url" rel="index">
-                    <span itemprop="name">性能</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2016/08/12/xhprof/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/08/12/xhprof/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1>XHProf 简介</h1>
-<p>XHProf 是一个轻量级的分层性能测量分析器。 可以追踪一个请求程序内部各函数的调用次数，消耗时间以及资源占用等信息，是我们进行性能分析的利器。<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup></p>
-<h1>XHProf 安装</h1>
-<p>首先要安装个extension <a href="http://xhprof.so" target="_blank" rel="external">xhprof.so</a> 并且配置启用，由于我用的环境默认带了，这里不具体描述</p>
-<p>装完so之后还要down下xhprof的php lib 文件，可以直接</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/phacility/xhprof.git</span><br></pre></td></tr></table></figure>
-<p>把这个目录丢到webroot里面(便于之后访问分析结果文件)或者其他地方都行</p>
-<h1>XHProf 使用</h1>
-<p>主要是在需要进行性能分析的地方 include xhprof的代码，enable 然后disable下，记录下调用情况；AP程序可以残暴点 直接写在index.php 里面，具体示例代码如下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">xhprof_enable(XHPROF_FLAGS_CPU + XHPROF_FLAGS_MEMORY);</span><br><span class="line">//your code</span><br><span class="line">//$objResponse = $objApplication-&gt;bootstrap()-&gt;run();</span><br><span class="line">$data = xhprof_disable(); //返回运行数据</span><br><span class="line"></span><br><span class="line">// xhprof_lib在下载的包里存在这个目录,记得将目录包含到运行的php代码中</span><br><span class="line">$XHPROF_ROOT = __DIR__ . &apos;/../vendor/facebook/xhprof/&apos;; //设置成自己的地址</span><br><span class="line">include_once $XHPROF_ROOT . &apos;/xhprof_lib/utils/xhprof_lib.php&apos;;</span><br><span class="line">include_once $XHPROF_ROOT . &apos;/xhprof_lib/utils/xhprof_runs.php&apos;;</span><br><span class="line">$objXhprofRun = new XHProfRuns_Default();</span><br><span class="line">// 第一个参数j是xhprof_disable()函数返回的运行信息</span><br><span class="line">// 第二个参数是自定义的命名空间字符串(任意字符串),</span><br><span class="line">// 返回运行ID,用这个ID查看相关的运行结果</span><br><span class="line">$run_id = $objXhprofRun-&gt;save_run($data, &quot;xhprof&quot;);</span><br><span class="line">//var_dump($run_id);</span><br><span class="line">echo &quot;http://localhost/xhprof/xhprof_html/index.php?run=&#123;$run_id&#125;&amp;source=xhprof_testing\n&quot;</span><br></pre></td></tr></table></figure>
-<h1>XHProf结果分析</h1>
-<p>直接在浏览器里面打开xhprof_html的页面，如果不是用web服务器配置的话，可以简单点直接在xhprof 同层目录里面 php -S 0.0.0.0:8888 然后访问 <a href="http://hostname:8888/xhprof/xhprof_html/" target="_blank" rel="external">http://hostname:8888/xhprof/xhprof_html/</a></p>
-<p>下面是页面中各字段解释：<br>
-我主要用于速度调忧，所以看的比较多的是前几个，调用次数 消耗时间等另外可以看看生成的graph 函数的调用逻辑以及消耗时间，帮助定位问题</p>
-<blockquote><p>Function Name 函数名<br>
-Calls 调用次数<br>
-Calls% 调用百分比<br>
-Incl. Wall Time (microsec) 调用的包括子函数所有花费时间 以微秒算(一百万分之一秒)<br>
-IWall% 调用的包括子函数所有花费时间的百分比<br>
-Excl. Wall Time (microsec) 函数执行本身花费的时间，不包括子树执行时间,以微秒算(一百万分之一秒)<br>
-EWall% 函数执行本身花费的时间的百分比，不包括子树执行时间<br>
-Incl. CPU(microsecs) 调用的包括子函数所有花费的cpu时间。减Incl. Wall Time即为等待cpu的时间<br>
-减Excl. Wall Time即为等待cpu的时间<br>
-ICpu% Incl. CPU(microsecs)的百分比<br>
-Excl. CPU(microsec) 函数执行本身花费的cpu时间，不包括子树执行时间,以微秒算(一百万分之一秒)。<br>
-ECPU% Excl. CPU(microsec)的百分比<br>
-Incl.MemUse(bytes) 包括子函数执行使用的内存。<br>
-IMemUse% Incl.MemUse(bytes)的百分比<br>
-Excl.MemUse(bytes) 函数执行本身内存,以字节算<br>
-EMemUse% Excl.MemUse(bytes)的百分比<br>
-Incl.PeakMemUse(bytes) Incl.MemUse的峰值<br>
-IPeakMemUse% Incl.PeakMemUse(bytes) 的峰值百分比<br>
-Excl.PeakMemUse(bytes) Excl.MemUse的峰值<br>
-EPeakMemUse% EMemUse% 峰值百分比</p>
-</blockquote>
-<hr class="footnotes-sep">
-<section class="footnotes">
-<ol class="footnotes-list">
-<li id="fn1" class="footnote-item"><p>具体介绍见 <a href="http://php.net/manual/zh/book.xhprof.php" target="_blank" rel="external">PHP官方文档</a> <a href="#fnref1" class="footnote-backref">↩</a></p>
-</li>
-</ol>
-</section>
-
-          
-        
-      
-    </div>
-    
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -1731,7 +1844,7 @@ EPeakMemUse% EMemUse% 峰值百分比</p>
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">30</span>
+              <span class="site-state-item-count">31</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
