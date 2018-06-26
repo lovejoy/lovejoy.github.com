@@ -267,6 +267,211 @@
             
               
                 
+                <a class="post-title-link" href="/2018/06/26/cka-exam/" itemprop="url">
+                  CKA考试题详解
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-06-26T15:40:29+08:00" content="2018-06-26">
+              2018-06-26
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2018/06/26/cka-exam/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2018/06/26/cka-exam/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1>CKA考试题真题详解</h1>
+<p>已经通过了CKA认证，这里大概讲下我遇到的考试题怎么解</p>
+<ul>
+<li>创建一个符合要求的pod</li>
+</ul>
+<p>具体内容不记得了，主要是得找到一个简单的yaml文件改改就好</p>
+<ul>
+<li>ß看某个标签使用cpu最高的pod</li>
+</ul>
+<p>Kubectl top pod -l xxx标签</p>
+<ul>
+<li>创建secret，并且创建2个pod 1个pod mount成文件，一个用环境变量</li>
+</ul>
+<p><a href="https://kubernetes.io/docs/concepts/configuration/secret/" target="_blank" rel="external">https://kubernetes.io/docs/concepts/configuration/secret/</a> 从Creating a Secret Manually 开始内容到后面，考题只需要创建一个password字段，mount的路径略有改动，其他和这个页面里面的一样</p>
+<ul>
+<li>oo给定deployment扩容</li>
+</ul>
+<p><a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/" target="_blank" rel="external">https://kubernetes.io/docs/concepts/workloads/controllers/deployment/</a></p>
+<p>直接kubectl scale命令</p>
+<ul>
+<li>按要求创建deployment ，然后改image，然后再回滚回去，把最终的deployment spec弄出来</li>
+</ul>
+<p><a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment" target="_blank" rel="external">https://kubernetes.io/docs/concepts/workloads/controllers/deployment</a></p>
+<ul>
+<li>按要求创建daemonsets</li>
+</ul>
+<p>貌似就是个创建个nginx镜像之类</p>
+<p><a href="https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/" target="_blank" rel="external">https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/</a> 这个里面的yaml （内容太大了，删都要删半天，可以找找还有没有更简单的）</p>
+<ul>
+<li>在一个新的namespace创建pod</li>
+</ul>
+<p>自己先create 一个namespace 然后创建pod</p>
+<ul>
+<li>创建static pod</li>
+</ul>
+<p><a href="https://kubernetes.io/docs/tasks/administer-cluster/static-pod/" target="_blank" rel="external">https://kubernetes.io/docs/tasks/administer-cluster/static-pod/</a></p>
+<p>在指定目录下面创建一个yaml文件，然后改kubelet的systemd配置，reload+重启，检查下</p>
+<ul>
+<li>给定一个pod 拿到某行日志</li>
+</ul>
+<p>Kubectl logs xxx | grep yyy 然后需要重定向去一个指定的文件</p>
+<ul>
+<li>给你个环境说有问题，自己看。manster 和node 只发现了controller-manager没启动</li>
+</ul>
+<p>每台节点都可以ssh ，kubectl get pod看也没有非running 的systemctl 看了下有2个失败的，但是看着和考题无关，没管，搜了下kube 开头的，发现controller-manager没有enable 也没有start ，启动就好</p>
+<ul>
+<li>一个大题 给定ca.crt 配置好kubelet 还要陪ratation certificate 巴拉巴拉</li>
+</ul>
+<p><a href="https://kubernetes.io/docs/concepts/cluster-administration/certificates/" target="_blank" rel="external">https://kubernetes.io/docs/concepts/cluster-administration/certificates/</a></p>
+<p><a href="https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/" target="_blank" rel="external">https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/</a></p>
+<p><a href="https://kubernetes.io/docs/tasks/tls/certificate-rotation" target="_blank" rel="external">https://kubernetes.io/docs/tasks/tls/certificate-rotation</a></p>
+<p>当时思路：应该是用openssl根据给定的ca.crt 生成server.crt server.key</p>
+<p>然后需要配置kubelet，systemd文件也没有，想着可以从别的集群拷过来用用</p>
+<p>但是openssl就报错了 此题8分，放弃。</p>
+<ul>
+<li>把一个node弄成unavailable 并且重新调度去新的node上</li>
+</ul>
+<p>直接cordon下，然后pod delete下。好像就行了，至少没扣分</p>
+<ul>
+<li>oo node 是not ready解决下</li>
+</ul>
+<p>Ssh 去node上，发现kubelet没有启动，启动下就好</p>
+<ul>
+<li>给定pod创建service</li>
+</ul>
+<p>麻烦就是自己写个yaml文件，聪明点可以kubectl expose 下，不会的话命令现场看就行了</p>
+<ul>
+<li>创建deployment 创建service 并且用nslookup 拿到service 和一个pod的解析的结果</li>
+</ul>
+<p><a href="https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/" target="_blank" rel="external">https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/</a></p>
+<p>kubectl run --expose一句就可以解决，不然有点累，然后需要进pod nslookup service的域名和pod的域名，但是镜像里面没有nslookup。所以改成了ssh 去master机器上，ps 看下kube的参数中dns的ip地址，然后在master机器上nslookup ，然后需要弄回原来的机器上一个文件中，复制，然后用nano粘贴格式会乱，直接用echo &quot;&quot; &gt;的方式</p>
+<ul>
+<li>列某个namepsace 下某个service所代表的所有pod的名字</li>
+</ul>
+<p>先kubectl get service看下label 是什么，再kubectl get pod -l 看下面名字，然后需要留的是名字 kubectl get pods &quot;-o=custom-columns=NAME:.metadata.name&quot; 注意最终要的只是名字</p>
+<ul>
+<li>给定一个spec文件，按要求加一个init container 创建某个文件，然后container 发现这个文件在就启动，不再就退出</li>
+</ul>
+<p><a href="https://kubernetes.io/docs/concepts/workloads/pods/init-containers/" target="_blank" rel="external">https://kubernetes.io/docs/concepts/workloads/pods/init-containers/</a></p>
+<p>照着抄就行，结合题目，shell里面写个touch个文件就行</p>
+<ul>
+<li>oo 用下nodeselector</li>
+</ul>
+<p><a href="https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector" target="_blank" rel="external">https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector</a></p>
+<p>这个里面的yaml改改就好</p>
+<ul>
+<li>创建一个符合要求的pv 大小 权限 路径</li>
+</ul>
+<p><a href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-persistent-volume-storage/" target="_blank" rel="external">https://kubernetes.io/docs/tasks/configure-pod-container/configure-persistent-volume-storage/</a></p>
+<p>这个里面的yaml文件，根据考题要求，改成ReadWriteMany ，路径改改就好</p>
+<ul>
+<li>给etcd做个snapshot 3.0 版本 要加环境变量用etcdctl 带证书</li>
+</ul>
+<p>export ETCDCTL_API=3，后面根据etcdctl 命令行的提示看就能弄好</p>
+<ul>
+<li>列不含某个标签的node的数量</li>
+</ul>
+<p>只有3个node，get出来一个个看，不知道命令怎么取非，注意审题，最终文件里面只需要个数量</p>
+<ul>
+<li>创建个带volume带pod，不可以是persistent的</li>
+</ul>
+<p>一开始有点懵，以为要用hostpath什么的</p>
+<p><a href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-volume-storage/" target="_blank" rel="external">https://kubernetes.io/docs/tasks/configure-pod-container/configure-volume-storage/</a></p>
+<p>其实就是这个，创建个带emptyDir的pod就好</p>
+<p>一共24题还有2题我不记得了</p>
+
+          
+        
+      
+    </div>
+    
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/05/25/cka-related/" itemprop="url">
                   kubernetes cka考试认证相关介绍
                 </a>
@@ -1647,158 +1852,6 @@ syscall.Flock_t{Type:2, Whence:0, Pad_cgo_0:[4]uint8{0x0, 0x0, 0x0, 0x0}, Start:
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/08/15/time-machine-on-samba/" itemprop="url">
-                  用Samba把TimeMachine备份在windows服务器上
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-08-15T20:11:18+08:00" content="2016-08-15">
-              2016-08-15
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/mac/" itemprop="url" rel="index">
-                    <span itemprop="name">mac</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2016/08/15/time-machine-on-samba/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/08/15/time-machine-on-samba/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>Mac的TimeMachine备份只支持AFP协议，所以默认情况下是没有办法备份在windows共享里面的，不过可以曲线救国下，通过备份在磁盘镜像<a href="https://zh.wikipedia.org/wiki/%E7%A8%80%E7%96%8F%E7%A3%81%E7%9B%98%E6%98%A0%E5%83%8F" target="_blank" rel="external">稀疏磁盘</a>的方式，备份在windows上</p>
-<h1>创建磁盘镜像</h1>
-<p>这里要创建的不是常见的DMG镜像，而是稀疏捆绑磁盘镜像<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>，目的是稀疏捆绑磁盘镜像是随着使用占用的空间而逐渐增大，不用一下子就把空间分好了，另外后期也可以动态调整大小，另外还有个分不清的叫稀疏磁盘镜像也可以，不过我选择的是稀疏磁盘捆绑镜像<sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup></p>
-<p>有2种方式来创建稀疏捆绑磁盘镜像</p>
-<ul>
-<li>命令行方式</li>
-</ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> ~</span><br><span class="line">hdiutil create -size 600g -type SPARSEBUNDLE -fs <span class="string">"HFS+J"</span> TimeMachine.sparsebundle</span><br></pre></td></tr></table></figure>
-<ul>
-<li>通过磁盘工具</li>
-</ul>
-<p>打开磁盘工具(spotlight搜下磁盘就出来了)，在文件新建-&gt;新建空白映像里面新建个，需要修改映像格式为稀疏捆绑磁盘映像，大小修改下自己写个数字可以写500gb这种mac会自动识别</p>
-<h1>把磁盘镜像拷贝到网络驱动上</h1>
-<p>打开finder CMD+K smb://你的ip地址，然后把生成的镜像拷贝到你的windows共享中，并且双击下镜像文件mount下</p>
-<h1>把这个镜像设置成你的TimeMachine备份设备</h1>
-<p>开个终端</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo tmutil setdestination /Volumes/TimeMachine</span><br></pre></td></tr></table></figure>
-<p>注意看你的volume目录是不是这个目录，可以cd到volume目录里面查看，替换成自己的</p>
-<h1>设置成开机自动连接</h1>
-<p>通过applescript的方式实现：<br>
-打开脚本编辑器(spotlight 搜applescript)</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">try</span><br><span class="line">	mount volume <span class="string">"smb://readyshare/TimeMachine"</span></span><br><span class="line">end try</span><br><span class="line"></span><br><span class="line"><span class="keyword">do</span> shell script <span class="string">"hdiutil attach -mountpoint /Volumes/TimeMachine/ /Volumes/TimeMachine/TimeMachine.sparsebundle"</span></span><br></pre></td></tr></table></figure>
-<h1>不足之处</h1>
-<p>这种方式不能使用可以恢复到任意时刻的<a href="https://support.apple.com/zh-cn/HT201314" target="_blank" rel="external">OSX的恢复功能</a>，只能先重装个系统，然后mount上镜像，再恢复，当然可以把镜像拷贝到移动硬盘上，插到mac上这样应该也可以使用OSX的恢复功能</p>
-<hr class="footnotes-sep">
-<section class="footnotes">
-<ol class="footnotes-list">
-<li id="fn1" class="footnote-item"><p><a href="https://zh.wikipedia.org/wiki/%E7%A8%80%E7%96%8F%E7%A3%81%E7%9B%98%E6%98%A0%E5%83%8F" target="_blank" rel="external">https://zh.wikipedia.org/wiki/稀疏磁盘映像</a> <a href="#fnref1" class="footnote-backref">↩</a></p>
-</li>
-<li id="fn2" class="footnote-item"><p><a href="https://www.v2ex.com/t/240799" target="_blank" rel="external">https://www.v2ex.com/t/240799</a> <a href="#fnref2" class="footnote-backref">↩</a></p>
-</li>
-</ol>
-</section>
-
-          
-        
-      
-    </div>
-    
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1844,7 +1897,7 @@ syscall.Flock_t{Type:2, Whence:0, Pad_cgo_0:[4]uint8{0x0, 0x0, 0x0, 0x0}, Start:
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">31</span>
+              <span class="site-state-item-count">32</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1861,7 +1914,7 @@ syscall.Flock_t{Type:2, Whence:0, Pad_cgo_0:[4]uint8{0x0, 0x0, 0x0, 0x0}, Start:
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-count">10</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

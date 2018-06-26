@@ -64,7 +64,7 @@
 <link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="工作记录," />
+  <meta name="keywords" content="k8s," />
 
 
 
@@ -80,34 +80,55 @@
 
 
 
-<meta name="description" content="随着业务的发展，终于要开始搞速度优化了，很久之前以运维的身份参与过一定时间的速度优化项目，现在以研发的身份再参与一次，体会下不同的角度不同的方法
-为什么要进行速度优化
+<meta name="description" content="CKA考试题真题详解
+已经通过了CKA认证，这里大概讲下我遇到的考试题怎么解
 
-Amazon每增加100ms 收入下降1%;
-Yahoo每降低400ms的加载时间，他们的访问量就提升9%
-Mozilla将他们的页面速度提升了2.2s，每年多获得了1.6亿下载量
-搜索首屏时间每增加300ms 无点击比例上升1%">
+创建一个符合要求的pod
+
+具体内容不记得了，主要是得找到一个简单的yaml文件改改就好
+
+ß看某个标签使用cpu最高的pod
+
+Kubectl top pod -l xxx标签
+
+创建secret，并且创建2个pod 1个pod mount成文件，一个用环境变量
+
+https://kubernetes.io/docs">
 <meta property="og:type" content="article">
-<meta property="og:title" content="速度优化起始篇">
-<meta property="og:url" content="http://blog.spider.im/2016/08/16/speed-kickoff/index.html">
+<meta property="og:title" content="CKA考试题详解">
+<meta property="og:url" content="http://blog.spider.im/2018/06/26/cka-exam/index.html">
 <meta property="og:site_name" content="吐核|Core Dump">
-<meta property="og:description" content="随着业务的发展，终于要开始搞速度优化了，很久之前以运维的身份参与过一定时间的速度优化项目，现在以研发的身份再参与一次，体会下不同的角度不同的方法
-为什么要进行速度优化
+<meta property="og:description" content="CKA考试题真题详解
+已经通过了CKA认证，这里大概讲下我遇到的考试题怎么解
 
-Amazon每增加100ms 收入下降1%;
-Yahoo每降低400ms的加载时间，他们的访问量就提升9%
-Mozilla将他们的页面速度提升了2.2s，每年多获得了1.6亿下载量
-搜索首屏时间每增加300ms 无点击比例上升1%">
-<meta property="og:updated_time" content="2017-08-16T14:29:26.000Z">
+创建一个符合要求的pod
+
+具体内容不记得了，主要是得找到一个简单的yaml文件改改就好
+
+ß看某个标签使用cpu最高的pod
+
+Kubectl top pod -l xxx标签
+
+创建secret，并且创建2个pod 1个pod mount成文件，一个用环境变量
+
+https://kubernetes.io/docs">
+<meta property="og:updated_time" content="2018-06-26T07:41:25.650Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="速度优化起始篇">
-<meta name="twitter:description" content="随着业务的发展，终于要开始搞速度优化了，很久之前以运维的身份参与过一定时间的速度优化项目，现在以研发的身份再参与一次，体会下不同的角度不同的方法
-为什么要进行速度优化
+<meta name="twitter:title" content="CKA考试题详解">
+<meta name="twitter:description" content="CKA考试题真题详解
+已经通过了CKA认证，这里大概讲下我遇到的考试题怎么解
 
-Amazon每增加100ms 收入下降1%;
-Yahoo每降低400ms的加载时间，他们的访问量就提升9%
-Mozilla将他们的页面速度提升了2.2s，每年多获得了1.6亿下载量
-搜索首屏时间每增加300ms 无点击比例上升1%">
+创建一个符合要求的pod
+
+具体内容不记得了，主要是得找到一个简单的yaml文件改改就好
+
+ß看某个标签使用cpu最高的pod
+
+Kubectl top pod -l xxx标签
+
+创建secret，并且创建2个pod 1个pod mount成文件，一个用环境变量
+
+https://kubernetes.io/docs">
 
 
 
@@ -125,7 +146,7 @@ Mozilla将他们的页面速度提升了2.2s，每年多获得了1.6亿下载量
   };
 </script>
 
-  <title> 速度优化起始篇 | 吐核|Core Dump </title>
+  <title> CKA考试题详解 | 吐核|Core Dump </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -283,7 +304,7 @@ Mozilla将他们的页面速度提升了2.2s，每年多获得了1.6亿下载量
             
             
               
-                速度优化起始篇
+                CKA考试题详解
               
             
           </h1>
@@ -295,38 +316,19 @@ Mozilla将他们的页面速度提升了2.2s，每年多获得了1.6亿下载量
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-08-16T10:58:39+08:00" content="2016-08-16">
-              2016-08-16
+            <time itemprop="dateCreated" datetime="2018-06-26T15:40:29+08:00" content="2018-06-26">
+              2018-06-26
             </time>
           </span>
 
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/speed/" itemprop="url" rel="index">
-                    <span itemprop="name">speed</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
           
 
           
             
               <span class="post-comments-count">
                 &nbsp; | &nbsp;
-                <a href="/2016/08/16/speed-kickoff/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/08/16/speed-kickoff/" itemprop="commentsCount"></span>
+                <a href="/2018/06/26/cka-exam/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2018/06/26/cka-exam/" itemprop="commentsCount"></span>
                 </a>
               </span>
             
@@ -354,59 +356,111 @@ Mozilla将他们的页面速度提升了2.2s，每年多获得了1.6亿下载量
       
 
       
-        <p>随着业务的发展，终于要开始搞速度优化了，很久之前以运维的身份参与过一定时间的速度优化项目，现在以研发的身份再参与一次，体会下不同的角度不同的方法</p>
-<h1>为什么要进行速度优化</h1>
+        <h1>CKA考试题真题详解</h1>
+<p>已经通过了CKA认证，这里大概讲下我遇到的考试题怎么解</p>
 <ul>
-<li>Amazon每增加100ms 收入下降1%;</li>
-<li>Yahoo每降低400ms的加载时间，他们的访问量就提升9%</li>
-<li>Mozilla将他们的页面速度提升了2.2s，每年多获得了1.6亿下载量</li>
-<li>搜索首屏时间每增加300ms 无点击比例上升1%</li>
+<li>创建一个符合要求的pod</li>
 </ul>
-<p>一般情况下认为移动端用户对访问速度的比PC端高，但是也有界限<br>
-用户体验：&lt;2s，响应快；2<sub>5s，还可以；5</sub>8s，慢，还可以接受；&gt;8s，流失</p>
-<p>总结下就是</p>
-<ol>
-<li>用户访问速度对用户体验至关重要</li>
-<li>用户访问速度快慢影响收入</li>
-</ol>
-<h1>优化的目标是什么</h1>
-<p>对于PC产品速度指标以1s为界限，移动端产品速度如上所述至少在2s内，最好能在1.5s内，能达到1s内就是完美</p>
-<pre><code>这里指的时间都是按80分位值计算
-</code></pre>
-<h1>面临的挑战是什么</h1>
+<p>具体内容不记得了，主要是得找到一个简单的yaml文件改改就好</p>
 <ul>
-<li>移动网络复杂不稳定的网络情况会带来很多不可控因素</li>
-<li>业务早期粗放的发展模式积累了大量性能低下的代码</li>
-<li>投入人力有限运维配合程度低，能获取到系统资源有限</li>
+<li>ß看某个标签使用cpu最高的pod</li>
 </ul>
-<h1>速度优化被安排的职责</h1>
-<ol>
-<li>负责团队用户可见组件(及其依赖)的性能评判</li>
-<li>负责性能优化方案的调研和制定，并逐步在实践中形成一些 <strong>设计和开发规范</strong></li>
-<li>负责定期CR线上服务代码，及时发现可优化的代码段，并发起优化流程直至优化完成</li>
-<li>参与核心模块和所有C端模块的设计评审，发现问题并给出指导意见</li>
-<li>组织定期的学习和分享(每个Q一次，在评判结果announce之后），提升整个团队的性能优化能力</li>
-<li>配合QA制定性能测试方案，根据测试结果提出优化方案，并跟进到底直至落地到线上</li>
-<li>带领所有同学养成看性能数据的日常习惯，根据服务性能的各项指标及早的发现和解决问题，避免问题放大</li>
-</ol>
-<p>杂七杂八的事情不少呵呵。</p>
-<h1>速度优化任务拆解</h1>
-<p>全盘摸底，只知道慢，有多慢，慢在什么环节，要尽快分析下，并且建立速度的监控体系，速度性能要直观可见，速度优化结果要有理可依，TODO：</p>
+<p>Kubectl top pod -l xxx标签</p>
 <ul>
-<li>指定性能评判标准</li>
-<li>建立速度指标监控</li>
-<li>对目前问题作出详尽的分析</li>
+<li>创建secret，并且创建2个pod 1个pod mount成文件，一个用环境变量</li>
 </ul>
-<p>快速调研下各种优化方案，这个公司内部做过的太多了，各种前后端方案能快速迁移的方案就快速迁移，TODO：</p>
+<p><a href="https://kubernetes.io/docs/concepts/configuration/secret/" target="_blank" rel="external">https://kubernetes.io/docs/concepts/configuration/secret/</a> 从Creating a Secret Manually 开始内容到后面，考题只需要创建一个password字段，mount的路径略有改动，其他和这个页面里面的一样</p>
 <ul>
-<li>公司内外速度优化方案调研</li>
+<li>oo给定deployment扩容</li>
 </ul>
-<p>流程规范下，之前更多的关注的是业务层面的事情，性能问题除非异常恶劣，研发测试都很少关注，要改变下流程和制度:</p>
+<p><a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/" target="_blank" rel="external">https://kubernetes.io/docs/concepts/workloads/controllers/deployment/</a></p>
+<p>直接kubectl scale命令</p>
 <ul>
-<li>梳理前后端重要页面接口，QA加入性能测试</li>
-<li>系统设计过评审</li>
+<li>按要求创建deployment ，然后改image，然后再回滚回去，把最终的deployment spec弄出来</li>
 </ul>
-<p>起始篇到此为止，后续记录具体的工作</p>
+<p><a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment" target="_blank" rel="external">https://kubernetes.io/docs/concepts/workloads/controllers/deployment</a></p>
+<ul>
+<li>按要求创建daemonsets</li>
+</ul>
+<p>貌似就是个创建个nginx镜像之类</p>
+<p><a href="https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/" target="_blank" rel="external">https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/</a> 这个里面的yaml （内容太大了，删都要删半天，可以找找还有没有更简单的）</p>
+<ul>
+<li>在一个新的namespace创建pod</li>
+</ul>
+<p>自己先create 一个namespace 然后创建pod</p>
+<ul>
+<li>创建static pod</li>
+</ul>
+<p><a href="https://kubernetes.io/docs/tasks/administer-cluster/static-pod/" target="_blank" rel="external">https://kubernetes.io/docs/tasks/administer-cluster/static-pod/</a></p>
+<p>在指定目录下面创建一个yaml文件，然后改kubelet的systemd配置，reload+重启，检查下</p>
+<ul>
+<li>给定一个pod 拿到某行日志</li>
+</ul>
+<p>Kubectl logs xxx | grep yyy 然后需要重定向去一个指定的文件</p>
+<ul>
+<li>给你个环境说有问题，自己看。manster 和node 只发现了controller-manager没启动</li>
+</ul>
+<p>每台节点都可以ssh ，kubectl get pod看也没有非running 的systemctl 看了下有2个失败的，但是看着和考题无关，没管，搜了下kube 开头的，发现controller-manager没有enable 也没有start ，启动就好</p>
+<ul>
+<li>一个大题 给定ca.crt 配置好kubelet 还要陪ratation certificate 巴拉巴拉</li>
+</ul>
+<p><a href="https://kubernetes.io/docs/concepts/cluster-administration/certificates/" target="_blank" rel="external">https://kubernetes.io/docs/concepts/cluster-administration/certificates/</a></p>
+<p><a href="https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/" target="_blank" rel="external">https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/</a></p>
+<p><a href="https://kubernetes.io/docs/tasks/tls/certificate-rotation" target="_blank" rel="external">https://kubernetes.io/docs/tasks/tls/certificate-rotation</a></p>
+<p>当时思路：应该是用openssl根据给定的ca.crt 生成server.crt server.key</p>
+<p>然后需要配置kubelet，systemd文件也没有，想着可以从别的集群拷过来用用</p>
+<p>但是openssl就报错了 此题8分，放弃。</p>
+<ul>
+<li>把一个node弄成unavailable 并且重新调度去新的node上</li>
+</ul>
+<p>直接cordon下，然后pod delete下。好像就行了，至少没扣分</p>
+<ul>
+<li>oo node 是not ready解决下</li>
+</ul>
+<p>Ssh 去node上，发现kubelet没有启动，启动下就好</p>
+<ul>
+<li>给定pod创建service</li>
+</ul>
+<p>麻烦就是自己写个yaml文件，聪明点可以kubectl expose 下，不会的话命令现场看就行了</p>
+<ul>
+<li>创建deployment 创建service 并且用nslookup 拿到service 和一个pod的解析的结果</li>
+</ul>
+<p><a href="https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/" target="_blank" rel="external">https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/</a></p>
+<p>kubectl run --expose一句就可以解决，不然有点累，然后需要进pod nslookup service的域名和pod的域名，但是镜像里面没有nslookup。所以改成了ssh 去master机器上，ps 看下kube的参数中dns的ip地址，然后在master机器上nslookup ，然后需要弄回原来的机器上一个文件中，复制，然后用nano粘贴格式会乱，直接用echo &quot;&quot; &gt;的方式</p>
+<ul>
+<li>列某个namepsace 下某个service所代表的所有pod的名字</li>
+</ul>
+<p>先kubectl get service看下label 是什么，再kubectl get pod -l 看下面名字，然后需要留的是名字 kubectl get pods &quot;-o=custom-columns=NAME:.metadata.name&quot; 注意最终要的只是名字</p>
+<ul>
+<li>给定一个spec文件，按要求加一个init container 创建某个文件，然后container 发现这个文件在就启动，不再就退出</li>
+</ul>
+<p><a href="https://kubernetes.io/docs/concepts/workloads/pods/init-containers/" target="_blank" rel="external">https://kubernetes.io/docs/concepts/workloads/pods/init-containers/</a></p>
+<p>照着抄就行，结合题目，shell里面写个touch个文件就行</p>
+<ul>
+<li>oo 用下nodeselector</li>
+</ul>
+<p><a href="https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector" target="_blank" rel="external">https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector</a></p>
+<p>这个里面的yaml改改就好</p>
+<ul>
+<li>创建一个符合要求的pv 大小 权限 路径</li>
+</ul>
+<p><a href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-persistent-volume-storage/" target="_blank" rel="external">https://kubernetes.io/docs/tasks/configure-pod-container/configure-persistent-volume-storage/</a></p>
+<p>这个里面的yaml文件，根据考题要求，改成ReadWriteMany ，路径改改就好</p>
+<ul>
+<li>给etcd做个snapshot 3.0 版本 要加环境变量用etcdctl 带证书</li>
+</ul>
+<p>export ETCDCTL_API=3，后面根据etcdctl 命令行的提示看就能弄好</p>
+<ul>
+<li>列不含某个标签的node的数量</li>
+</ul>
+<p>只有3个node，get出来一个个看，不知道命令怎么取非，注意审题，最终文件里面只需要个数量</p>
+<ul>
+<li>创建个带volume带pod，不可以是persistent的</li>
+</ul>
+<p>一开始有点懵，以为要用hostpath什么的</p>
+<p><a href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-volume-storage/" target="_blank" rel="external">https://kubernetes.io/docs/tasks/configure-pod-container/configure-volume-storage/</a></p>
+<p>其实就是这个，创建个带emptyDir的pod就好</p>
+<p>一共24题还有2题我不记得了</p>
 
       
     </div>
@@ -427,7 +481,7 @@ Mozilla将他们的页面速度提升了2.2s，每年多获得了1.6亿下载量
       
         <div class="post-tags">
           
-            <a href="/tags/工作记录/" rel="tag">#工作记录</a>
+            <a href="/tags/k8s/" rel="tag">#k8s</a>
           
         </div>
       
@@ -436,17 +490,13 @@ Mozilla将他们的页面速度提升了2.2s，每年多获得了1.6亿下载量
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/08/15/time-machine-on-samba/" rel="next" title="用Samba把TimeMachine备份在windows服务器上">
-                <i class="fa fa-chevron-left"></i> 用Samba把TimeMachine备份在windows服务器上
+              <a href="/2018/05/25/cka-related/" rel="next" title="kubernetes cka考试认证相关介绍">
+                <i class="fa fa-chevron-left"></i> kubernetes cka考试认证相关介绍
               </a>
             
           </div>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2016/08/21/speed-investigate-and-survey/" rel="prev" title="速度优化相关调研">
-                速度优化相关调研 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -587,7 +637,7 @@ Mozilla将他们的页面速度提升了2.2s，每年多获得了1.6亿下载量
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#undefined"><span class="nav-number">1.</span> <span class="nav-text">为什么要进行速度优化</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#undefined"><span class="nav-number">2.</span> <span class="nav-text">优化的目标是什么</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#undefined"><span class="nav-number">3.</span> <span class="nav-text">面临的挑战是什么</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#undefined"><span class="nav-number">4.</span> <span class="nav-text">速度优化被安排的职责</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#undefined"><span class="nav-number">5.</span> <span class="nav-text">速度优化任务拆解</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#undefined"><span class="nav-number">1.</span> <span class="nav-text">CKA考试题真题详解</span></a></li></ol></div>
             
           </div>
         </section>
@@ -730,9 +780,9 @@ Mozilla将他们的页面速度提升了2.2s，每年多获得了1.6亿下载量
 
     <script type="text/javascript">
       var disqus_shortname = 'tucao';
-      var disqus_identifier = '2016/08/16/speed-kickoff/';
-      var disqus_title = '速度优化起始篇';
-      var disqus_url = 'http://blog.spider.im/2016/08/16/speed-kickoff/';
+      var disqus_identifier = '2018/06/26/cka-exam/';
+      var disqus_title = 'CKA考试题详解';
+      var disqus_url = 'http://blog.spider.im/2018/06/26/cka-exam/';
 
       function run_disqus_script(disqus_script){
         var dsq = document.createElement('script');

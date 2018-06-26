@@ -267,6 +267,158 @@
             
               
                 
+                <a class="post-title-link" href="/2016/08/15/time-machine-on-samba/" itemprop="url">
+                  用Samba把TimeMachine备份在windows服务器上
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-08-15T20:11:18+08:00" content="2016-08-15">
+              2016-08-15
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/mac/" itemprop="url" rel="index">
+                    <span itemprop="name">mac</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/08/15/time-machine-on-samba/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/08/15/time-machine-on-samba/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>Mac的TimeMachine备份只支持AFP协议，所以默认情况下是没有办法备份在windows共享里面的，不过可以曲线救国下，通过备份在磁盘镜像<a href="https://zh.wikipedia.org/wiki/%E7%A8%80%E7%96%8F%E7%A3%81%E7%9B%98%E6%98%A0%E5%83%8F" target="_blank" rel="external">稀疏磁盘</a>的方式，备份在windows上</p>
+<h1>创建磁盘镜像</h1>
+<p>这里要创建的不是常见的DMG镜像，而是稀疏捆绑磁盘镜像<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>，目的是稀疏捆绑磁盘镜像是随着使用占用的空间而逐渐增大，不用一下子就把空间分好了，另外后期也可以动态调整大小，另外还有个分不清的叫稀疏磁盘镜像也可以，不过我选择的是稀疏磁盘捆绑镜像<sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup></p>
+<p>有2种方式来创建稀疏捆绑磁盘镜像</p>
+<ul>
+<li>命令行方式</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> ~</span><br><span class="line">hdiutil create -size 600g -type SPARSEBUNDLE -fs <span class="string">"HFS+J"</span> TimeMachine.sparsebundle</span><br></pre></td></tr></table></figure>
+<ul>
+<li>通过磁盘工具</li>
+</ul>
+<p>打开磁盘工具(spotlight搜下磁盘就出来了)，在文件新建-&gt;新建空白映像里面新建个，需要修改映像格式为稀疏捆绑磁盘映像，大小修改下自己写个数字可以写500gb这种mac会自动识别</p>
+<h1>把磁盘镜像拷贝到网络驱动上</h1>
+<p>打开finder CMD+K smb://你的ip地址，然后把生成的镜像拷贝到你的windows共享中，并且双击下镜像文件mount下</p>
+<h1>把这个镜像设置成你的TimeMachine备份设备</h1>
+<p>开个终端</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo tmutil setdestination /Volumes/TimeMachine</span><br></pre></td></tr></table></figure>
+<p>注意看你的volume目录是不是这个目录，可以cd到volume目录里面查看，替换成自己的</p>
+<h1>设置成开机自动连接</h1>
+<p>通过applescript的方式实现：<br>
+打开脚本编辑器(spotlight 搜applescript)</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">try</span><br><span class="line">	mount volume <span class="string">"smb://readyshare/TimeMachine"</span></span><br><span class="line">end try</span><br><span class="line"></span><br><span class="line"><span class="keyword">do</span> shell script <span class="string">"hdiutil attach -mountpoint /Volumes/TimeMachine/ /Volumes/TimeMachine/TimeMachine.sparsebundle"</span></span><br></pre></td></tr></table></figure>
+<h1>不足之处</h1>
+<p>这种方式不能使用可以恢复到任意时刻的<a href="https://support.apple.com/zh-cn/HT201314" target="_blank" rel="external">OSX的恢复功能</a>，只能先重装个系统，然后mount上镜像，再恢复，当然可以把镜像拷贝到移动硬盘上，插到mac上这样应该也可以使用OSX的恢复功能</p>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p><a href="https://zh.wikipedia.org/wiki/%E7%A8%80%E7%96%8F%E7%A3%81%E7%9B%98%E6%98%A0%E5%83%8F" target="_blank" rel="external">https://zh.wikipedia.org/wiki/稀疏磁盘映像</a> <a href="#fnref1" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn2" class="footnote-item"><p><a href="https://www.v2ex.com/t/240799" target="_blank" rel="external">https://www.v2ex.com/t/240799</a> <a href="#fnref2" class="footnote-backref">↩</a></p>
+</li>
+</ol>
+</section>
+
+          
+        
+      
+    </div>
+    
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2016/08/12/xhprof/" itemprop="url">
                   使用xhprof进行性能分析
                 </a>
@@ -1370,146 +1522,6 @@ USER=root
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2013/05/10/unreadable-codes-with-mail/" itemprop="url">
-                  Mail的乱码问题
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2013-05-10T11:07:00+08:00" content="2013-05-10">
-              2013-05-10
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/mac/" itemprop="url" rel="index">
-                    <span itemprop="name">mac</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2013/05/10/unreadable-codes-with-mail/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2013/05/10/unreadable-codes-with-mail/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>Mail是Mac上的官方邮件客户端</p>
-<p>Mail 的乱码问题是由于发送的邮件是mime格式，outlook/express 等无法正确识别。<br>
-由于mail的默认编码是 utf8，而 outlook 的默认编码是gb2312/gbk，如果 mail 回复邮件则会使用 utf8，<br>
-而当 html 的 charset 和实际编码有出入在 IE 中会无法正确识别。这就是为什么同样用 webmail，在 firefox 下显示正常，而 IE 则乱码。<br>
-虽说是 IE 的问题，但是还是可以解决这个问题的，方法有3:</p>
-<ul>
-<li>使用纯文本方式（ mail 格式里选择制作纯文本）</li>
-<li>在新建邮件或者回复 outlook 类发送的邮件，手工指定编码（在 mail 的邮件－文本编码 选择 utf8 或者简体中文/GBK/GBK18030 等编码 ）</li>
-<li>如果嫌每次如此操作太麻烦，可以修改 mail 的默认值，由于这个选项没有界面可选，我们需要用命令来执行或者直接修改 mail 的 plist 文件：</li>
-</ul>
-<p>退出mail，在终端输入:<br>
-defaults write com.apple.mail NSPreferredMailCharset “GBK”    （最好用这个，其它的各有各的问题）<br>
-或者：<br>
-defaults write com.apple.mail NSPreferredMailCharset &quot;UTF-8&quot;<br>
-defaults write com.apple.mail NSPreferredMailCharset &quot;EUC&quot;<br>
-defaults write com.apple.mail NSPreferredMailCharset “GB18030” 再开启 Mail 收发邮件就正常了。<br>
-要还原的话，输入：<br>
-defaults write com.apple.mail NSPreferredMailCharset “UTF-8”</p>
-<blockquote>
-<p><a href="http://www.son1c.cn/show/1270.html" target="_blank" rel="external">http://www.son1c.cn/show/1270.html</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1555,7 +1567,7 @@ defaults write com.apple.mail NSPreferredMailCharset “UTF-8”</p>
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">31</span>
+              <span class="site-state-item-count">32</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1572,7 +1584,7 @@ defaults write com.apple.mail NSPreferredMailCharset “UTF-8”</p>
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-count">10</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
