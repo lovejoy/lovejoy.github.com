@@ -64,7 +64,7 @@
 <link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="PHP," />
+  <meta name="keywords" content="ubuntu," />
 
 
 
@@ -80,31 +80,34 @@
 
 
 
-<meta name="description" content="XHProf 简介
-XHProf 是一个轻量级的分层性能测量分析器。 可以追踪一个请求程序内部各函数的调用次数，消耗时间以及资源占用等信息，是我们进行性能分析的利器。[1]
-XHProf 安装
-首先要安装个extension xhprof.so 并且配置启用，由于我用的环境默认带了，这里不具体描述
-装完so之后还要down下xhprof的php lib 文件，可以直接
-1git clone htt">
+<meta name="description" content="ubuntu上anyconnect的server实现是openconnect server(ocserv)
+我们只需要简单的
+1sudo apt install ocserv
+再简单的修改下/etc/ocserv/ocserv.conf
+在route部分添加你连接上后需要走vpn的路由就行了
+如果需要全部流量都在vpn 设置成route = 0.0.0.0/0.0.0.0
+比如我只希望公司的网络走">
 <meta property="og:type" content="article">
-<meta property="og:title" content="使用xhprof进行性能分析">
-<meta property="og:url" content="http://blog.spider.im/2016/08/12/xhprof/index.html">
+<meta property="og:title" content="ubuntu18.04上配置anyconnect的server">
+<meta property="og:url" content="http://blog.spider.im/2018/07/23/openconnect-server-config/index.html">
 <meta property="og:site_name" content="吐核|Core Dump">
-<meta property="og:description" content="XHProf 简介
-XHProf 是一个轻量级的分层性能测量分析器。 可以追踪一个请求程序内部各函数的调用次数，消耗时间以及资源占用等信息，是我们进行性能分析的利器。[1]
-XHProf 安装
-首先要安装个extension xhprof.so 并且配置启用，由于我用的环境默认带了，这里不具体描述
-装完so之后还要down下xhprof的php lib 文件，可以直接
-1git clone htt">
-<meta property="og:updated_time" content="2017-08-16T14:29:26.000Z">
+<meta property="og:description" content="ubuntu上anyconnect的server实现是openconnect server(ocserv)
+我们只需要简单的
+1sudo apt install ocserv
+再简单的修改下/etc/ocserv/ocserv.conf
+在route部分添加你连接上后需要走vpn的路由就行了
+如果需要全部流量都在vpn 设置成route = 0.0.0.0/0.0.0.0
+比如我只希望公司的网络走">
+<meta property="og:updated_time" content="2018-07-23T02:33:34.086Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="使用xhprof进行性能分析">
-<meta name="twitter:description" content="XHProf 简介
-XHProf 是一个轻量级的分层性能测量分析器。 可以追踪一个请求程序内部各函数的调用次数，消耗时间以及资源占用等信息，是我们进行性能分析的利器。[1]
-XHProf 安装
-首先要安装个extension xhprof.so 并且配置启用，由于我用的环境默认带了，这里不具体描述
-装完so之后还要down下xhprof的php lib 文件，可以直接
-1git clone htt">
+<meta name="twitter:title" content="ubuntu18.04上配置anyconnect的server">
+<meta name="twitter:description" content="ubuntu上anyconnect的server实现是openconnect server(ocserv)
+我们只需要简单的
+1sudo apt install ocserv
+再简单的修改下/etc/ocserv/ocserv.conf
+在route部分添加你连接上后需要走vpn的路由就行了
+如果需要全部流量都在vpn 设置成route = 0.0.0.0/0.0.0.0
+比如我只希望公司的网络走">
 
 
 
@@ -122,7 +125,7 @@ XHProf 安装
   };
 </script>
 
-  <title> 使用xhprof进行性能分析 | 吐核|Core Dump </title>
+  <title> ubuntu18.04上配置anyconnect的server | 吐核|Core Dump </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -280,7 +283,7 @@ XHProf 安装
             
             
               
-                使用xhprof进行性能分析
+                ubuntu18.04上配置anyconnect的server
               
             
           </h1>
@@ -292,38 +295,19 @@ XHProf 安装
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-08-12T15:18:11+08:00" content="2016-08-12">
-              2016-08-12
+            <time itemprop="dateCreated" datetime="2018-07-23T10:28:38+08:00" content="2018-07-23">
+              2018-07-23
             </time>
           </span>
 
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/性能/" itemprop="url" rel="index">
-                    <span itemprop="name">性能</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
           
 
           
             
               <span class="post-comments-count">
                 &nbsp; | &nbsp;
-                <a href="/2016/08/12/xhprof/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/08/12/xhprof/" itemprop="commentsCount"></span>
+                <a href="/2018/07/23/openconnect-server-config/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2018/07/23/openconnect-server-config/" itemprop="commentsCount"></span>
                 </a>
               </span>
             
@@ -351,48 +335,13 @@ XHProf 安装
       
 
       
-        <h1>XHProf 简介</h1>
-<p>XHProf 是一个轻量级的分层性能测量分析器。 可以追踪一个请求程序内部各函数的调用次数，消耗时间以及资源占用等信息，是我们进行性能分析的利器。<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup></p>
-<h1>XHProf 安装</h1>
-<p>首先要安装个extension <a href="http://xhprof.so" target="_blank" rel="external">xhprof.so</a> 并且配置启用，由于我用的环境默认带了，这里不具体描述</p>
-<p>装完so之后还要down下xhprof的php lib 文件，可以直接</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/phacility/xhprof.git</span><br></pre></td></tr></table></figure>
-<p>把这个目录丢到webroot里面(便于之后访问分析结果文件)或者其他地方都行</p>
-<h1>XHProf 使用</h1>
-<p>主要是在需要进行性能分析的地方 include xhprof的代码，enable 然后disable下，记录下调用情况；AP程序可以残暴点 直接写在index.php 里面，具体示例代码如下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">xhprof_enable(XHPROF_FLAGS_CPU + XHPROF_FLAGS_MEMORY);</span><br><span class="line">//your code</span><br><span class="line">//$objResponse = $objApplication-&gt;bootstrap()-&gt;run();</span><br><span class="line">$data = xhprof_disable(); //返回运行数据</span><br><span class="line"></span><br><span class="line">// xhprof_lib在下载的包里存在这个目录,记得将目录包含到运行的php代码中</span><br><span class="line">$XHPROF_ROOT = __DIR__ . &apos;/../vendor/facebook/xhprof/&apos;; //设置成自己的地址</span><br><span class="line">include_once $XHPROF_ROOT . &apos;/xhprof_lib/utils/xhprof_lib.php&apos;;</span><br><span class="line">include_once $XHPROF_ROOT . &apos;/xhprof_lib/utils/xhprof_runs.php&apos;;</span><br><span class="line">$objXhprofRun = new XHProfRuns_Default();</span><br><span class="line">// 第一个参数j是xhprof_disable()函数返回的运行信息</span><br><span class="line">// 第二个参数是自定义的命名空间字符串(任意字符串),</span><br><span class="line">// 返回运行ID,用这个ID查看相关的运行结果</span><br><span class="line">$run_id = $objXhprofRun-&gt;save_run($data, &quot;xhprof&quot;);</span><br><span class="line">//var_dump($run_id);</span><br><span class="line">echo &quot;http://localhost/xhprof/xhprof_html/index.php?run=&#123;$run_id&#125;&amp;source=xhprof_testing\n&quot;</span><br></pre></td></tr></table></figure>
-<h1>XHProf结果分析</h1>
-<p>直接在浏览器里面打开xhprof_html的页面，如果不是用web服务器配置的话，可以简单点直接在xhprof 同层目录里面 php -S 0.0.0.0:8888 然后访问 <a href="http://hostname:8888/xhprof/xhprof_html/" target="_blank" rel="external">http://hostname:8888/xhprof/xhprof_html/</a></p>
-<p>下面是页面中各字段解释：<br>
-我主要用于速度调忧，所以看的比较多的是前几个，调用次数 消耗时间等另外可以看看生成的graph 函数的调用逻辑以及消耗时间，帮助定位问题</p>
-<blockquote><p>Function Name 函数名<br>
-Calls 调用次数<br>
-Calls% 调用百分比<br>
-Incl. Wall Time (microsec) 调用的包括子函数所有花费时间 以微秒算(一百万分之一秒)<br>
-IWall% 调用的包括子函数所有花费时间的百分比<br>
-Excl. Wall Time (microsec) 函数执行本身花费的时间，不包括子树执行时间,以微秒算(一百万分之一秒)<br>
-EWall% 函数执行本身花费的时间的百分比，不包括子树执行时间<br>
-Incl. CPU(microsecs) 调用的包括子函数所有花费的cpu时间。减Incl. Wall Time即为等待cpu的时间<br>
-减Excl. Wall Time即为等待cpu的时间<br>
-ICpu% Incl. CPU(microsecs)的百分比<br>
-Excl. CPU(microsec) 函数执行本身花费的cpu时间，不包括子树执行时间,以微秒算(一百万分之一秒)。<br>
-ECPU% Excl. CPU(microsec)的百分比<br>
-Incl.MemUse(bytes) 包括子函数执行使用的内存。<br>
-IMemUse% Incl.MemUse(bytes)的百分比<br>
-Excl.MemUse(bytes) 函数执行本身内存,以字节算<br>
-EMemUse% Excl.MemUse(bytes)的百分比<br>
-Incl.PeakMemUse(bytes) Incl.MemUse的峰值<br>
-IPeakMemUse% Incl.PeakMemUse(bytes) 的峰值百分比<br>
-Excl.PeakMemUse(bytes) Excl.MemUse的峰值<br>
-EPeakMemUse% EMemUse% 峰值百分比</p>
-</blockquote>
-<hr class="footnotes-sep">
-<section class="footnotes">
-<ol class="footnotes-list">
-<li id="fn1" class="footnote-item"><p>具体介绍见 <a href="http://php.net/manual/zh/book.xhprof.php" target="_blank" rel="external">PHP官方文档</a> <a href="#fnref1" class="footnote-backref">↩</a></p>
-</li>
-</ol>
-</section>
+        <p>ubuntu上anyconnect的server实现是openconnect server(ocserv)</p>
+<p>我们只需要简单的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install ocserv</span><br></pre></td></tr></table></figure>
+<p>再简单的修改下/etc/ocserv/ocserv.conf<br>
+在route部分添加你连接上后需要走vpn的路由就行了<br>
+如果需要全部流量都在vpn 设置成route = 0.0.0.0/0.0.0.0</p>
+<p>比如我只希望公司的网络走vpn 设置成route = 10.0.0.0/255.0.0.0</p>
 
       
     </div>
@@ -413,7 +362,7 @@ EPeakMemUse% EMemUse% 峰值百分比</p>
       
         <div class="post-tags">
           
-            <a href="/tags/PHP/" rel="tag">#PHP</a>
+            <a href="/tags/ubuntu/" rel="tag">#ubuntu</a>
           
         </div>
       
@@ -422,17 +371,13 @@ EPeakMemUse% EMemUse% 峰值百分比</p>
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/04/27/install-hexo/" rel="next" title="安装hexo">
-                <i class="fa fa-chevron-left"></i> 安装hexo
+              <a href="/2018/06/29/tensorflow-on-kubeflow/" rel="next" title="tensorflow-on-kubeflow">
+                <i class="fa fa-chevron-left"></i> tensorflow-on-kubeflow
               </a>
             
           </div>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2016/08/15/time-machine-on-samba/" rel="prev" title="用Samba把TimeMachine备份在windows服务器上">
-                用Samba把TimeMachine备份在windows服务器上 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -573,7 +518,7 @@ EPeakMemUse% EMemUse% 峰值百分比</p>
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#undefined"><span class="nav-number">1.</span> <span class="nav-text">XHProf 简介</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#undefined"><span class="nav-number">2.</span> <span class="nav-text">XHProf 安装</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#undefined"><span class="nav-number">3.</span> <span class="nav-text">XHProf 使用</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#undefined"><span class="nav-number">4.</span> <span class="nav-text">XHProf结果分析</span></a></li></ol></div>
+              <p class="post-toc-empty">此文章未包含目录</p>
             
           </div>
         </section>
@@ -716,9 +661,9 @@ EPeakMemUse% EMemUse% 峰值百分比</p>
 
     <script type="text/javascript">
       var disqus_shortname = 'tucao';
-      var disqus_identifier = '2016/08/12/xhprof/';
-      var disqus_title = '使用xhprof进行性能分析';
-      var disqus_url = 'http://blog.spider.im/2016/08/12/xhprof/';
+      var disqus_identifier = '2018/07/23/openconnect-server-config/';
+      var disqus_title = 'ubuntu18.04上配置anyconnect的server';
+      var disqus_url = 'http://blog.spider.im/2018/07/23/openconnect-server-config/';
 
       function run_disqus_script(disqus_script){
         var dsq = document.createElement('script');

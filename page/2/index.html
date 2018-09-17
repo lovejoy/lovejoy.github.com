@@ -267,6 +267,381 @@
             
               
                 
+                <a class="post-title-link" href="/2016/08/21/speed-investigate-and-survey/" itemprop="url">
+                  速度优化相关调研
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-08-21T18:53:12+08:00" content="2016-08-21">
+              2016-08-21
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/speed/" itemprop="url" rel="index">
+                    <span itemprop="name">speed</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/08/21/speed-investigate-and-survey/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/08/21/speed-investigate-and-survey/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>主要记录下速度优化相关的调研</p>
+<h1>速度指标定义与监控方案</h1>
+<h2 id="速度指标定义"><a class="header-anchor" href="#速度指标定义">¶</a>速度指标定义</h2>
+<p>如上文所述，做速度优化，需要给速度进行量化定义</p>
+<p>调研了下速度指标的定义方式</p>
+<ol>
+<li>网页类产品：比如搜索，其实相对比较简单只有2个页面：首页、结果页，速度指标都是以首屏时间80分位来定义，这个首屏时间指核心DOM加载时间，比如搜索结果页就是网页中部，不包含右边和最底下推荐的搜索结果主体部分，而不是指占满整个屏幕的时间；但是移动端又不一样，移动端由于屏幕大小的限制以及操作方式，整个屏幕都是正文，这个首屏时间又变成了真正的首屏时间，就是占据屏幕的时间，不过一般打点都会往下打，防止用户快速下滑，这个</li>
+<li>端上产品：端上情况比较复杂</li>
+</ol>
+<ul>
+<li>第一种 其实还是网页，比如京东和美团不少页面<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>，定义方法类似1</li>
+<li>第二种 是个网页但又不仅仅是个网页，这种主要是通过JS来调用APP本身的能力来进行渲染展现，可以理解成是个本地的网页，然后后端主要是输出接口</li>
+<li>第三种 完全是Native实现</li>
+</ul>
+<p>上面第二种和第三种大体还是类似于网页但是又不太是，还依赖端的一些能力，所以端本身也要消耗一些时间</p>
+<p>理想的速度指标应该反映出用户的浏览速度体验，我看到有一个指标很不错，叫做用户可操作时间，最终还是需要结合业务进行制定。</p>
+<h2 id="监控方案"><a class="header-anchor" href="#监控方案">¶</a>监控方案</h2>
+<p>网页类的产品监控方式2种</p>
+<ol>
+<li>多地采集点进行页面性能监控，早年这个东西做的最好的是基调网络（主要是采集点多）后来出现不少此类产品，监控宝、各种云（阿里云 百度BCE）里面都自带类似工具；不过这个方案其实只适合做网站可用性监控，页面性能监控基本被淘汰了，毕竟一方面配置的页面不可能太全，覆盖面有限，另外一方面这种东西实现方式不一，很多前端优化在这个上面体现不出来。</li>
+<li>网页自身JS打点，把所有需要的信息带在参数里面去访问一个空图片，然后后端统计日志，计算出来，再做个展示的平台，这个虽然看上去要做的事情比用现成的方案多，但是这个基本是目前的主流，另外百度内部也有现成的做好的平台，直接引用JS再设置下就行，另外JS打点的逻辑也值得说下，见脚注<sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup></li>
+</ol>
+<p>APP类的产品监控方式也有2种</p>
+<ol>
+<li>类似上面网页监控方式的1，代表产品是听云、博瑞、oneAPM等，和网页监控的区别就是这个是走的移动网络的监控点，可能是一堆手机在那监控。。。这个事情其实类似上面的问题，做过的基本都是以失败告终，意义实在不大，不是说APM意义不大，APM是另外一个概念，是在APP里面嵌入SDK</li>
+<li>客户端日志回传，自己的东西还是自己清楚，利用客户端本身的能力去记录</li>
+</ol>
+<h1>速度优化方案</h1>
+<p>看到的一些常见的速度优化方案，这里聚合罗列下，冒号后面是我的理解和解释</p>
+<h2 id="基础网络"><a class="header-anchor" href="#基础网络">¶</a>基础网络</h2>
+<ol>
+<li>全国多接入点：移动网络下，网络传输时间占据了相当大的一个比例，所以接入点越多离用户越近速度越快，这里要具体分析下自己业务的用户群体以及网络情况</li>
+<li>BGP接入：由于跨运营商的问题，对于移动应用，3大运营商接入点必须有，否则会出现各种奇怪的现象（移动会对跨网流量随机丢包）</li>
+<li>动态代理加速？</li>
+</ol>
+<h2 id="基础层协议参数"><a class="header-anchor" href="#基础层协议参数">¶</a>基础层协议参数</h2>
+<ol>
+<li>优化拥塞窗口</li>
+<li>TFO TLP</li>
+<li>长连接</li>
+<li>Chunked：http 流式异步传输协议；服务端收到请求后分段返回，浏览器立即渲染。</li>
+</ol>
+<h2 id="应用层协议"><a class="header-anchor" href="#应用层协议">¶</a>应用层协议</h2>
+<ol>
+<li>Head压缩：这里指发送请求的头部大小，有实验证明发送请求的头部大小会强烈影响首字节，基本结论是在1000字节以下，请求时间随头部大小增加变化明显，在1000字节之上，呈缓慢的上升趋势，后续详细实验下</li>
+<li>HttpDns IP方式访问后端 : 这个腾讯写的一个<a href="http://mp.weixin.qq.com/s?__biz=MzA3ODgyNzcwMw==&amp;mid=201837080&amp;idx=1&amp;sn=b2a152b84df1c7dbd294ea66037cf262&amp;scene=2&amp;from=timeline&amp;isappinstalled=0" target="_blank" rel="external">文章</a>介绍的比较详细，DNSPOD也有现成的<a href="https://www.dnspod.cn/httpdns/guide" target="_blank" rel="external">产品</a>。百度看资料实际很早之前也有了，然而又是秘而不发。最早可能是为了防止DNS劫持，不过也可以用来提速，把DNS解析时间干掉，实现成端预请求获得所有APP要访问的域名和IP列表，请求都走IP（不过这个可能有限制，可能需要全部改成POST请求，不然依赖域名的接入服务，就没有办法路由请求了)</li>
+<li>Spdy Quic：Spdy是HTTPS的多路复用，介绍HTTPS握手时间（考虑到我们已经全部是HTTPS了） QUIC是用UDP承载HTTPS的流量，不过这些都处于调研阶段，需要端上配合，服务端使用也不是太普遍，没看到内部实践例子，可能比较难实践</li>
+</ol>
+<h2 id="前端页面优化"><a class="header-anchor" href="#前端页面优化">¶</a>前端页面优化</h2>
+<ol>
+<li>理想页面布局：css前置，js后置尾部，html的js回调</li>
+<li>理想页面内容：gzip 压缩页面size，减少js，减少图片数和size。</li>
+<li>DNS预解析：和HttpDns目的类似，干掉DNS解析时间，毕竟移动网络DNS解析要几十ms呢</li>
+<li>资源预测加载：提前加载图片资源，图片预取，资源预取</li>
+<li>页面分块加载：这个我们用不到，指PC网页的，移动网页没有那么多块，顶多是把首屏下面的分块加载</li>
+<li>异步化：这个提醒在搜索引擎上就是instant search，具体可以google 谷歌的实现</li>
+</ol>
+<h2 id="服务端优化"><a class="header-anchor" href="#服务端优化">¶</a>服务端优化</h2>
+<h3 id="服务端前端"><a class="header-anchor" href="#服务端前端">¶</a>服务端前端</h3>
+<ol>
+<li>并行渲染：不懂，应该是smarty相关的，我们都是接口不出页面用不到</li>
+<li>HHVM：HHVM方案已经比较成熟了，对于CPU和速度都有很显著的提升，这个是在多个产品上有过证明的，当然HHVM本身会代理一些兼容性问题，可能需要修改PHP代码</li>
+<li>调度串行改并行：服务端前端基本是调用一堆后端，PHP程序员的思维基本是串行写逻辑，这个需要改下，把所有请求改成并行的，建议是先并行请求需要的数据，然后根据返回的数据在串行写自己的逻辑，可能会导致代码的可读性变差些，就看怎么实现的优雅点了。</li>
+<li>图片压缩 Base64编码：移动端不需要过大的图，毕竟屏幕大小在那，而且很多图根本不会让用户放大了看，所以适当的压缩下图片大小，可以结合用户的网络制式和屏幕大小来动态调整，至于不是外链的图，自己产生的图可以直接base64返回，不变的图，前端直接放在前端代码里。</li>
+<li>慢速识别，简版展现：这个之前管过，叫做速度适配，基本思路是根据用户的网络情况，展现不一样的网页，慢速的展现简版的网页，快速的展现元素多比较炫的网页，不过我们是服务端是不渲染HTML的，都是前端渲染的，而且这个得跟PM和UE聊聊，不一定同意。</li>
+</ol>
+<h3 id="服务端后端"><a class="header-anchor" href="#服务端后端">¶</a>服务端后端</h3>
+<ol>
+<li>全局全机房Cache：全机房统一全局Cache可以明显提升命中率，但是也有稳定性风险，异常就没有备份了</li>
+<li>预充Cache：预充预取是移动端提速2大法宝，先模拟用户访问，预充下Cache，真正用户访问时就已经在Cache里面了</li>
+<li>并行计算</li>
+</ol>
+<h2 id="预取架构"><a class="header-anchor" href="#预取架构">¶</a>预取架构</h2>
+<p>这个有一套大的架构，并且有很多有趣的策略，不过都是很个性化的，这里不方便说，主要方法是提前把用户可能要访问的东西请求回来，用户真正点的时候直接加载了</p>
+<p>这个网页通过JS就可以弄，但是App里面还依赖App本身，感觉我们App的实现不一定能搞预取的事情。</p>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p>区别1和2最好的判断方式是在移动访问下查看页面有没有被插入运营商的流量球。。。经常看到京东和美团的APP内部被插入运营商流量球，感觉好low，即是个网页还没有HTTPS <a href="#fnref1" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn2" class="footnote-item"><p>要监控的数据: 白屏时间、首屏时间、用户可操作时间、Timing API数据（DNS TCP连接 首字节 传输完成 domComplete loadEventEnd) 白屏时间监控放在head底部（因为浏览器只有加载并解析完头部才会真正开始渲染页面,可以通过这个来监控白屏时间)，首屏时间（放在HTML代码渲染时，浏览器上首屏末尾处DOM元素所在的代码位置处，会计算首屏内图片加载的耗时当成首屏时间），用户可操作时间（在domready的地方标记） <a href="#fnref2" class="footnote-backref">↩</a></p>
+</li>
+</ol>
+</section>
+
+          
+        
+      
+    </div>
+    
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/08/16/speed-kickoff/" itemprop="url">
+                  速度优化起始篇
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-08-16T10:58:39+08:00" content="2016-08-16">
+              2016-08-16
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/speed/" itemprop="url" rel="index">
+                    <span itemprop="name">speed</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/08/16/speed-kickoff/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/08/16/speed-kickoff/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>随着业务的发展，终于要开始搞速度优化了，很久之前以运维的身份参与过一定时间的速度优化项目，现在以研发的身份再参与一次，体会下不同的角度不同的方法</p>
+<h1>为什么要进行速度优化</h1>
+<ul>
+<li>Amazon每增加100ms 收入下降1%;</li>
+<li>Yahoo每降低400ms的加载时间，他们的访问量就提升9%</li>
+<li>Mozilla将他们的页面速度提升了2.2s，每年多获得了1.6亿下载量</li>
+<li>搜索首屏时间每增加300ms 无点击比例上升1%</li>
+</ul>
+<p>一般情况下认为移动端用户对访问速度的比PC端高，但是也有界限<br>
+用户体验：&lt;2s，响应快；2<sub>5s，还可以；5</sub>8s，慢，还可以接受；&gt;8s，流失</p>
+<p>总结下就是</p>
+<ol>
+<li>用户访问速度对用户体验至关重要</li>
+<li>用户访问速度快慢影响收入</li>
+</ol>
+<h1>优化的目标是什么</h1>
+<p>对于PC产品速度指标以1s为界限，移动端产品速度如上所述至少在2s内，最好能在1.5s内，能达到1s内就是完美</p>
+<pre><code>这里指的时间都是按80分位值计算
+</code></pre>
+<h1>面临的挑战是什么</h1>
+<ul>
+<li>移动网络复杂不稳定的网络情况会带来很多不可控因素</li>
+<li>业务早期粗放的发展模式积累了大量性能低下的代码</li>
+<li>投入人力有限运维配合程度低，能获取到系统资源有限</li>
+</ul>
+<h1>速度优化被安排的职责</h1>
+<ol>
+<li>负责团队用户可见组件(及其依赖)的性能评判</li>
+<li>负责性能优化方案的调研和制定，并逐步在实践中形成一些 <strong>设计和开发规范</strong></li>
+<li>负责定期CR线上服务代码，及时发现可优化的代码段，并发起优化流程直至优化完成</li>
+<li>参与核心模块和所有C端模块的设计评审，发现问题并给出指导意见</li>
+<li>组织定期的学习和分享(每个Q一次，在评判结果announce之后），提升整个团队的性能优化能力</li>
+<li>配合QA制定性能测试方案，根据测试结果提出优化方案，并跟进到底直至落地到线上</li>
+<li>带领所有同学养成看性能数据的日常习惯，根据服务性能的各项指标及早的发现和解决问题，避免问题放大</li>
+</ol>
+<p>杂七杂八的事情不少呵呵。</p>
+<h1>速度优化任务拆解</h1>
+<p>全盘摸底，只知道慢，有多慢，慢在什么环节，要尽快分析下，并且建立速度的监控体系，速度性能要直观可见，速度优化结果要有理可依，TODO：</p>
+<ul>
+<li>指定性能评判标准</li>
+<li>建立速度指标监控</li>
+<li>对目前问题作出详尽的分析</li>
+</ul>
+<p>快速调研下各种优化方案，这个公司内部做过的太多了，各种前后端方案能快速迁移的方案就快速迁移，TODO：</p>
+<ul>
+<li>公司内外速度优化方案调研</li>
+</ul>
+<p>流程规范下，之前更多的关注的是业务层面的事情，性能问题除非异常恶劣，研发测试都很少关注，要改变下流程和制度:</p>
+<ul>
+<li>梳理前后端重要页面接口，QA加入性能测试</li>
+<li>系统设计过评审</li>
+</ul>
+<p>起始篇到此为止，后续记录具体的工作</p>
+
+          
+        
+      
+    </div>
+    
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2016/08/15/time-machine-on-samba/" itemprop="url">
                   用Samba把TimeMachine备份在windows服务器上
                 </a>
@@ -1248,280 +1623,6 @@ zeromq 比较简单，直接编译安装就好了</p>
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2013/05/19/mldonkey-on-raspberry/" itemprop="url">
-                  在raspberry上使用mldonkey同时解决移动磁盘权限的问题
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2013-05-19T00:18:00+08:00" content="2013-05-19">
-              2013-05-19
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/rpi/" itemprop="url" rel="index">
-                    <span itemprop="name">rpi</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2013/05/19/mldonkey-on-raspberry/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2013/05/19/mldonkey-on-raspberry/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>在树莓派上用mldonkey本来应该是一件很简单的事情，但是用上外挂硬盘之后，就各种蛋疼的问题了。<br>
-首先安装</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install mldonkey</span><br></pre></td></tr></table></figure>
-<p>安装完成之后修改配置文件</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /var/lib/mldonkey/downloads.ini</span><br><span class="line">修改allowed_ips为0.0.0.0/0</span><br><span class="line">然后自己看情况修改下载目录</span><br><span class="line">shared_directories</span><br></pre></td></tr></table></figure>
-<p>正常这样访问raspberry pi 的4080端口就可以看到mldonkey的web界面，可以使用了。<br>
-但是我的移动硬盘的分区是fat32格式的，mldonkey就没有权限写文件了，这点可以通过</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ps -ef |grep mlnet</span><br><span class="line">sudo cat /etc/passwd</span><br></pre></td></tr></table></figure>
-<p>看出来,有一个uid为109,名为mldonkey的用户,然后mldonkey会以这个用户启动，WTF</p>
-<p>照着之前处理transmission时的经验，尝试将mldonkey的进程以root用户执行，仔细读一下/etc/init.d/mldonkey-server同时观察/var/log/mldonkey/mlnet.log的日志就可以发现，用户的指定在<br>
-/etc/default/mldonkey-server文件<br>
-所以更改下mldonkey的启动账户</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /etc/default/mldonkey</span><br><span class="line">将原来的3个字段改成下面这样</span><br><span class="line">MLDONKEY_DIR=/root/.mldonkey</span><br><span class="line">MLDONKEY_USER=root</span><br><span class="line">MLDONKEY_GROUP=root</span><br></pre></td></tr></table></figure>
-<p>然后把默认的配置文件移动到root帐号的home目录下</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">sudo cp -r /var/lib/mldonkey /root/.mldonkey/</span><br><span class="line">``` </span><br><span class="line">这样就可以正常使用啦</span><br><span class="line">``` bash</span><br><span class="line">sudo service mldonkey-server restart</span><br></pre></td></tr></table></figure>
-<p>如果你不需要外挂磁盘的话就不需要这样玩</p>
-
-          
-        
-      
-    </div>
-    
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2013/05/18/transmission-on-raspberry/" itemprop="url">
-                  在raspberry pi上使用transmission
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2013-05-18T20:07:00+08:00" content="2013-05-18">
-              2013-05-18
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/rpi/" itemprop="url" rel="index">
-                    <span itemprop="name">rpi</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2013/05/18/transmission-on-raspberry/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2013/05/18/transmission-on-raspberry/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>先安装transmission-daemon<br>
-sudo apt-get install transmission-daemon</p>
-<p>默认会自己启动，为了改配置文件，需要先手动关闭服务</p>
-<pre><code>sudo service transmission-daemon stop
-</code></pre>
-<p>然后更改在/etc/transmission-daemon/ 下的配置文件settings.json</p>
-<p>有几个地方需要改，下载目录download-dir改为你自己的下载目录,port-forwarding-enabled改为true,这个<br>
-是控制upnp的，开了端口才能有用（找了半天才找到这个问题，默认居然是关闭的），还有rpc-username，rpc-password<br>
-自己看着改一下，是登录web界面的用户名密码，另外rpc-whitelist-enabled改为false，不然外网无法访问web界面<br>
-另外在树莓派上使用外接硬盘或者U盘，作为下载目录的，碰到Permission denied 的时候，需要改下transmission的启动脚本</p>
-<pre><code>sudo vim /etc/init.d/transmission-daemon
-把
-USER=debian-transmission
-改为
-USER=root
-</code></pre>
-<p>这也是个坑爹的地方，transmission原来的下载目录是/var/lib/transmission-daemon 这下面的目录的用户是debian-transmission的<br>
-(搞不懂干嘛弄个专门给transmission用的用户),但是又不方便在外挂硬盘上chown改变目录的用户权限，改不了，还有能改的话，别的软件又会出问题。</p>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2013/05/18/transmission-on-raspberry/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-    
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1567,7 +1668,7 @@ USER=root
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">32</span>
+              <span class="site-state-item-count">34</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1584,7 +1685,7 @@ USER=root
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">10</span>
+                <span class="site-state-item-count">11</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
