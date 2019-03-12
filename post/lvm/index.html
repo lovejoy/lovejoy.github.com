@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.lug.ustc.edu.cn/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=6.6.0" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.6.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.6.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.6.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.6.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '6.6.0',
+    sidebar: {"position":"right","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="LVM基础知识LVM现在用的还是挺多的，每次看每次每次忘，还是记录下吧 LVM3个概念，PV，VG，LV 递进式的，一层层往上  如图所示:  PV可以创建在一块硬盘 pvcreate /dev/sdb 或者一个分区上 pvcreate /dev/sdb1  VG创建在PV之上,VG可以跨多个PV创建 vgcreate docker /dev/sdb /dev/sdc LV创建在VG之中，LV不可">
+<meta name="keywords" content="k8s,devops">
+<meta property="og:type" content="article">
+<meta property="og:title" content="lvm相关知识以及与docker配合使用记录">
+<meta property="og:url" content="https://blog.spider.im/post/lvm/index.html">
+<meta property="og:site_name" content="吐核|Core Dump">
+<meta property="og:description" content="LVM基础知识LVM现在用的还是挺多的，每次看每次每次忘，还是记录下吧 LVM3个概念，PV，VG，LV 递进式的，一层层往上  如图所示:  PV可以创建在一块硬盘 pvcreate /dev/sdb 或者一个分区上 pvcreate /dev/sdb1  VG创建在PV之上,VG可以跨多个PV创建 vgcreate docker /dev/sdb /dev/sdc LV创建在VG之中，LV不可">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://img.linux.net.cn/data/attachment/album/201406/18/134408sa12dauefffyszfg.jpg">
+<meta property="og:updated_time" content="2019-03-11T13:50:15.233Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="lvm相关知识以及与docker配合使用记录">
+<meta name="twitter:description" content="LVM基础知识LVM现在用的还是挺多的，每次看每次每次忘，还是记录下吧 LVM3个概念，PV，VG，LV 递进式的，一层层往上  如图所示:  PV可以创建在一块硬盘 pvcreate /dev/sdb 或者一个分区上 pvcreate /dev/sdb1  VG创建在PV之上,VG可以跨多个PV创建 vgcreate docker /dev/sdb /dev/sdc LV创建在VG之中，LV不可">
+<meta name="twitter:image" content="https://img.linux.net.cn/data/attachment/album/201406/18/134408sa12dauefffyszfg.jpg">
+
+
+
+
+
+
+  <link rel="canonical" href="https://blog.spider.im/post/lvm/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>lvm相关知识以及与docker配合使用记录 | 吐核|Core Dump</title>
+  
+
+
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-36548399-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-36548399-1');
+</script>
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion .logo-line-before i { left: initial; }
+    .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">吐核|Core Dump</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+      
+        <p class="site-subtitle">笔记 随想 吐槽</p>
+      
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/lvm/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="lovejoy">
+      <meta itemprop="description" content="今天不开心">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吐核|Core Dump">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">lvm相关知识以及与docker配合使用记录
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-12-28 14:41:48" itemprop="dateCreated datePublished" datetime="2018-12-28T14:41:48+08:00">2018-12-28</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-03-11 21:50:15" itemprop="dateModified" datetime="2019-03-11T21:50:15+08:00">2019-03-11</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="LVM基础知识"><a href="#LVM基础知识" class="headerlink" title="LVM基础知识"></a>LVM基础知识</h2><p>LVM现在用的还是挺多的，每次看每次每次忘，还是记录下吧</p>
+<p>LVM3个概念，PV，VG，LV 递进式的，一层层往上</p>
+<p><img src="https://img.linux.net.cn/data/attachment/album/201406/18/134408sa12dauefffyszfg.jpg" alt="LVM"></p>
+<p>如图所示:</p>
+<ol>
+<li>PV可以创建在一块硬盘 pvcreate /dev/sdb 或者一个分区上 pvcreate /dev/sdb1 </li>
+<li>VG创建在PV之上,VG可以跨多个PV创建 vgcreate docker /dev/sdb /dev/sdc</li>
+<li>LV创建在VG之中，LV不可以跨VG, lvcreate -L ${SIZE} -n ${VOLUMEID} ${VG} ,可以-L指定大小创建，也可以lvcreate –wipesignatures y -n thinpool docker -l 95%VG 按百分比的方式创建</li>
+</ol>
+<p>日常命令：<br>pvs,vgs,lvs 一类命令，我一般用来看空间大小以及还剩空间<br>vgs可以看到剩余的空间，表示lv分不出去了就占了那么大，不能超卖<br>vgdisplay docker –units g | grep ‘VG Size’ | awk ‘{print $3}’ | cut -d. -f1 看docker这个vg的大小</p>
+<a id="more"></a>
+<h2 id="和docker的结合使用"><a href="#和docker的结合使用" class="headerlink" title="和docker的结合使用"></a>和docker的结合使用</h2><h3 id="参照docker官方文档设置dircet模式的lvm"><a href="#参照docker官方文档设置dircet模式的lvm" class="headerlink" title="参照docker官方文档设置dircet模式的lvm"></a><a href="https://docs.docker.com/storage/storagedriver/device-mapper-driver/#configure-direct-lvm-mode-for-production" target="_blank" rel="noopener">参照docker官方文档设置dircet模式的lvm</a></h3><ol>
+<li><p>创建2个lv分别用95%，1%的vg的空间</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#lvcreate --wipesignatures y -n thinpool docker -l 95%VG</span></span><br><span class="line">WARNING: ext4 signature detected on /dev/docker/thinpool at offset 1080. Wipe it? [y/n]: y</span><br><span class="line">  Wiping ext4 signature on /dev/docker/thinpool.</span><br><span class="line">  Logical volume <span class="string">"thinpool"</span> created.</span><br><span class="line"><span class="comment">#lvcreate --wipesignatures y -n thinpoolmeta docker -l 1%VG</span></span><br><span class="line">  Logical volume <span class="string">"thinpoolmeta"</span> created</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>查看一下lv</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># lvs</span></span><br><span class="line">  LV           VG     Attr       LSize  Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert</span><br><span class="line">  thinpool     docker -wi<span class="_">-a</span>-----  6.45t</span><br><span class="line">  thinpoolmeta docker -wi<span class="_">-a</span>----- 69.54g</span><br><span class="line">查看一下vg，可以看到还有空余订单4%空间</span><br><span class="line"><span class="comment"># vgs</span></span><br><span class="line">  VG     <span class="comment">#PV #LV #SN Attr   VSize VFree</span></span><br><span class="line">  docker   1   2   0 wz--n- 6.79t 278.19g</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>将这2个lv转变成thinpool</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#lvconvert -y --zero n -c 512K --thinpool docker/thinpool --poolmetadata docker/thinpoolmeta</span></span><br><span class="line"><span class="comment">#lvs</span></span><br><span class="line">  LV       VG     Attr       LSize Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert</span><br><span class="line">  thinpool docker twi<span class="_">-a</span>-t--- 6.45t             0.00   0.03</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>设置让这2个thinpool可以自动extend，以下的意思是当空间用到80%时，自动扩容20%</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#cat &gt; /etc/lvm/profile/docker-thinpool.profile &lt;&lt; EOF</span></span><br><span class="line">activation &#123; </span><br><span class="line">thin_pool_autoextend_threshold=80</span><br><span class="line">thin_pool_autoextend_percent=20</span><br><span class="line">&#125;</span><br><span class="line">EOF</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>生效配置</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#lvchange --metadataprofile docker-thinpool docker/thinpool</span></span><br><span class="line">  Logical volume <span class="string">"thinpool"</span> changed</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>启用监控模式才能真正有用，否则也不会autoextend 可以看到多了最后一列</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#lvs -o+seg_monitor</span></span><br><span class="line">  LV       VG     Attr       LSize Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert Monitor</span><br><span class="line">  thinpool docker twi<span class="_">-a</span>-t--- 6.45t             0.00   0.03                             monitored</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>把以下内容丢到/etc/docker/deamon.json中和你原来的配置结合起来，没有这个文件就新建(注意此处我用的docker版本是17.04.有几个参数和官方推荐不一样) 官方配置见<a href="https://docs.docker.com/storage/storagedriver/device-mapper-driver/#configure-direct-lvm-mode-for-production" target="_blank" rel="noopener">这里</a></p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"storage-driver"</span>: <span class="string">"devicemapper"</span>,</span><br><span class="line">    <span class="attr">"storage-opts"</span>: [</span><br><span class="line">    <span class="string">"dm.thinpooldev=/dev/mapper/docker-thinpool"</span>,</span><br><span class="line">    <span class="string">"dm.use_deferred_removal=false"</span>,</span><br><span class="line">    <span class="string">"dm.override_udev_sync_check=true"</span>,</span><br><span class="line">    <span class="string">"dm.use_deferred_deletion=false"</span></span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>重启docker docker info查看确认结果</p>
+<pre><code class="bash"> <span class="comment">#docker info</span>
+Containers: 0
+Running: 0
+Paused: 0
+Stopped: 0
+Images: 1
+Server Version: 17.04.0-ce
+Storage Driver: devicemapper
+Pool Name: docker-thinpool
+Pool Blocksize: 524.3kB
+Base Device Size: 10.74GB
+Backing Filesystem: xfs
+Data file:
+Metadata file:
+Data Space Used: 210.2MB
+Data Space Total: 7.094TB
+Data Space Available: 7.094TB
+Metadata Space Used: 4.542MB
+Metadata Space Total: 16.98GB
+Metadata Space Available: 16.97GB
+Thin Pool Minimum Free Space: 709.4GB
+Udev Sync Supported: <span class="literal">false</span>
+Deferred Removal Enabled: <span class="literal">false</span>
+Deferred Deletion Enabled: <span class="literal">false</span>
+Deferred Deleted Device Count: 0
+<span class="comment">#可以看到多了很多东西，原来是</span>
+<span class="comment"># docker info</span>
+Containers: 20
+Running: 0
+Paused: 0
+Stopped: 20
+Images: 23
+Server Version: 17.04.0-ce
+Storage Driver: overlay
+Backing Filesystem: xfs
+Supports d_type: <span class="literal">false</span>
+Logging Driver: json-file
+Cgroup Driver: cgroupfs
+Plugins:
+Volume: <span class="built_in">local</span>
+Network: bridge host macvlan null overlay
+Swarm: inactive
+</code></pre>
+</li>
+</ol>
+<p>这样弄完后docker相关的东西就全部放在了thinpool里面，你并不能再直接看到images net啊，原来docker目录下那些文件。<br>只有当docker的container run起来之后，可以看到 /var/lib/docker/devicemapper/mnt/ 下的目录被mount在主机上</p>
+<h3 id="创建一个单独的VG出来让docker还是用loopdata的方式"><a href="#创建一个单独的VG出来让docker还是用loopdata的方式" class="headerlink" title="创建一个单独的VG出来让docker还是用loopdata的方式"></a>创建一个单独的VG出来让docker还是用loopdata的方式</h3><p>上面的方式确实有些好处，但是不方便在和k8s配合使用的时候用lvm的flexvolume插件，所以还有个方案是lvm创建的时候，多分个区，多创建个vg，然后创建相应的lv 给docker 用，相当于docker还是用loopdata</p>
+<h2 id="总结下"><a href="#总结下" class="headerlink" title="总结下"></a>总结下</h2><ol>
+<li>理论上还是建议用direct lvm thinpool的方式来配合docker使用的</li>
+<li>以上方式会有docker的image 很少会被gc的问题</li>
+<li>以上方式会由于空间都被分配了导致无法使用k8s lvm插件的问题</li>
+<li>以上方式会导致多模块公用thinpool，空间问题时不方便审查，容易甩锅的问题</li>
+</ol>
+<p>参考文中链接以及<br><a href="https://success.docker.com/article/resolving-error-unable-to-take-ownership-of-thin-pool" target="_blank" rel="noopener">https://success.docker.com/article/resolving-error-unable-to-take-ownership-of-thin-pool</a></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/k8s/" rel="tag"># k8s</a>
+          
+            <a href="/tags/devops/" rel="tag"># devops</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/post/jumpserver/" rel="next" title="简单限制用户可执行命令来做堡垒机的方案">
+                <i class="fa fa-chevron-left"></i> 简单限制用户可执行命令来做堡垒机的方案
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/post/flex-volume-plugin/" rel="prev" title="k8s的flexvolume-plugin介绍">
+                k8s的flexvolume-plugin介绍 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div id="gitalk-container">
+    </div>
+    
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">lovejoy</p>
+              <p class="site-description motion-element" itemprop="description">今天不开心</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">48</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">12</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">13</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://github.com/lovejoy" title="Github &rarr; https://github.com/lovejoy" rel="noopener" target="_blank"><i class="fa fa-fw fa-globe"></i>Github</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://twitter.com/liangyongqing" title="Twitter &rarr; https://twitter.com/liangyongqing" rel="noopener" target="_blank"><i class="fa fa-fw fa-globe"></i>Twitter</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                友情链接
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://yuerblog.cc/" title="https://yuerblog.cc/" rel="noopener" target="_blank">鱼儿的博客</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#LVM基础知识"><span class="nav-number">1.</span> <span class="nav-text">LVM基础知识</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#和docker的结合使用"><span class="nav-number">2.</span> <span class="nav-text">和docker的结合使用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#参照docker官方文档设置dircet模式的lvm"><span class="nav-number">2.1.</span> <span class="nav-text">参照docker官方文档设置dircet模式的lvm</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#创建一个单独的VG出来让docker还是用loopdata的方式"><span class="nav-number">2.2.</span> <span class="nav-text">创建一个单独的VG出来让docker还是用loopdata的方式</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结下"><span class="nav-number">3.</span> <span class="nav-text">总结下</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lovejoy</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.8.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v6.6.0</div>
+
+
+
+
+        
+
+
+
+
+
+  <script>
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//tajs.qq.com/stats?sId=63414042";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script src="/js/src/utils.js?v=6.6.0"></script>
+
+  <script src="/js/src/motion.js?v=6.6.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/src/affix.js?v=6.6.0"></script>
+
+  <script src="/js/src/schemes/pisces.js?v=6.6.0"></script>
+
+
+
+  
+  <script src="/js/src/scrollspy.js?v=6.6.0"></script>
+<script src="/js/src/post-details.js?v=6.6.0"></script>
+
+
+
+  
+
+
+  <script src="/js/src/bootstrap.js?v=6.6.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <script src="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.js"></script>
+
+  
+  
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.css">
+
+  
+  
+  <script src="//cdn.jsdelivr.net/npm/js-md5@0.7.3/src/md5.min.js"></script>
+
+   <script>
+        var gitalk = new Gitalk({
+          clientID: 'e10649a0fb2b6556a966',
+          clientSecret: 'd07a6e94a4768d09ae4fe2febbcdafb5b5d4ef61',
+          repo: 'lovejoy.github.com',
+          owner: 'lovejoy',
+          admin: ['lovejoy'],
+          id: md5(location.pathname),
+          distractionFreeMode: 'false'
+        })
+        gitalk.render('gitalk-container')
+       </script>
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

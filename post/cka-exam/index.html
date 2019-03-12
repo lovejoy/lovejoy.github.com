@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.lug.ustc.edu.cn/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=6.6.0" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.6.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.6.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.6.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.6.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '6.6.0',
+    sidebar: {"position":"right","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="CKA考试题真题详解已经通过了CKA认证，这里大概讲下我遇到的考试题怎么解  创建一个符合要求的pod  具体内容不记得了，主要是得找到一个简单的yaml文件改改就好  ß看某个标签使用cpu最高的pod  Kubectl top pod -l xxx标签  创建secret，并且创建2个pod 1个pod mount成文件，一个用环境变量  https://kubernetes.io/docs/">
+<meta name="keywords" content="k8s">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CKA考试题详解">
+<meta property="og:url" content="https://blog.spider.im/post/cka-exam/index.html">
+<meta property="og:site_name" content="吐核|Core Dump">
+<meta property="og:description" content="CKA考试题真题详解已经通过了CKA认证，这里大概讲下我遇到的考试题怎么解  创建一个符合要求的pod  具体内容不记得了，主要是得找到一个简单的yaml文件改改就好  ß看某个标签使用cpu最高的pod  Kubectl top pod -l xxx标签  创建secret，并且创建2个pod 1个pod mount成文件，一个用环境变量  https://kubernetes.io/docs/">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-03-11T13:50:15.230Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="CKA考试题详解">
+<meta name="twitter:description" content="CKA考试题真题详解已经通过了CKA认证，这里大概讲下我遇到的考试题怎么解  创建一个符合要求的pod  具体内容不记得了，主要是得找到一个简单的yaml文件改改就好  ß看某个标签使用cpu最高的pod  Kubectl top pod -l xxx标签  创建secret，并且创建2个pod 1个pod mount成文件，一个用环境变量  https://kubernetes.io/docs/">
+
+
+
+
+
+
+  <link rel="canonical" href="https://blog.spider.im/post/cka-exam/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>CKA考试题详解 | 吐核|Core Dump</title>
+  
+
+
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-36548399-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-36548399-1');
+</script>
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion .logo-line-before i { left: initial; }
+    .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">吐核|Core Dump</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+      
+        <p class="site-subtitle">笔记 随想 吐槽</p>
+      
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/cka-exam/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="lovejoy">
+      <meta itemprop="description" content="今天不开心">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吐核|Core Dump">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">CKA考试题详解
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-06-26 15:40:29" itemprop="dateCreated datePublished" datetime="2018-06-26T15:40:29+08:00">2018-06-26</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-03-11 21:50:15" itemprop="dateModified" datetime="2019-03-11T21:50:15+08:00">2019-03-11</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="CKA考试题真题详解"><a href="#CKA考试题真题详解" class="headerlink" title="CKA考试题真题详解"></a>CKA考试题真题详解</h1><p>已经通过了CKA认证，这里大概讲下我遇到的考试题怎么解</p>
+<ul>
+<li>创建一个符合要求的pod</li>
+</ul>
+<p>具体内容不记得了，主要是得找到一个简单的yaml文件改改就好</p>
+<ul>
+<li>ß看某个标签使用cpu最高的pod</li>
+</ul>
+<p>Kubectl top pod -l xxx标签</p>
+<ul>
+<li>创建secret，并且创建2个pod 1个pod mount成文件，一个用环境变量</li>
+</ul>
+<p><a href="https://kubernetes.io/docs/concepts/configuration/secret/" target="_blank" rel="noopener">https://kubernetes.io/docs/concepts/configuration/secret/</a> 从Creating a Secret Manually 开始内容到后面，考题只需要创建一个password字段，mount的路径略有改动，其他和这个页面里面的一样</p>
+<ul>
+<li>oo给定deployment扩容</li>
+</ul>
+<p><a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/" target="_blank" rel="noopener">https://kubernetes.io/docs/concepts/workloads/controllers/deployment/</a></p>
+<p>直接kubectl scale命令<br><a id="more"></a></p>
+<ul>
+<li>按要求创建deployment ，然后改image，然后再回滚回去，把最终的deployment spec弄出来</li>
+</ul>
+<p><a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment" target="_blank" rel="noopener">https://kubernetes.io/docs/concepts/workloads/controllers/deployment</a></p>
+<ul>
+<li>按要求创建daemonsets</li>
+</ul>
+<p>貌似就是个创建个nginx镜像之类</p>
+<p><a href="https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/" target="_blank" rel="noopener">https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/</a> 这个里面的yaml （内容太大了，删都要删半天，可以找找还有没有更简单的）</p>
+<ul>
+<li>在一个新的namespace创建pod</li>
+</ul>
+<p>自己先create 一个namespace 然后创建pod</p>
+<ul>
+<li>创建static pod</li>
+</ul>
+<p><a href="https://kubernetes.io/docs/tasks/administer-cluster/static-pod/" target="_blank" rel="noopener">https://kubernetes.io/docs/tasks/administer-cluster/static-pod/</a></p>
+<p>在指定目录下面创建一个yaml文件，然后改kubelet的systemd配置，reload+重启，检查下</p>
+<ul>
+<li>给定一个pod 拿到某行日志</li>
+</ul>
+<p>Kubectl logs xxx | grep yyy 然后需要重定向去一个指定的文件</p>
+<ul>
+<li>给你个环境说有问题，自己看。manster 和node 只发现了controller-manager没启动</li>
+</ul>
+<p>每台节点都可以ssh ，kubectl get pod看也没有非running 的systemctl 看了下有2个失败的，但是看着和考题无关，没管，搜了下kube 开头的，发现controller-manager没有enable 也没有start ，启动就好</p>
+<ul>
+<li>一个大题 给定ca.crt 配置好kubelet 还要陪ratation certificate 巴拉巴拉</li>
+</ul>
+<p><a href="https://kubernetes.io/docs/concepts/cluster-administration/certificates/" target="_blank" rel="noopener">https://kubernetes.io/docs/concepts/cluster-administration/certificates/</a></p>
+<p><a href="https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/" target="_blank" rel="noopener">https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/</a></p>
+<p><a href="https://kubernetes.io/docs/tasks/tls/certificate-rotation" target="_blank" rel="noopener">https://kubernetes.io/docs/tasks/tls/certificate-rotation</a></p>
+<p>当时思路：应该是用openssl根据给定的ca.crt 生成server.crt server.key</p>
+<p>然后需要配置kubelet，systemd文件也没有，想着可以从别的集群拷过来用用</p>
+<p>但是openssl就报错了 此题8分，放弃。</p>
+<ul>
+<li>把一个node弄成unavailable 并且重新调度去新的node上</li>
+</ul>
+<p>直接cordon下，然后pod delete下。好像就行了，至少没扣分</p>
+<ul>
+<li>oo node 是not ready解决下</li>
+</ul>
+<p>Ssh 去node上，发现kubelet没有启动，启动下就好</p>
+<ul>
+<li>给定pod创建service</li>
+</ul>
+<p>麻烦就是自己写个yaml文件，聪明点可以kubectl expose 下，不会的话命令现场看就行了</p>
+<ul>
+<li>创建deployment 创建service 并且用nslookup 拿到service 和一个pod的解析的结果</li>
+</ul>
+<p><a href="https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/" target="_blank" rel="noopener">https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/</a></p>
+<p>kubectl run –expose一句就可以解决，不然有点累，然后需要进pod nslookup service的域名和pod的域名，但是镜像里面没有nslookup。所以改成了ssh 去master机器上，ps 看下kube的参数中dns的ip地址，然后在master机器上nslookup ，然后需要弄回原来的机器上一个文件中，复制，然后用nano粘贴格式会乱，直接用echo &quot;&quot; &gt;的方式</p>
+<ul>
+<li>列某个namepsace 下某个service所代表的所有pod的名字</li>
+</ul>
+<p>先kubectl get service看下label 是什么，再kubectl get pod -l 看下面名字，然后需要留的是名字 kubectl get pods &quot;-o=custom-columns=NAME:.metadata.name&quot; 注意最终要的只是名字</p>
+<ul>
+<li>给定一个spec文件，按要求加一个init container 创建某个文件，然后container 发现这个文件在就启动，不再就退出</li>
+</ul>
+<p><a href="https://kubernetes.io/docs/concepts/workloads/pods/init-containers/" target="_blank" rel="noopener">https://kubernetes.io/docs/concepts/workloads/pods/init-containers/</a></p>
+<p>照着抄就行，结合题目，shell里面写个touch个文件就行</p>
+<ul>
+<li>oo 用下nodeselector</li>
+</ul>
+<p><a href="https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector" target="_blank" rel="noopener">https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector</a></p>
+<p>这个里面的yaml改改就好</p>
+<ul>
+<li>创建一个符合要求的pv 大小 权限 路径</li>
+</ul>
+<p><a href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-persistent-volume-storage/" target="_blank" rel="noopener">https://kubernetes.io/docs/tasks/configure-pod-container/configure-persistent-volume-storage/</a></p>
+<p>这个里面的yaml文件，根据考题要求，改成ReadWriteMany ，路径改改就好</p>
+<ul>
+<li>给etcd做个snapshot 3.0 版本 要加环境变量用etcdctl 带证书</li>
+</ul>
+<p>export ETCDCTL_API=3，后面根据etcdctl 命令行的提示看就能弄好</p>
+<ul>
+<li>列不含某个标签的node的数量</li>
+</ul>
+<p>只有3个node，get出来一个个看，不知道命令怎么取非，注意审题，最终文件里面只需要个数量</p>
+<ul>
+<li>创建个带volume带pod，不可以是persistent的</li>
+</ul>
+<p>一开始有点懵，以为要用hostpath什么的</p>
+<p><a href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-volume-storage/" target="_blank" rel="noopener">https://kubernetes.io/docs/tasks/configure-pod-container/configure-volume-storage/</a></p>
+<p>其实就是这个，创建个带emptyDir的pod就好</p>
+<p>一共24题还有2题我不记得了</p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/k8s/" rel="tag"># k8s</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/post/cka-related/" rel="next" title="kubernetes cka考试认证相关介绍">
+                <i class="fa fa-chevron-left"></i> kubernetes cka考试认证相关介绍
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/post/tensorflow-on-kubeflow/" rel="prev" title="tensorflow-on-kubeflow">
+                tensorflow-on-kubeflow <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div id="gitalk-container">
+    </div>
+    
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">lovejoy</p>
+              <p class="site-description motion-element" itemprop="description">今天不开心</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">48</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">12</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">13</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://github.com/lovejoy" title="Github &rarr; https://github.com/lovejoy" rel="noopener" target="_blank"><i class="fa fa-fw fa-globe"></i>Github</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://twitter.com/liangyongqing" title="Twitter &rarr; https://twitter.com/liangyongqing" rel="noopener" target="_blank"><i class="fa fa-fw fa-globe"></i>Twitter</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                友情链接
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://yuerblog.cc/" title="https://yuerblog.cc/" rel="noopener" target="_blank">鱼儿的博客</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#CKA考试题真题详解"><span class="nav-number">1.</span> <span class="nav-text">CKA考试题真题详解</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lovejoy</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.8.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v6.6.0</div>
+
+
+
+
+        
+
+
+
+
+
+  <script>
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//tajs.qq.com/stats?sId=63414042";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script src="/js/src/utils.js?v=6.6.0"></script>
+
+  <script src="/js/src/motion.js?v=6.6.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/src/affix.js?v=6.6.0"></script>
+
+  <script src="/js/src/schemes/pisces.js?v=6.6.0"></script>
+
+
+
+  
+  <script src="/js/src/scrollspy.js?v=6.6.0"></script>
+<script src="/js/src/post-details.js?v=6.6.0"></script>
+
+
+
+  
+
+
+  <script src="/js/src/bootstrap.js?v=6.6.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <script src="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.js"></script>
+
+  
+  
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.css">
+
+  
+  
+  <script src="//cdn.jsdelivr.net/npm/js-md5@0.7.3/src/md5.min.js"></script>
+
+   <script>
+        var gitalk = new Gitalk({
+          clientID: 'e10649a0fb2b6556a966',
+          clientSecret: 'd07a6e94a4768d09ae4fe2febbcdafb5b5d4ef61',
+          repo: 'lovejoy.github.com',
+          owner: 'lovejoy',
+          admin: ['lovejoy'],
+          id: md5(location.pathname),
+          distractionFreeMode: 'false'
+        })
+        gitalk.render('gitalk-container')
+       </script>
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.lug.ustc.edu.cn/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=6.6.0" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.6.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.6.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.6.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.6.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '6.6.0',
+    sidebar: {"position":"right","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="k8s的卷管理目前都是in-tree的，也就是写在k8s代码中，实际看了下对国内用户唯一有价值的就ceph相关的cephfs和rbd以及glusterfs，其他基本都不是国内用户在用的。除此之外我们可以扩展的就flexvolomeplugin或者是csi，csi需要高版本的k8s以及有点麻烦，这里就不关注了。还是主要关注flexvolumeplugin flexvolume有多个用处：  用于区分">
+<meta name="keywords" content="k8s">
+<meta property="og:type" content="article">
+<meta property="og:title" content="k8s的flexvolume-plugin介绍">
+<meta property="og:url" content="https://blog.spider.im/post/flex-volume-plugin/index.html">
+<meta property="og:site_name" content="吐核|Core Dump">
+<meta property="og:description" content="k8s的卷管理目前都是in-tree的，也就是写在k8s代码中，实际看了下对国内用户唯一有价值的就ceph相关的cephfs和rbd以及glusterfs，其他基本都不是国内用户在用的。除此之外我们可以扩展的就flexvolomeplugin或者是csi，csi需要高版本的k8s以及有点麻烦，这里就不关注了。还是主要关注flexvolumeplugin flexvolume有多个用处：  用于区分">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-03-11T13:50:15.233Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="k8s的flexvolume-plugin介绍">
+<meta name="twitter:description" content="k8s的卷管理目前都是in-tree的，也就是写在k8s代码中，实际看了下对国内用户唯一有价值的就ceph相关的cephfs和rbd以及glusterfs，其他基本都不是国内用户在用的。除此之外我们可以扩展的就flexvolomeplugin或者是csi，csi需要高版本的k8s以及有点麻烦，这里就不关注了。还是主要关注flexvolumeplugin flexvolume有多个用处：  用于区分">
+
+
+
+
+
+
+  <link rel="canonical" href="https://blog.spider.im/post/flex-volume-plugin/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>k8s的flexvolume-plugin介绍 | 吐核|Core Dump</title>
+  
+
+
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-36548399-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-36548399-1');
+</script>
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion .logo-line-before i { left: initial; }
+    .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">吐核|Core Dump</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+      
+        <p class="site-subtitle">笔记 随想 吐槽</p>
+      
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/flex-volume-plugin/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="lovejoy">
+      <meta itemprop="description" content="今天不开心">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吐核|Core Dump">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">k8s的flexvolume-plugin介绍
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-02-02 11:29:26" itemprop="dateCreated datePublished" datetime="2019-02-02T11:29:26+08:00">2019-02-02</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-03-11 21:50:15" itemprop="dateModified" datetime="2019-03-11T21:50:15+08:00">2019-03-11</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>k8s的卷管理目前都是in-tree的，也就是写在k8s代码中，实际看了下对国内用户唯一有价值的就ceph相关的cephfs和rbd以及glusterfs，其他基本都不是国内用户在用的。<br>除此之外我们可以扩展的就flexvolomeplugin或者是csi，csi需要高版本的k8s以及有点麻烦，这里就不关注了。还是主要关注flexvolumeplugin</p>
+<p>flexvolume有多个用处：</p>
+<ol>
+<li>用于区分本地的磁盘，分出特定的大小，挂载到容器中，用于动态控制用户可用的空间，而不依赖于docker的配置 </li>
+<li>在有client的情况下，挂载远端的(分布式)文件系统</li>
+</ol>
+<p>我这里的用途主要是用于挂载分布式存储，在实现插件的过程中，顺道看下flexvolume的相关代码<br>首先需要了解的是：我们需要实现一个可执行程序放在/usr/libexec/kubernetes/kubelet-plugins/volume/exec/&lt;vendor~driver&gt;/<driver> 这样的目录, 实现以下接口<br> init：kubelet/kube-controller-manager 初始化存储插件时调用，插件需要返回是否需要要 attach 和 detach 操作<br> attach：将存储卷挂载到 Node 上<br> detach：将存储卷从 Node 上卸载<br> waitforattach： 等待 attach 操作成功（超时时间为 10 分钟）<br> isattached：检查存储卷是否已经挂载<br> mountdevice：将设备挂载到指定目录中以便后续 bind mount 使用<br> unmountdevice：将设备取消挂载<br> mount：将存储卷挂载到指定目录中<br> umount：将存储卷取消挂载<br>具体的可以看官方设计文档<a href="https://github.com/kubernetes/community/blob/master/contributors/devel/sig-storage/flexvolume.md" target="_blank" rel="noopener">https://github.com/kubernetes/community/blob/master/contributors/devel/sig-storage/flexvolume.md</a></driver></p>
+<a id="more"></a>
+<p>下面看代码：<br>flexVolumePlugin的主要代码在pkg/volume/flexvolume目录下<br><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(pluginFactory)</span> <span class="title">NewFlexVolumePlugin</span><span class="params">(pluginDir, name <span class="keyword">string</span>)</span> <span class="params">(volume.VolumePlugin, error)</span></span> &#123;</span><br><span class="line">	execPath := path.Join(pluginDir, name)</span><br><span class="line"></span><br><span class="line">	driverName := utilstrings.UnescapePluginName(name)</span><br><span class="line"></span><br><span class="line">	flexPlugin := &amp;flexVolumePlugin&#123;</span><br><span class="line">		driverName:          driverName,</span><br><span class="line">		execPath:            execPath,</span><br><span class="line">		runner:              exec.New(),</span><br><span class="line">		unsupportedCommands: []<span class="keyword">string</span>&#123;&#125;,</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Initialize the plugin and probe the capabilities</span></span><br><span class="line">	call := flexPlugin.NewDriverCall(initCmd)</span><br><span class="line">	ds, err := call.Run()</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">	&#125;</span><br><span class="line">	flexPlugin.capabilities = *ds.Capabilities</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> flexPlugin.capabilities.Attach &#123;</span><br><span class="line">		<span class="comment">// Plugin supports attach/detach, so return flexVolumeAttachablePlugin</span></span><br><span class="line">		<span class="keyword">return</span> &amp;flexVolumeAttachablePlugin&#123;flexVolumePlugin: flexPlugin&#125;, <span class="literal">nil</span></span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> flexPlugin, <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p> 一个细节是会根据init 接口的返回来判断走不通的逻辑，支持则是device模式，不支持则是普通的模式<br>区别是device模式需要实现attach detach waitforattach isattached mountdevicve unmountdevice 这些接口 比如用于挂lvm 设备，需要有个先创建设备的过程<br>普通模式实现mount unmount就可以了 比如用于挂nfs<br>为什么这么设计呢： 其实很容器理解，kubelet有些reconile 重试的操作，以lvm举例，如果把lvcreate只写在mount中的话会导致device重新被创建，但是显然只是不应该的，且是非幂等有问题的<br><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//我们先看简单的只需要mount umount的</span></span><br><span class="line"><span class="comment">//注意下列函数实际在2个文件中，我这放一起方便查看</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// newMounterInternal创建了相关的结构用于实际的mount操作</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(plugin *flexVolumePlugin)</span> <span class="title">newMounterInternal</span><span class="params">(spec *volume.Spec, pod *api.Pod, mounter mount.Interface, runner exec.Interface)</span> <span class="params">(volume.Mounter, error)</span></span> &#123;</span><br><span class="line">	source, readOnly := getVolumeSource(spec)</span><br><span class="line">	<span class="keyword">return</span> &amp;flexVolumeMounter&#123;</span><br><span class="line">		flexVolume: &amp;flexVolume&#123;</span><br><span class="line">			driverName:   source.Driver,</span><br><span class="line">			execPath:     plugin.getExecutable(),</span><br><span class="line">			mounter:      mounter,</span><br><span class="line">			plugin:       plugin,</span><br><span class="line">			podUID:       pod.UID,</span><br><span class="line">			podNamespace: pod.Namespace,</span><br><span class="line">			volName:      spec.Name(),</span><br><span class="line">		&#125;,</span><br><span class="line">		runner:             runner,</span><br><span class="line">		spec:               spec,</span><br><span class="line">		readOnly:           readOnly,</span><br><span class="line">		blockDeviceMounter: &amp;mount.SafeFormatAndMount&#123;Interface: mounter, Runner: runner&#125;,</span><br><span class="line">	&#125;, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 这里实际完成了mount的操作 代码在mounter.go 中</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(f *flexVolumeMounter)</span> <span class="title">SetUpAt</span><span class="params">(dir <span class="keyword">string</span>, fsGroup *<span class="keyword">int64</span>)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	glog.Infof(<span class="string">"Mount dir:%s"</span>, dir)</span><br><span class="line">	<span class="comment">// Mount only once.</span></span><br><span class="line">	alreadyMounted, err := prepareForMount(f.mounter, dir)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> alreadyMounted &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	call := f.plugin.NewDriverCall(mountCmd) <span class="comment">//drivercall是实际去执行命令的方法，后面单独讲下</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// Interface parameters</span></span><br><span class="line">	call.Append(dir) <span class="comment">//这是你的mount命令能收到的第一个参数 即挂载的目录</span></span><br><span class="line"></span><br><span class="line">	extraOptions := <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span>)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Extract secret and pass it as options.</span></span><br><span class="line">	<span class="keyword">if</span> err := addSecretsToOptions(extraOptions, f.spec, f.podNamespace, f.driverName, f.plugin.host); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Implicit parameters</span></span><br><span class="line">	<span class="keyword">if</span> fsGroup != <span class="literal">nil</span> &#123;</span><br><span class="line">		extraOptions[optionFSGroup] = strconv.FormatInt(*fsGroup, <span class="number">10</span>)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	call.AppendSpec(f.spec, f.plugin.host, extraOptions) <span class="comment">//这是第二个参数，注意这里是以json格式传递的 所以这里能看到你能拿到的相关信息</span></span><br><span class="line"></span><br><span class="line">	_, err = call.Run()</span><br><span class="line">	<span class="keyword">if</span> isCmdNotSupportedErr(err) &#123;</span><br><span class="line">		err = (*mounterDefaults)(f).SetUpAt(dir, fsGroup)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> !f.readOnly &#123;</span><br><span class="line">		volume.SetVolumeOwnership(f, fsGroup)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>attach看了下，本质区别不大，就是步骤多点，代码太多这里不贴出来了，下面看下driverCall的逻辑<br><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(plugin *flexVolumePlugin)</span> <span class="title">NewDriverCallWithTimeout</span><span class="params">(command <span class="keyword">string</span>, timeout time.Duration)</span> *<span class="title">DriverCall</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> &amp;DriverCall&#123;</span><br><span class="line">		Command: command,</span><br><span class="line">		Timeout: timeout,</span><br><span class="line">		plugin:  plugin,</span><br><span class="line">		args:    []<span class="keyword">string</span>&#123;command&#125;,</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//注意append和appendSpec的区别</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(dc *DriverCall)</span> <span class="title">Append</span><span class="params">(arg <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">	dc.args = <span class="built_in">append</span>(dc.args, arg)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(dc *DriverCall)</span> <span class="title">AppendSpec</span><span class="params">(spec *volume.Spec, host volume.VolumeHost, extraOptions <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span>)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	optionsForDriver, err := NewOptionsForDriver(spec, host, extraOptions)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	jsonBytes, err := json.Marshal(optionsForDriver)<span class="comment">//这里json编码了下</span></span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> fmt.Errorf(<span class="string">"Failed to marshal spec, error: %s"</span>, err.Error())</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	dc.Append(<span class="keyword">string</span>(jsonBytes))</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(dc *DriverCall)</span> <span class="title">Run</span><span class="params">()</span> <span class="params">(*DriverStatus, error)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> dc.plugin.isUnsupported(dc.Command) &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, errors.New(StatusNotSupported)</span><br><span class="line">	&#125;</span><br><span class="line">	execPath := dc.plugin.getExecutable()</span><br><span class="line"></span><br><span class="line">	cmd := dc.plugin.runner.Command(execPath, dc.args...)</span><br><span class="line"></span><br><span class="line">	timeout := <span class="literal">false</span></span><br><span class="line">	<span class="keyword">if</span> dc.Timeout &gt; <span class="number">0</span> &#123;</span><br><span class="line">		timer := time.AfterFunc(dc.Timeout, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123; <span class="comment">//这里实现了一个超时机制，注意插件挂目录有个2分钟的超时，这个时间是hardcode的，不可修改</span></span><br><span class="line">			timeout = <span class="literal">true</span></span><br><span class="line">			cmd.Stop()</span><br><span class="line">		&#125;)</span><br><span class="line">		<span class="keyword">defer</span> timer.Stop()</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	output, execErr := cmd.CombinedOutput()</span><br><span class="line">	<span class="keyword">if</span> execErr != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">if</span> timeout &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">nil</span>, TimeoutError</span><br><span class="line">		&#125;</span><br><span class="line">		_, err := handleCmdResponse(dc.Command, output)</span><br><span class="line">		<span class="keyword">if</span> err == <span class="literal">nil</span> &#123;</span><br><span class="line">			glog.Errorf(<span class="string">"FlexVolume: driver bug: %s: exec error (%s) but no error in response."</span>, execPath, execErr)</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">nil</span>, execErr</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> isCmdNotSupportedErr(err) &#123;</span><br><span class="line">			dc.plugin.unsupported(dc.Command)</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			glog.Warningf(<span class="string">"FlexVolume: driver call failed: executable: %s, args: %s, error: %s, output: %s"</span>, execPath, dc.args, execErr.Error(), output)</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	status, err := handleCmdResponse(dc.Command, output)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">if</span> isCmdNotSupportedErr(err) &#123;</span><br><span class="line">			dc.plugin.unsupported(dc.Command)</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> status, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>总体来看flexvolume还是个比较简单的逻辑根据用户的程序init的返回走不同实现，用driver-call来调用用户的命令，来把目录挂到相应的路径。<br>需要留意的点是:以上步骤都在pause创建出来前。</p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/k8s/" rel="tag"># k8s</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/post/lvm/" rel="next" title="lvm相关知识以及与docker配合使用记录">
+                <i class="fa fa-chevron-left"></i> lvm相关知识以及与docker配合使用记录
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/post/nvidia-kubernetes/" rel="prev" title="nvidia kubernetes 和官方k8s的不同">
+                nvidia kubernetes 和官方k8s的不同 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div id="gitalk-container">
+    </div>
+    
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <div class="site-overview-wrap sidebar-panel sidebar-panel-active">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">lovejoy</p>
+              <p class="site-description motion-element" itemprop="description">今天不开心</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">48</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">12</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">13</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://github.com/lovejoy" title="Github &rarr; https://github.com/lovejoy" rel="noopener" target="_blank"><i class="fa fa-fw fa-globe"></i>Github</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://twitter.com/liangyongqing" title="Twitter &rarr; https://twitter.com/liangyongqing" rel="noopener" target="_blank"><i class="fa fa-fw fa-globe"></i>Twitter</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                友情链接
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://yuerblog.cc/" title="https://yuerblog.cc/" rel="noopener" target="_blank">鱼儿的博客</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lovejoy</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.8.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v6.6.0</div>
+
+
+
+
+        
+
+
+
+
+
+  <script>
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//tajs.qq.com/stats?sId=63414042";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script src="/js/src/utils.js?v=6.6.0"></script>
+
+  <script src="/js/src/motion.js?v=6.6.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/src/affix.js?v=6.6.0"></script>
+
+  <script src="/js/src/schemes/pisces.js?v=6.6.0"></script>
+
+
+
+  
+  <script src="/js/src/scrollspy.js?v=6.6.0"></script>
+<script src="/js/src/post-details.js?v=6.6.0"></script>
+
+
+
+  
+
+
+  <script src="/js/src/bootstrap.js?v=6.6.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <script src="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.js"></script>
+
+  
+  
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.css">
+
+  
+  
+  <script src="//cdn.jsdelivr.net/npm/js-md5@0.7.3/src/md5.min.js"></script>
+
+   <script>
+        var gitalk = new Gitalk({
+          clientID: 'e10649a0fb2b6556a966',
+          clientSecret: 'd07a6e94a4768d09ae4fe2febbcdafb5b5d4ef61',
+          repo: 'lovejoy.github.com',
+          owner: 'lovejoy',
+          admin: ['lovejoy'],
+          id: md5(location.pathname),
+          distractionFreeMode: 'false'
+        })
+        gitalk.render('gitalk-container')
+       </script>
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

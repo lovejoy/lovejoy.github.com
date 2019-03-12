@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.lug.ustc.edu.cn/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=6.6.0" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.6.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.6.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.6.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.6.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '6.6.0',
+    sidebar: {"position":"right","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="GPU在容器间共享这个功能其实都有需要，但是官方都没有，之前在公司内实现的改动也太过于in-tree，无法opensource，今天看到阿里云开源了个GPU共享的方案，那么顺道借分析下阿里的方案来总结下这方面的事情。 阿里云的代码在https://github.com/AliyunContainerService/gpushare-scheduler-extenderhttps://github.">
+<meta name="keywords" content="k8s">
+<meta property="og:type" content="article">
+<meta property="og:title" content="k8s中的GPU共享功能实现分析">
+<meta property="og:url" content="https://blog.spider.im/post/gpu-share-in-k8s/index.html">
+<meta property="og:site_name" content="吐核|Core Dump">
+<meta property="og:description" content="GPU在容器间共享这个功能其实都有需要，但是官方都没有，之前在公司内实现的改动也太过于in-tree，无法opensource，今天看到阿里云开源了个GPU共享的方案，那么顺道借分析下阿里的方案来总结下这方面的事情。 阿里云的代码在https://github.com/AliyunContainerService/gpushare-scheduler-extenderhttps://github.">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-03-11T13:50:15.234Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="k8s中的GPU共享功能实现分析">
+<meta name="twitter:description" content="GPU在容器间共享这个功能其实都有需要，但是官方都没有，之前在公司内实现的改动也太过于in-tree，无法opensource，今天看到阿里云开源了个GPU共享的方案，那么顺道借分析下阿里的方案来总结下这方面的事情。 阿里云的代码在https://github.com/AliyunContainerService/gpushare-scheduler-extenderhttps://github.">
+
+
+
+
+
+
+  <link rel="canonical" href="https://blog.spider.im/post/gpu-share-in-k8s/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>k8s中的GPU共享功能实现分析 | 吐核|Core Dump</title>
+  
+
+
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-36548399-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-36548399-1');
+</script>
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion .logo-line-before i { left: initial; }
+    .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">吐核|Core Dump</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+      
+        <p class="site-subtitle">笔记 随想 吐槽</p>
+      
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/gpu-share-in-k8s/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="lovejoy">
+      <meta itemprop="description" content="今天不开心">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吐核|Core Dump">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">k8s中的GPU共享功能实现分析
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-02-21 17:52:04" itemprop="dateCreated datePublished" datetime="2019-02-21T17:52:04+08:00">2019-02-21</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-03-11 21:50:15" itemprop="dateModified" datetime="2019-03-11T21:50:15+08:00">2019-03-11</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>GPU在容器间共享这个功能其实都有需要，但是官方都没有，之前在公司内实现的改动也太过于in-tree，无法opensource，今天看到阿里云开源了个GPU共享的方案，那么顺道借分析下阿里的方案来总结下这方面的事情。</p>
+<p>阿里云的代码在<br><a href="https://github.com/AliyunContainerService/gpushare-scheduler-extender" target="_blank" rel="noopener">https://github.com/AliyunContainerService/gpushare-scheduler-extender</a><br><a href="https://github.com/AliyunContainerService/gpushare-device-plugin" target="_blank" rel="noopener">https://github.com/AliyunContainerService/gpushare-device-plugin</a><br>阿里云实现了一个gpushare的device-plugin，然后实现了相关的调度逻辑</p>
+<p>由于具体的共享逻辑在node上，所以我们先看下device-plugin的实现。<br>之前看过nvidia的官方device-plugin实现，本质很简单，需要实现2个接口 1.listandwatch用于获得机器上的device列表，2. allocate接口用于kubelet分配设备时，这个设备要做的一些事情 这个设计其实不是那么好，这个之前的<a href="/post/nvidia-kubernetes/">nvidia k8s和官方的区别中</a> 有提到,限制了deviceplugin对设备的调度控制能力 (device-plugin相关的实现后面也看下补篇文章)</p>
+<p>入口代码，和nvidia官方本质没什么区别，加载了nvml的库(cgo的)用户获取机器上的gpu的信息<br>创建了个fsNotify去实现deviceplugin要求的相关逻辑<br><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(ngm *sharedGPUManager)</span> <span class="title">Run</span><span class="params">()</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	log.V(<span class="number">1</span>).Infoln(<span class="string">"Loading NVML"</span>)</span><br><span class="line">	<span class="keyword">if</span> err := nvml.Init(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.V(<span class="number">1</span>).Infof(<span class="string">"Failed to initialize NVML: %s."</span>, err)</span><br><span class="line">		log.V(<span class="number">1</span>).Infof(<span class="string">"If this is a GPU node, did you set the docker default runtime to `nvidia`?"</span>)</span><br><span class="line">		<span class="keyword">select</span> &#123;&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123; log.V(<span class="number">1</span>).Infoln(<span class="string">"Shutdown of NVML returned:"</span>, nvml.Shutdown()) &#125;()</span><br><span class="line">	log.V(<span class="number">1</span>).Infoln(<span class="string">"Fetching devices."</span>)</span><br><span class="line">	<span class="keyword">if</span> getDeviceCount() == <span class="keyword">uint</span>(<span class="number">0</span>) &#123;</span><br><span class="line">		log.V(<span class="number">1</span>).Infoln(<span class="string">"No devices found. Waiting indefinitely."</span>)</span><br><span class="line">		<span class="keyword">select</span> &#123;&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	log.V(<span class="number">1</span>).Infoln(<span class="string">"Starting FS watcher."</span>)</span><br><span class="line">	watcher, err := newFSWatcher(pluginapi.DevicePluginPath)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.V(<span class="number">1</span>).Infoln(<span class="string">"Failed to created FS watcher."</span>)</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> watcher.Close()</span><br><span class="line">	log.V(<span class="number">1</span>).Infoln(<span class="string">"Starting OS watcher."</span>)</span><br><span class="line">	sigs := newOSWatcher(syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)</span><br><span class="line">	restart := <span class="literal">true</span></span><br><span class="line">	<span class="keyword">var</span> devicePlugin *NvidiaDevicePlugin</span><br><span class="line">L:</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="keyword">if</span> restart &#123;</span><br><span class="line">			<span class="keyword">if</span> devicePlugin != <span class="literal">nil</span> &#123;</span><br><span class="line">				devicePlugin.Stop()</span><br><span class="line">			&#125;</span><br><span class="line">			devicePlugin = NewNvidiaDevicePlugin(ngm.enableMPS, ngm.healthCheck)</span><br><span class="line">			<span class="keyword">if</span> err := devicePlugin.Serve(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">				log.Warningf(<span class="string">"Failed to start device plugin due to %v"</span>, err)</span><br><span class="line">			&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">				restart = <span class="literal">false</span></span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> event := &lt;-watcher.Events:</span><br><span class="line">			<span class="keyword">if</span> event.Name == pluginapi.KubeletSocket &amp;&amp; event.Op&amp;fsnotify.Create == fsnotify.Create &#123;</span><br><span class="line">				log.V(<span class="number">1</span>).Infof(<span class="string">"inotify: %s created, restarting."</span>, pluginapi.KubeletSocket)</span><br><span class="line">				restart = <span class="literal">true</span></span><br><span class="line">			&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">case</span> err := &lt;-watcher.Errors:</span><br><span class="line">			log.Warningf(<span class="string">"inotify: %s"</span>, err)</span><br><span class="line"></span><br><span class="line">		<span class="keyword">case</span> s := &lt;-sigs:</span><br><span class="line">			<span class="keyword">switch</span> s &#123;</span><br><span class="line">			<span class="keyword">case</span> syscall.SIGHUP:</span><br><span class="line">				log.V(<span class="number">1</span>).Infoln(<span class="string">"Received SIGHUP, restarting."</span>)</span><br><span class="line">				restart = <span class="literal">true</span></span><br><span class="line">			<span class="keyword">case</span> syscall.SIGQUIT:</span><br><span class="line">				t := time.Now()</span><br><span class="line">				timestamp := fmt.Sprint(t.Format(<span class="string">"20060102150405"</span>))</span><br><span class="line">				log.Infoln(<span class="string">"generate core dump"</span>)</span><br><span class="line">				coredump(<span class="string">"/etc/kubernetes/go_"</span> + timestamp + <span class="string">".txt"</span>)</span><br><span class="line">			<span class="keyword">default</span>:</span><br><span class="line">				log.V(<span class="number">1</span>).Infof(<span class="string">"Received signal \"%v\", shutting down."</span>, s)</span><br><span class="line">				devicePlugin.Stop()</span><br><span class="line">				<span class="keyword">break</span> L</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<a id="more"></a>
+<p>ListAndWatch的逻辑<br><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//listandwatch 返回的是m.Devs, 实际是从下面这个函数获得的</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">getDevices</span><span class="params">()</span> <span class="params">([]*pluginapi.Device, <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">uint</span>)</span></span> &#123;</span><br><span class="line">	n, err := nvml.GetDeviceCount()</span><br><span class="line">	check(err)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> devs []*pluginapi.Device</span><br><span class="line">	realDevNames := <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">uint</span>&#123;&#125;</span><br><span class="line">	<span class="keyword">for</span> i := <span class="keyword">uint</span>(<span class="number">0</span>); i &lt; n; i++ &#123;</span><br><span class="line">		d, err := nvml.NewDevice(i)</span><br><span class="line">		check(err)</span><br><span class="line">		<span class="comment">// realDevNames = append(realDevNames, d.UUID)</span></span><br><span class="line">		<span class="keyword">var</span> id <span class="keyword">uint</span></span><br><span class="line">		log.Infof(<span class="string">"Deivce %s's Path is %s"</span>, d.UUID, d.Path)</span><br><span class="line">		_, err = fmt.Sscanf(d.Path, <span class="string">"/dev/nvidia%d"</span>, &amp;id)</span><br><span class="line">		check(err)</span><br><span class="line">		realDevNames[d.UUID] = id</span><br><span class="line">		<span class="comment">// var KiB uint64 = 1024</span></span><br><span class="line">		log.Infof(<span class="string">"# device Memory: %d"</span>, <span class="keyword">uint</span>(*d.Memory))</span><br><span class="line">		<span class="keyword">if</span> getGPUMemory() == <span class="keyword">uint</span>(<span class="number">0</span>) &#123;</span><br><span class="line">			setGPUMemory(<span class="keyword">uint</span>(*d.Memory))</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">for</span> j := <span class="keyword">uint</span>(<span class="number">0</span>); j &lt; getGPUMemory(); j++ &#123;</span><br><span class="line">			fakeID := generateFakeDeviceID(d.UUID, j) <span class="comment">//上面的逻辑和官方的没太多的区别，主要是这，创建了个fakeId ,就是用真的uuid和0-n的数字来加，相当于加了内存数量个的设备！很有意思的实现</span></span><br><span class="line">			<span class="keyword">if</span> j == <span class="number">0</span> &#123;</span><br><span class="line">				log.Infoln(<span class="string">"# Add first device ID: "</span> + fakeID)</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">if</span> j == getGPUMemory()<span class="number">-1</span> &#123;</span><br><span class="line">				log.Infoln(<span class="string">"# Add last device ID: "</span> + fakeID)</span><br><span class="line">			&#125;</span><br><span class="line">			devs = <span class="built_in">append</span>(devs, &amp;pluginapi.Device&#123;</span><br><span class="line">				ID:     fakeID,</span><br><span class="line">				Health: pluginapi.Healthy,</span><br><span class="line">			&#125;)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> devs, realDevNames</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>具体的分配逻辑:<br><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Allocate which return list of devices.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(m *NvidiaDevicePlugin)</span> <span class="title">Allocate</span><span class="params">(ctx context.Context,</span></span></span><br><span class="line"><span class="function"><span class="params">	reqs *pluginapi.AllocateRequest)</span> <span class="params">(*pluginapi.AllocateResponse, error)</span></span> &#123;</span><br><span class="line">	responses := pluginapi.AllocateResponse&#123;&#125; <span class="comment">//这是一些deviceplugin要求的结构体</span></span><br><span class="line"></span><br><span class="line">	log.Infoln(<span class="string">"----Allocating GPU for gpu mem is started----"</span>)</span><br><span class="line">	<span class="keyword">var</span> (</span><br><span class="line">		podReqGPU <span class="keyword">uint</span></span><br><span class="line">		found     <span class="keyword">bool</span></span><br><span class="line">		assumePod *v1.Pod</span><br><span class="line">	)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// podReqGPU = uint(0)</span></span><br><span class="line">	<span class="keyword">for</span> _, req := <span class="keyword">range</span> reqs.ContainerRequests &#123;</span><br><span class="line">		podReqGPU += <span class="keyword">uint</span>(<span class="built_in">len</span>(req.DevicesIDs))  <span class="comment">//这里的deviceid是假的</span></span><br><span class="line">	&#125;</span><br><span class="line">	log.Infof(<span class="string">"RequestPodGPUs: %d"</span>, podReqGPU) <span class="comment">//遍历pod的container获得这个pod需要的设备数量其实就是内存数啦</span></span><br><span class="line"></span><br><span class="line">	m.Lock()</span><br><span class="line">	<span class="keyword">defer</span> m.Unlock()</span><br><span class="line">	log.Infoln(<span class="string">"checking..."</span>)</span><br><span class="line">	pods, err := getCandidatePods() <span class="comment">//这里是获得用了aliyun.com/gpu-mem 这个资源的在这个node上的pending的pod</span></span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Infof(<span class="string">"invalid allocation requst: Failed to find candidate pods due to %v"</span>, err)</span><br><span class="line">		<span class="keyword">return</span> buildErrResponse(reqs, podReqGPU), <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> log.V(<span class="number">4</span>) &#123;</span><br><span class="line">		<span class="keyword">for</span> _, pod := <span class="keyword">range</span> pods &#123;</span><br><span class="line">			log.Infof(<span class="string">"Pod %s in ns %s request GPU Memory %d with timestamp %v"</span>,</span><br><span class="line">				pod.Name,</span><br><span class="line">				pod.Namespace,</span><br><span class="line">				getGPUMemoryFromPodResource(pod),</span><br><span class="line">				getAssumeTimeFromPodAnnotation(pod))</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;<span class="comment">//debug信息，忽略</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> _, pod := <span class="keyword">range</span> pods &#123;</span><br><span class="line">		<span class="keyword">if</span> getGPUMemoryFromPodResource(pod) == podReqGPU &#123;</span><br><span class="line">			log.Infof(<span class="string">"Found Assumed GPU shared Pod %s in ns %s with GPU Memory %d"</span>,</span><br><span class="line">				pod.Name,</span><br><span class="line">				pod.Namespace,</span><br><span class="line">				podReqGPU)</span><br><span class="line">			assumePod = pod</span><br><span class="line">			found = <span class="literal">true</span></span><br><span class="line">			<span class="keyword">break</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> found &#123;</span><br><span class="line">		id := getGPUIDFromPodAnnotation(assumePod) <span class="comment">//从pod的annotation上获得gpu的真正设备号</span></span><br><span class="line">		<span class="keyword">if</span> id &lt; <span class="number">0</span> &#123;</span><br><span class="line">			log.Warningf(<span class="string">"Failed to get the dev "</span>, assumePod)</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		candidateDevID := <span class="string">""</span></span><br><span class="line">		<span class="keyword">if</span> id &gt;= <span class="number">0</span> &#123;</span><br><span class="line">			ok := <span class="literal">false</span></span><br><span class="line">			candidateDevID, ok = m.GetDeviceNameByIndex(<span class="keyword">uint</span>(id))</span><br><span class="line">			<span class="keyword">if</span> !ok &#123;</span><br><span class="line">				log.Warningf(<span class="string">"Failed to find the dev for pod %v because it's not able to find dev with index %d"</span>,</span><br><span class="line">					assumePod,</span><br><span class="line">					id)</span><br><span class="line">				id = <span class="number">-1</span></span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> id &lt; <span class="number">0</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> buildErrResponse(reqs, podReqGPU), <span class="literal">nil</span></span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 1. Create container requests</span></span><br><span class="line">		<span class="keyword">for</span> _, req := <span class="keyword">range</span> reqs.ContainerRequests &#123;</span><br><span class="line">			reqGPU := <span class="keyword">uint</span>(<span class="built_in">len</span>(req.DevicesIDs))</span><br><span class="line">			response := pluginapi.ContainerAllocateResponse&#123;</span><br><span class="line">				Envs: <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span>&#123;</span><br><span class="line">					envNVGPU:               candidateDevID, <span class="comment">// 这里是关键!!!  这个环境变量是NVIDIA_VISABLE_DEVICE 其实是通过传递这个环境变量，让nvidia-docker来实现了选择用哪个设备，所以原始的kubelet选设备的逻辑根本毫无用处</span></span><br><span class="line">					EnvResourceIndex:       fmt.Sprintf(<span class="string">"%d"</span>, id),</span><br><span class="line">					EnvResourceByPod:       fmt.Sprintf(<span class="string">"%d"</span>, podReqGPU),</span><br><span class="line">					EnvResourceByContainer: fmt.Sprintf(<span class="string">"%d"</span>, reqGPU),</span><br><span class="line">					EnvResourceByDev:       fmt.Sprintf(<span class="string">"%d"</span>, getGPUMemory()), <span class="comment">//另外传递了几个变量给容器内的业务来使用</span></span><br><span class="line">				&#125;,</span><br><span class="line">			&#125;</span><br><span class="line">			responses.ContainerResponses = <span class="built_in">append</span>(responses.ContainerResponses, &amp;response)</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 2. Update Pod spec</span></span><br><span class="line">		newPod := updatePodAnnotations(assumePod)</span><br><span class="line">		_, err = clientset.CoreV1().Pods(newPod.Namespace).Update(newPod) <span class="comment">//这个实现其实导致了device-plugin还需要和k8s交互</span></span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="comment">// the object has been modified; please apply your changes to the latest version and try again</span></span><br><span class="line">			<span class="keyword">if</span> err.Error() == OptimisticLockErrorMsg &#123;</span><br><span class="line">				<span class="comment">// retry</span></span><br><span class="line">				pod, err := clientset.CoreV1().Pods(assumePod.Namespace).Get(assumePod.Name, metav1.GetOptions&#123;&#125;)</span><br><span class="line">				<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">					log.Warningf(<span class="string">"Failed due to %v"</span>, err)</span><br><span class="line">					<span class="keyword">return</span> buildErrResponse(reqs, podReqGPU), <span class="literal">nil</span></span><br><span class="line">				&#125;</span><br><span class="line">				newPod = updatePodAnnotations(pod)</span><br><span class="line">				_, err = clientset.CoreV1().Pods(newPod.Namespace).Update(newPod)</span><br><span class="line">				<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">					log.Warningf(<span class="string">"Failed due to %v"</span>, err)</span><br><span class="line">					<span class="keyword">return</span> buildErrResponse(reqs, podReqGPU), <span class="literal">nil</span></span><br><span class="line">				&#125;</span><br><span class="line">			&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">				log.Warningf(<span class="string">"Failed due to %v"</span>, err)</span><br><span class="line">				<span class="keyword">return</span> buildErrResponse(reqs, podReqGPU), <span class="literal">nil</span></span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		log.Warningf(<span class="string">"invalid allocation requst: request GPU memory %d can't be satisfied."</span>,</span><br><span class="line">			podReqGPU)</span><br><span class="line">		<span class="comment">// return &amp;responses, fmt.Errorf("invalid allocation requst: request GPU memory %d can't be satisfied", reqGPU)</span></span><br><span class="line">		<span class="keyword">return</span> buildErrResponse(reqs, podReqGPU), <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	log.Infof(<span class="string">"new allocated GPUs info %v"</span>, &amp;responses)</span><br><span class="line">	log.Infoln(<span class="string">"----Allocating GPU for gpu mem is ended----"</span>)</span><br><span class="line">	<span class="comment">// // Add this to make sure the container is created at least</span></span><br><span class="line">	<span class="comment">// currentTime := time.Now()</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// currentTime.Sub(lastAllocateTime)</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> &amp;responses, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>device-plugin控制了设备真正的使用，所以从这里可以看出来，阿里的方案并没有真正控制gpu的使用，只是实现了共享，最终还需要业务方从传入的环境变量来适应这个共享</p>
+<p>然后阿里这个scheduler首先我们需要了解scheduler-extender的设计<br><a href="https://github.com/kubernetes/community/blob/master/contributors/design-proposals/scheduling/scheduler_extender.md" target="_blank" rel="noopener">https://github.com/kubernetes/community/blob/master/contributors/design-proposals/scheduling/scheduler_extender.md</a><br>即官方提供了个方案允许你扩展它的调度器<br>只需要你指定一个描述文件<a href="https://github.com/AliyunContainerService/gpushare-scheduler-extender/blob/master/config/scheduler-policy-config.json" target="_blank" rel="noopener">https://github.com/AliyunContainerService/gpushare-scheduler-extender/blob/master/config/scheduler-policy-config.json</a> 其中设置好几个verb，官方调度器会在相应的环节调用你的调度器处理你的逻辑，</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&#123;</span></span><br><span class="line"><span class="attr">  "kind":</span> <span class="string">"Policy"</span><span class="string">,</span></span><br><span class="line"><span class="attr">  "apiVersion":</span> <span class="string">"v1"</span><span class="string">,</span></span><br><span class="line"><span class="attr">  "extenders":</span> <span class="string">[</span></span><br><span class="line">    <span class="string">&#123;</span></span><br><span class="line"><span class="attr">      "urlPrefix":</span> <span class="string">"http://127.0.0.1:32766/gpushare-scheduler"</span><span class="string">,</span></span><br><span class="line"><span class="attr">      "filterVerb":</span> <span class="string">"filter"</span><span class="string">,</span></span><br><span class="line"><span class="attr">      "bindVerb":</span>   <span class="string">"bind"</span><span class="string">,</span></span><br><span class="line"><span class="attr">      "enableHttps":</span> <span class="literal">false</span><span class="string">,</span></span><br><span class="line"><span class="attr">      "nodeCacheCapable":</span> <span class="literal">true</span><span class="string">,</span></span><br><span class="line"><span class="attr">      "managedResources":</span> <span class="string">[</span></span><br><span class="line">        <span class="string">&#123;</span></span><br><span class="line"><span class="attr">          "name":</span> <span class="string">"aliyun.com/gpu-mem"</span><span class="string">,</span></span><br><span class="line"><span class="attr">          "ignoredByScheduler":</span> <span class="literal">false</span></span><br><span class="line">        <span class="string">&#125;</span></span><br><span class="line">      <span class="string">],</span></span><br><span class="line"><span class="attr">      "ignorable":</span> <span class="literal">false</span></span><br><span class="line">    <span class="string">&#125;</span></span><br><span class="line">  <span class="string">]</span></span><br><span class="line"><span class="string">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>从描述文件来看，阿里实现了filter和bind接口来接管gpu-mem这个资源的预选操作，具体另外开文章说吧。</p>
+<p>然后再描述下我之前对gpu共享的改动，和阿里不太一样，我这里主要是修改了nvidia.com/gpu这个原有的资源，让其支持小数。<br>主要是改动了scheduler和kubelet，这个比阿里的好处是由于是已有的资源，调度上实现不用太多，改动很少，只有<br>plugin/pkg/scheduler/algorithm/predicates/predicates.go 以及plugin/pkg/scheduler/schedulercache/node_info.go中资源相关的数据又原来的Value()改成MilliValue()。</p>
+<p>剩下的改动主要是kubelet中pkg/kubelet/gpu/nvidia/nvidia_gpu_manager.go 这里由于支持了小数，并且比阿里好的是支持了多gpu的共享<br>主要是扩展了原有的定义，以及改动了 AllocateGPU(pod <em>v1.Pod, container </em>v1.Container) 这个func中的具体逻辑，具体就不列出来了<br><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//扩展了原有的结构，记录了pod对container，container对gpu的使用量的情况,便于allocate处使用</span></span><br><span class="line"><span class="keyword">type</span> podGpuUsage <span class="keyword">struct</span> &#123;</span><br><span class="line">	podGPUMapping <span class="keyword">map</span>[<span class="keyword">string</span>]containerToGpuUsage</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">newPodGpuUsage</span><span class="params">()</span> *<span class="title">podGpuUsage</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> &amp;podGpuUsage&#123;</span><br><span class="line">		podGPUMapping: <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="keyword">string</span>]containerToGpuUsage),</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> containerToGpuUsage <span class="keyword">map</span>[<span class="keyword">string</span>]gpuToUsage</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> gpuToUsage <span class="keyword">map</span>[<span class="keyword">string</span>]*resource.Quantity</span><br></pre></td></tr></table></figure></p>
+<p>总结下来看，目前对k8s容器中gpu共享的方案，都没有实现真正的资源控制，只是实现了gpu卡在多个容器中的共享，并且需要业务去适应这样的问题<br>但是！！！ 其实我也接触到了一些vgpu的方案，总体来说都是通过改写nvidia的cuda api的方式来实现了资源控制，最简单的例子就是写个so把cuMemGetInfo这个cuda api重新实现变，这样无论是什么机器学习框架tensorflow也好还是别的，获得的mem都是限制住的，避免了业务没有适配可能带来的问题</p>
+<p>另外再补充一句，gpu这种资源还是适合用的时候多分配，不用的时候就回收，即适合结合自动扩缩容的方案来做资源管理,尤其是对在线的预测服务。</p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/k8s/" rel="tag"># k8s</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/post/nvidia-kubernetes/" rel="next" title="nvidia kubernetes 和官方k8s的不同">
+                <i class="fa fa-chevron-left"></i> nvidia kubernetes 和官方k8s的不同
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/post/control-disk-size-in-docker/" rel="prev" title="如何实现系列一：如何控制k8s pod中磁盘空间的大小">
+                如何实现系列一：如何控制k8s pod中磁盘空间的大小 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div id="gitalk-container">
+    </div>
+    
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <div class="site-overview-wrap sidebar-panel sidebar-panel-active">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">lovejoy</p>
+              <p class="site-description motion-element" itemprop="description">今天不开心</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">48</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">12</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">13</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://github.com/lovejoy" title="Github &rarr; https://github.com/lovejoy" rel="noopener" target="_blank"><i class="fa fa-fw fa-globe"></i>Github</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://twitter.com/liangyongqing" title="Twitter &rarr; https://twitter.com/liangyongqing" rel="noopener" target="_blank"><i class="fa fa-fw fa-globe"></i>Twitter</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                友情链接
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://yuerblog.cc/" title="https://yuerblog.cc/" rel="noopener" target="_blank">鱼儿的博客</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lovejoy</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.8.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v6.6.0</div>
+
+
+
+
+        
+
+
+
+
+
+  <script>
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//tajs.qq.com/stats?sId=63414042";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script src="/js/src/utils.js?v=6.6.0"></script>
+
+  <script src="/js/src/motion.js?v=6.6.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/src/affix.js?v=6.6.0"></script>
+
+  <script src="/js/src/schemes/pisces.js?v=6.6.0"></script>
+
+
+
+  
+  <script src="/js/src/scrollspy.js?v=6.6.0"></script>
+<script src="/js/src/post-details.js?v=6.6.0"></script>
+
+
+
+  
+
+
+  <script src="/js/src/bootstrap.js?v=6.6.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <script src="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.js"></script>
+
+  
+  
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.css">
+
+  
+  
+  <script src="//cdn.jsdelivr.net/npm/js-md5@0.7.3/src/md5.min.js"></script>
+
+   <script>
+        var gitalk = new Gitalk({
+          clientID: 'e10649a0fb2b6556a966',
+          clientSecret: 'd07a6e94a4768d09ae4fe2febbcdafb5b5d4ef61',
+          repo: 'lovejoy.github.com',
+          owner: 'lovejoy',
+          admin: ['lovejoy'],
+          id: md5(location.pathname),
+          distractionFreeMode: 'false'
+        })
+        gitalk.render('gitalk-container')
+       </script>
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

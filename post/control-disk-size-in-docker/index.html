@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.lug.ustc.edu.cn/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=6.6.0" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.6.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.6.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.6.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.6.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '6.6.0',
+    sidebar: {"position":"right","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="这2年基于k8s做了大量的工作，其中很多相信业界的同仁也会碰到，打算开个系列来介绍下，相关的东西如何实现，也作为这方面的一些总结 k8s集群管理必然会遇到的一个问题，磁盘空间控制问题, 业务方的代码跑在容器中，必然会生成日志和临时文件，也必然会遇到磁盘空间控制的问题，不然业务方就直接把磁盘用满了。如果google搜索下的话基本的解决方案是：修改docker的参数 ，添加 –storage-opt">
+<meta name="keywords" content="k8s">
+<meta property="og:type" content="article">
+<meta property="og:title" content="如何实现系列一：如何控制k8s pod中磁盘空间的大小">
+<meta property="og:url" content="https://blog.spider.im/post/control-disk-size-in-docker/index.html">
+<meta property="og:site_name" content="吐核|Core Dump">
+<meta property="og:description" content="这2年基于k8s做了大量的工作，其中很多相信业界的同仁也会碰到，打算开个系列来介绍下，相关的东西如何实现，也作为这方面的一些总结 k8s集群管理必然会遇到的一个问题，磁盘空间控制问题, 业务方的代码跑在容器中，必然会生成日志和临时文件，也必然会遇到磁盘空间控制的问题，不然业务方就直接把磁盘用满了。如果google搜索下的话基本的解决方案是：修改docker的参数 ，添加 –storage-opt">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-03-11T13:50:15.234Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="如何实现系列一：如何控制k8s pod中磁盘空间的大小">
+<meta name="twitter:description" content="这2年基于k8s做了大量的工作，其中很多相信业界的同仁也会碰到，打算开个系列来介绍下，相关的东西如何实现，也作为这方面的一些总结 k8s集群管理必然会遇到的一个问题，磁盘空间控制问题, 业务方的代码跑在容器中，必然会生成日志和临时文件，也必然会遇到磁盘空间控制的问题，不然业务方就直接把磁盘用满了。如果google搜索下的话基本的解决方案是：修改docker的参数 ，添加 –storage-opt">
+
+
+
+
+
+
+  <link rel="canonical" href="https://blog.spider.im/post/control-disk-size-in-docker/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>如何实现系列一：如何控制k8s pod中磁盘空间的大小 | 吐核|Core Dump</title>
+  
+
+
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-36548399-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-36548399-1');
+</script>
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion .logo-line-before i { left: initial; }
+    .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">吐核|Core Dump</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+      
+        <p class="site-subtitle">笔记 随想 吐槽</p>
+      
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/control-disk-size-in-docker/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="lovejoy">
+      <meta itemprop="description" content="今天不开心">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吐核|Core Dump">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">如何实现系列一：如何控制k8s pod中磁盘空间的大小
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-03-06 14:55:03" itemprop="dateCreated datePublished" datetime="2019-03-06T14:55:03+08:00">2019-03-06</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-03-11 21:50:15" itemprop="dateModified" datetime="2019-03-11T21:50:15+08:00">2019-03-11</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>这2年基于k8s做了大量的工作，其中很多相信业界的同仁也会碰到，打算开个系列来介绍下，相关的东西如何实现，也作为这方面的一些总结</p>
+<p>k8s集群管理必然会遇到的一个问题，磁盘空间控制问题, 业务方的代码跑在容器中，必然会生成日志和临时文件，也必然会遇到磁盘空间控制的问题，不然业务方就直接把磁盘用满了。<br>如果google搜索下的话基本的解决方案是：修改docker的参数 ，添加 –storage-opt dm.basesize= 参数设置为需要的值 😀</p>
+<p>然而这不是一个可以随不同的业务和容器变化的值，即docker daemon启动后，创建的容器的根分区的大小都是这个值。并不满足我们的需求，我们需要的是根据不同的业务设置不同的大小，即我们提供给用户的容器规格除了CPU和MEM之外还有DISK的大小，当然dm.basesize这个值推荐修改(这个值也限制了镜像的大小），默认值是10G，建议修改成20G，虽然目前大部分业务镜像都是在5G之内，但是随着机器学习的兴起，相关的镜像普遍偏大,有超过10G点现象</p>
+<p>回到正题，如何限制磁盘空间：<br>首先我们的容器用的磁盘都是本地盘，那么就需要从本地磁盘的方案来考虑限制。即需要有办法从本地磁盘切分不同的大小：这里推荐2个方法：LVM(lvm相关命令)以及DeviceMapper(dmsetup相关命令)。这2个方案分别在不同的地方实践过，各有利弊。即我们通过一些系统命令，在node上的物理磁盘上分配出相应大小的空间，然后通过flexvolume挂到容器中，实现控制容器磁盘大小的目的(注意这里根分区还是basesize的大小)。FlexVolume的功能请参考<a href="/post/flex-volume-plugin/">前文</a><br><a id="more"></a></p>
+<h3 id="LVM的方案"><a href="#LVM的方案" class="headerlink" title="LVM的方案"></a>LVM的方案</h3><p>官方其实有个<a href="https://github.com/kubernetes/examples/blob/master/staging/volumes/flexvolume/lvm" target="_blank" rel="noopener">示例</a> ，不过这确实只是个示例，在实际的使用中，并无法使用，官方的示例要求你提前在物理机上创建好volume，用的时候挂上。而我们需要的是根据podSpec上的参数动态创建不同大小的volume，所以我们需要做相应的改造</p>
+<p>如<a href="/post/flex-volume-plugin/">前文</a> 描述的lvm是device的模式，所以需要实现attach detach mountdevice umountdevice等操作<br>我们需要先pvcreate /dev/sdb2 ;vgcreate docker /dev/sdb2 这样创建好一个docker的vg用于后面的lv创建<br>attach中需要实现的是根据posSpec上的size设置创建相应大小的volume<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">attach() &#123;</span><br><span class="line">        JSON_PARAMS=$1</span><br><span class="line">        SIZE=$(echo $1 | jq -r &apos;.size&apos;)</span><br><span class="line">        VOLUMEID=$(echo $&#123;JSON_PARAMS&#125; | jq -r &apos;.[&quot;kubernetes.io/pod.uid&quot;]&apos; #这里用uid作为volumeid,核心就在这个，和下面注释的地方</span><br><span class="line">        VG=$(echo $&#123;JSON_PARAMS&#125;|jq -r &apos;.volumegroup&apos;)</span><br><span class="line"></span><br><span class="line">        DMDEV=&quot;/dev/mapper/$&#123;VG&#125;-$&#123;VOLUMEID&#125;&quot;</span><br><span class="line">        if [ -b &quot;$&#123;DMDEV&#125;&quot; ]; then</span><br><span class="line">                log &quot;&#123;\&quot;status\&quot;: \&quot;Success\&quot;, \&quot;device\&quot;:\&quot;$&#123;DMDEV&#125;\&quot;&#125;&quot;</span><br><span class="line">                exit 0</span><br><span class="line">        fi</span><br><span class="line"></span><br><span class="line">        lvcreate -L $&#123;SIZE&#125; -n $&#123;VOLUMEID&#125; $&#123;VG&#125; &amp;&gt; /tmp/$&#123;VOLUMEID&#125; #这里创建不同大小的空间 </span><br><span class="line">        if [ $? -ne 0 ]; then</span><br><span class="line">                RST=`cat /tmp/$&#123;VOLUMEID&#125;`</span><br><span class="line">                RST=`echo $&#123;RST//\&quot;/&#125;`</span><br><span class="line">                err &quot;&#123; \&quot;status\&quot;: \&quot;Failure\&quot;, \&quot;message\&quot;: \&quot;Failed to create volume $&#123;VOLUMEID&#125; at $&#123;VG&#125;, Reason:$&#123;RST&#125;\&quot;&#125;&quot;</span><br><span class="line">                exit 1</span><br><span class="line">        fi</span><br><span class="line">        /bin/rm -rf /tmp/$&#123;VOLUMEID&#125;</span><br><span class="line"></span><br><span class="line">        if [ ! -b &quot;$&#123;DMDEV&#125;&quot; ]; then</span><br><span class="line">                err &quot;&#123;\&quot;status\&quot;: \&quot;Failure\&quot;, \&quot;message\&quot;: \&quot;Volume $&#123;VOLUMEID&#125; does not exist\&quot;&#125;&quot;</span><br><span class="line">                exit 1</span><br><span class="line">        fi</span><br><span class="line">        log &quot;&#123;\&quot;status\&quot;: \&quot;Success\&quot;, \&quot;device\&quot;:\&quot;$&#123;DMDEV&#125;\&quot;&#125;&quot;</span><br><span class="line">        exit 0</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>mountdevice中实现将volume mkfs掉，并且将目录挂载到相应的位置，这部分和官方没什么区别<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">domountdevice() &#123;</span><br><span class="line">	MNTPATH=$1</span><br><span class="line">	DMDEV=$2</span><br><span class="line">	FSTYPE=$(echo $3|jq -r &apos;.[&quot;kubernetes.io/fsType&quot;]&apos;)</span><br><span class="line"></span><br><span class="line">	if [ ! -b &quot;$&#123;DMDEV&#125;&quot; ]; then</span><br><span class="line">		err &quot;&#123;\&quot;status\&quot;: \&quot;Failure\&quot;, \&quot;message\&quot;: \&quot;$&#123;DMDEV&#125; does not exist\&quot;&#125;&quot;</span><br><span class="line">		exit 1</span><br><span class="line">	fi</span><br><span class="line"></span><br><span class="line">	if [ $(ismounted) -eq 1 ] ; then</span><br><span class="line">		log &quot;&#123;\&quot;status\&quot;: \&quot;Success\&quot;&#125;&quot;</span><br><span class="line">		exit 0</span><br><span class="line">	fi</span><br><span class="line"></span><br><span class="line">	VOLFSTYPE=`blkid -o udev $&#123;DMDEV&#125; 2&gt;/dev/null|grep &quot;ID_FS_TYPE&quot;|cut -d&quot;=&quot; -f2`</span><br><span class="line">	if [ &quot;$&#123;VOLFSTYPE&#125;&quot; == &quot;&quot; ]; then</span><br><span class="line">		mkfs -t $&#123;FSTYPE&#125; $&#123;DMDEV&#125; &gt;/dev/null 2&gt;&amp;1</span><br><span class="line">		if [ $? -ne 0 ]; then</span><br><span class="line">			err &quot;&#123; \&quot;status\&quot;: \&quot;Failure\&quot;, \&quot;message\&quot;: \&quot;Failed to create fs $&#123;FSTYPE&#125; on device $&#123;DMDEV&#125;\&quot;&#125;&quot;</span><br><span class="line">			exit 1</span><br><span class="line">		fi</span><br><span class="line">	fi</span><br><span class="line"></span><br><span class="line">	mkdir -p $&#123;MNTPATH&#125; &amp;&gt; /dev/null</span><br><span class="line"></span><br><span class="line">	mount $&#123;DMDEV&#125; $&#123;MNTPATH&#125; &amp;&gt; /dev/null</span><br><span class="line">	if [ $? -ne 0 ]; then</span><br><span class="line">		err &quot;&#123; \&quot;status\&quot;: \&quot;Failure\&quot;, \&quot;message\&quot;: \&quot;Failed to mount device $&#123;DMDEV&#125; at $&#123;MNTPATH&#125;\&quot;&#125;&quot;</span><br><span class="line">		exit 1</span><br><span class="line">	fi</span><br><span class="line">	log &quot;&#123;\&quot;status\&quot;: \&quot;Success\&quot;&#125;&quot;</span><br><span class="line">	exit 0</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>detach和doumountdevice都是反操作，如lvremove，自己理解实现下就好,上述程序实现后，放在/usr/libexec/kubernetes/kubelet-plugins/volume/exec/kubernetes.io~lvm/lvm 即可<br>podSpec上需要添加如下的东西<br><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">volumes:</span></span><br><span class="line"><span class="attr">- flexVolume:</span></span><br><span class="line"><span class="attr">    driver:</span> <span class="string">kubernetes.io/lvm</span> <span class="comment">#注意这里和机器上文件目录是对应的</span></span><br><span class="line"><span class="attr">    fsType:</span> <span class="string">ext4</span></span><br><span class="line"><span class="attr">    options:</span></span><br><span class="line"><span class="attr">      size:</span> <span class="number">30</span><span class="string">Gi</span></span><br><span class="line"><span class="attr">      volumegroup:</span> <span class="string">docker</span></span><br><span class="line"><span class="attr">  name:</span> <span class="string">mnt</span></span><br><span class="line"><span class="attr">volumeMounts:</span></span><br><span class="line"><span class="attr">  - mountPath:</span> <span class="string">/mnt</span></span><br><span class="line"><span class="attr">    name:</span> <span class="string">mnt</span></span><br></pre></td></tr></table></figure></p>
+<h3 id="DeviceMapper的方案"><a href="#DeviceMapper的方案" class="headerlink" title="DeviceMapper的方案"></a>DeviceMapper的方案</h3><p>使用devicemapper首先得了解一些devicemapper的相关知识，其中创建thinpool的内容可以在<a href="/post/lvm">前文</a>中查看，也建议看看这篇<a href="https://www.centos.bz/2016/12/docker-device-mapper-in-practice/" target="_blank" rel="noopener">文章</a>，以及kernel上的<a href="https://www.kernel.org/doc/Documentation/device-mapper/thin-provisioning.txt" target="_blank" rel="noopener">文章</a></p>
+<p>重要的几个步骤<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#创建thinly-provisioned volume.</span></span><br><span class="line">dmsetup message /dev/mapper/docker-thinpool <span class="variable">$sector</span> create_thin <span class="variable">$sector</span></span><br><span class="line"><span class="comment">#创建具体的设备</span></span><br><span class="line">dmsetup create <span class="variable">$deviceName</span> --table 0 <span class="variable">$size</span> thin /dev/mapper/docker-thinpool <span class="variable">$sector</span></span><br><span class="line"><span class="comment">#反操作，删除设备</span></span><br><span class="line">dmsetup remove -f <span class="variable">$deviceName</span></span><br><span class="line"><span class="comment">#删除thinly-provisioned volume</span></span><br><span class="line">dmsetup mesage /dev/mapper/docker-thinpool <span class="variable">$sector</span> delete <span class="variable">$sector</span></span><br></pre></td></tr></table></figure></p>
+<p>之前的实现是用go写的，这里我们用bash来简单实现下<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="title">attach</span></span>() &#123;</span><br><span class="line">   JSON_PARAMS=<span class="variable">$1</span></span><br><span class="line">   SIZE=$(<span class="built_in">echo</span> <span class="variable">$1</span> | jq -r <span class="string">'.size'</span>)</span><br><span class="line">   VOLUMEID=$(<span class="built_in">echo</span> <span class="variable">$&#123;JSON_PARAMS&#125;</span> | jq -r <span class="string">'.["kubernetes.io/pod.uid"]'</span>  </span><br><span class="line">   sector=0 <span class="comment">#这里是个比较麻烦的地方 sector是个标识数字，不可以一样，所以需要自己先dmsetup ls找下已经占用的，然后随机找个用上，这里略过</span></span><br><span class="line">   dmsetup message /dev/mapper/docker-thinpool <span class="variable">$sector</span> create_thin <span class="variable">$sector</span> &amp;&gt; /tmp/<span class="variable">$&#123;VOLUMEID&#125;</span> <span class="comment">#这里创建不同大小的空间 </span></span><br><span class="line">   <span class="keyword">if</span> [ $? -ne 0 ]; <span class="keyword">then</span></span><br><span class="line">        RST=`cat /tmp/<span class="variable">$&#123;VOLUMEID&#125;</span>`</span><br><span class="line">        RST=`<span class="built_in">echo</span> <span class="variable">$&#123;RST//\"/&#125;</span>`</span><br><span class="line">        err <span class="string">"&#123; \"status\": \"Failure\", \"message\": \"Failed to create thin volume <span class="variable">$&#123;VOLUMEID&#125;</span> , Reason:<span class="variable">$&#123;RST&#125;</span>\"&#125;"</span></span><br><span class="line">        <span class="built_in">exit</span> 1</span><br><span class="line">   <span class="keyword">fi</span></span><br><span class="line">   DMDEV=pod_<span class="variable">$&#123;VOLUMEID&#125;</span>_<span class="variable">$sector</span> <span class="comment">#注意这里由于需要有sector信息，所以巧妙的把这个保存在device设备名上，偏于后续删除的时候用</span></span><br><span class="line">   dmsetup create <span class="variable">$DMDEV</span> --table 0 <span class="variable">$SIZE</span> thin /dev/mapper/docker-thinpool <span class="variable">$sector</span> &amp;&gt; /tmp/<span class="variable">$&#123;VOLUMEID&#125;</span></span><br><span class="line">   <span class="keyword">if</span> [ $? -ne 0 ]; <span class="keyword">then</span></span><br><span class="line">        RST=`cat /tmp/<span class="variable">$&#123;VOLUMEID&#125;</span>`</span><br><span class="line">        RST=`<span class="built_in">echo</span> <span class="variable">$&#123;RST//\"/&#125;</span>`</span><br><span class="line">        err <span class="string">"&#123; \"status\": \"Failure\", \"message\": \"Failed to create volume <span class="variable">$&#123;VOLUMEID&#125;</span> , Reason:<span class="variable">$&#123;RST&#125;</span>\"&#125;"</span></span><br><span class="line">        <span class="built_in">exit</span> 1</span><br><span class="line">   <span class="keyword">fi</span></span><br><span class="line">   <span class="built_in">log</span> <span class="string">"&#123;\"status\": \"Success\", \"device\":\"<span class="variable">$&#123;DMDEV&#125;</span>\"&#125;"</span></span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>mountdevice 等操作和lvm类似，这里不再赘述</p>
+<p>总结下来说就是通过flexvolume利用一些已有的技术在本地磁盘上划分出相应空间大小的磁盘挂载到容器中，让业务往指定的目录写比如我这边都是/export目录,来达到控制磁盘空间大小的目的。 至于lvm和devicemapper的方案谁好谁坏不好简单评价，我自己的感受：lvm的方案比较成熟，周边系统文档也比较齐全；devicemapper的话我觉得最大的好处是，是thinpool的模式，用多少占多少，类似我们平常电脑上虚拟机创建动态盘的感觉，空间不是像lvm或者分区一样立刻占用掉的。这样最大的好处是我们可以创建出比物理机磁盘更大的空间，来实现超卖的功能！！！（因为实际观察磁盘多数是用不完的，lvm的模式会导致容器数受磁盘大小限制，影响我们的精细化运营）</p>
+<p>PS: devicemapper注意选择比较高版本的内核模块，低版本的内核可能有内核<a href="https://tech.meili-inc.com/docker_crash-79" target="_blank" rel="noopener">bug</a> 虽然可以通过加dm.mountopt=nodiscard 和dm.blkdiscard=false 的参数解决</p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/k8s/" rel="tag"># k8s</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/post/gpu-share-in-k8s/" rel="next" title="k8s中的GPU共享功能实现分析">
+                <i class="fa fa-chevron-left"></i> k8s中的GPU共享功能实现分析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/post/admission-controller/" rel="prev" title="如何实现系列二：实现一个自己的admission controller">
+                如何实现系列二：实现一个自己的admission controller <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div id="gitalk-container">
+    </div>
+    
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">lovejoy</p>
+              <p class="site-description motion-element" itemprop="description">今天不开心</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">48</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">12</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">13</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://github.com/lovejoy" title="Github &rarr; https://github.com/lovejoy" rel="noopener" target="_blank"><i class="fa fa-fw fa-globe"></i>Github</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://twitter.com/liangyongqing" title="Twitter &rarr; https://twitter.com/liangyongqing" rel="noopener" target="_blank"><i class="fa fa-fw fa-globe"></i>Twitter</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                友情链接
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://yuerblog.cc/" title="https://yuerblog.cc/" rel="noopener" target="_blank">鱼儿的博客</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#LVM的方案"><span class="nav-number">1.</span> <span class="nav-text">LVM的方案</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#DeviceMapper的方案"><span class="nav-number">2.</span> <span class="nav-text">DeviceMapper的方案</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lovejoy</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.8.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v6.6.0</div>
+
+
+
+
+        
+
+
+
+
+
+  <script>
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//tajs.qq.com/stats?sId=63414042";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script src="/js/src/utils.js?v=6.6.0"></script>
+
+  <script src="/js/src/motion.js?v=6.6.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/src/affix.js?v=6.6.0"></script>
+
+  <script src="/js/src/schemes/pisces.js?v=6.6.0"></script>
+
+
+
+  
+  <script src="/js/src/scrollspy.js?v=6.6.0"></script>
+<script src="/js/src/post-details.js?v=6.6.0"></script>
+
+
+
+  
+
+
+  <script src="/js/src/bootstrap.js?v=6.6.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <script src="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.js"></script>
+
+  
+  
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.css">
+
+  
+  
+  <script src="//cdn.jsdelivr.net/npm/js-md5@0.7.3/src/md5.min.js"></script>
+
+   <script>
+        var gitalk = new Gitalk({
+          clientID: 'e10649a0fb2b6556a966',
+          clientSecret: 'd07a6e94a4768d09ae4fe2febbcdafb5b5d4ef61',
+          repo: 'lovejoy.github.com',
+          owner: 'lovejoy',
+          admin: ['lovejoy'],
+          id: md5(location.pathname),
+          distractionFreeMode: 'false'
+        })
+        gitalk.render('gitalk-container')
+       </script>
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
