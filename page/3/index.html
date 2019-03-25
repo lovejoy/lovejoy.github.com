@@ -369,6 +369,169 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/go-flock-fnctl-getlock/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="lovejoy">
+      <meta itemprop="description" content="今天不开心">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吐核|Core Dump">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/post/go-flock-fnctl-getlock/" class="post-title-link" itemprop="url">go语言中判断一个文件是否被flock上了</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-01-20 23:05:01" itemprop="dateCreated datePublished" datetime="2018-01-20T23:05:01+08:00">2018-01-20</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-03-11 21:50:15" itemprop="dateModified" datetime="2019-03-11T21:50:15+08:00">2019-03-11</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>首先需要知道的是linux存在强制锁（mandatory lock）和劝告锁（advisory lock）。劝告锁是一种协同工作的锁。对于这种锁来说，内核只提供加锁以及检测文件是否已经加锁的手段，但是内核并不参与锁的控制和协调，所以只是个约定，对文件打个标签的感觉，具体遵守不遵守看自己；强制锁是一种内核强制采用的文件锁，每当有系统调用 open()、read() 以及write() 发生的时候，内核都要检查并确保这些系统调用不会违反在所访问文件上加的强制锁约束。也就是说，如果有进程不遵守游戏规则，硬要往加了锁的文件中写入内容，内核就会加以阻拦。更多参考<a href="https://www.ibm.com/developerworks/cn/linux/l-cn-filelock/" target="_blank" rel="noopener">这里</a></p>
+<p>我这里利用文件锁来做等待的事情，即前面有一个进程跑着呢，后面这个干同样事情的进程就得等着，并且前一个进程无论是正常退出还是异常退出的时候锁必须释放掉</p>
+<p>看了下，用flock加LOCK_EX排它锁或者用fnctl加F_SETLKW也可以，其实都是相当于对文件加个标记（注意这句话）<br>
+          <!--noindex-->
+          
+            <div class="post-button text-center">
+              <a class="btn" href="/post/go-flock-fnctl-getlock/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          
+          <!--/noindex-->
+        
+      
+    </p></div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/lack-post-start-hook-error-message/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1894,169 +2057,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/install-hexo/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="lovejoy">
-      <meta itemprop="description" content="今天不开心">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="吐核|Core Dump">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/post/install-hexo/" class="post-title-link" itemprop="url">安装hexo</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-
-              
-                
-              
-
-              <time title="创建时间：2016-04-27 18:14:52" itemprop="dateCreated datePublished" datetime="2016-04-27T18:14:52+08:00">2016-04-27</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">更新于</span>
-                
-                <time title="修改时间：2019-03-11 21:50:15" itemprop="dateModified" datetime="2019-03-11T21:50:15+08:00">2019-03-11</time>
-              
-            
-          </span>
-
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>安装npm<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ wget -qO- https://raw.github.com/creationix/nvm/master/install.sh | sh</span><br><span class="line">$ NVM_NODEJS_ORG_MIRROR=https://npm.taobao.org/mirrors/node nvm install 4.3.1</span><br></pre></td></tr></table></figure></p>
-<p>安装hexo<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install -g hexo-cli --registry=https://registry.npm.taobao.org --disturl=https://npm.taobao.org/mirrors/node</span><br></pre></td></tr></table></figure></p>
-<p>安装cnpm<br>
-          <!--noindex-->
-          
-            <div class="post-button text-center">
-              <a class="btn" href="/post/install-hexo/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          
-          <!--/noindex-->
-        
-      
-    </p></div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2103,7 +2103,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">49</span>
+                    <span class="site-state-item-count">50</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>

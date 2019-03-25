@@ -369,6 +369,169 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/control-gpu-memory/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="lovejoy">
+      <meta itemprop="description" content="今天不开心">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吐核|Core Dump">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/post/control-gpu-memory/" class="post-title-link" itemprop="url">一种vGPU方案：控制GPU内存使用上限</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-03-20 17:33:51" itemprop="dateCreated datePublished" datetime="2019-03-20T17:33:51+08:00">2019-03-20</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-03-22 16:14:21" itemprop="dateModified" datetime="2019-03-22T16:14:21+08:00">2019-03-22</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>在已经实现了k8s层面的GPU按小数申请支持的情况下(阿里是按内存数量支持），我们需要有个实际的资源限制的方案。<br>目前不太有好的办法控制gpu的算力（其实有，局限性比较大）。我们先控制下gpu显存的使用，具体实现就不方便贴了，讲下思路和效果</p>
+<ol>
+<li>首先需要了解cuda api，所有框架如果细看代码都会发现底层是使用的cuda api去操作nvidia 的gpu，python只是个binding</li>
+<li>需要了解hook 系统api的方法（ 搜索关键词ring3 hook)</li>
+</ol>
+<p>我们从tensorflow的运行日志去翻<a href="https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/common_runtime/gpu/gpu_device.cc" target="_blank" rel="noopener">代码</a> 找设备初始化信息的地方 Found device ，跟进去，可以发现实际是调用了<a href="https://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__MEM.html#group__CUDA__MEM_1g808f555540d0143a331cc42aa98835c0" target="_blank" rel="noopener">cuMemGetInfo</a>这个函数获取的信息。 （这个页面中mem相关的函数都建议看下）</p>
+<p>那么我们只需要重新写个so，实现这个函数就可以了，这个函数根据我们自己的逻辑设置最大的内存上限，与此同时由于cuMemGetInfo ( size_t<em> free, size_t</em> total ) 这个函数还返回了free的情况，所以我们也需要记录free的值，可以hook掉cuMemAlloc ，申请的时候记录下各个容器的使用情况，也可以利用外围的监控程序获取信息</p>
+<p>最终实现的效果,设置环境变量后tensorflow看到的内存值是我们设置的值</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">root@cnn2-1553057347-worker-0:~<span class="comment"># export GPU_MEMORY=2147483648</span></span><br><span class="line">root@cnn2-1553057347-worker-0:~<span class="comment"># python</span></span><br><span class="line">Python 3.5.2 (default, Nov 23 2017, 16:37:01)</span><br><span class="line">[GCC 5.4.0 20160609] on linux</span><br><span class="line">Type <span class="string">"help"</span>, <span class="string">"copyright"</span>, <span class="string">"credits"</span> or <span class="string">"license"</span> <span class="keyword">for</span> more information.</span><br><span class="line">&gt;&gt;&gt; import tensorflow as tf</span><br><span class="line">&gt;&gt;&gt; sess =tf.Session()</span><br><span class="line">2019-03-22 14:57:33.394861: I tensorflow/core/platform/cpu_feature_guard.cc:140] Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.1 SSE4.2 AVX AVX2 FMA</span><br><span class="line">hacking gpu memory from GPU_MEMORY env by lovejoy. mem=&lt;2147483648&gt;</span><br><span class="line">2019-03-22 14:57:33.554589: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1344] Found device 0 with properties:</span><br><span class="line">name: Tesla K20c major: 3 minor: 5 memoryClockRate(GHz): 0.7055</span><br><span class="line">pciBusID: 0000:02:00.0</span><br><span class="line">totalMemory: 2.00GiB freeMemory: 1.00GiB</span><br><span class="line">2019-03-22 14:57:33.554637: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1423] Adding visible gpu devices: 0</span><br><span class="line">2019-03-22 14:57:33.843047: I tensorflow/core/common_runtime/gpu/gpu_device.cc:911] Device interconnect StreamExecutor with strength 1 edge matrix:</span><br><span class="line">2019-03-22 14:57:33.843094: I tensorflow/core/common_runtime/gpu/gpu_device.cc:917]      0</span><br><span class="line">2019-03-22 14:57:33.843106: I tensorflow/core/common_runtime/gpu/gpu_device.cc:930] 0:   N</span><br></pre></td></tr></table></figure>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/how-to-write-a-cni-plugin/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1780,173 +1943,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/flex-volume-plugin/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="lovejoy">
-      <meta itemprop="description" content="今天不开心">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="吐核|Core Dump">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/post/flex-volume-plugin/" class="post-title-link" itemprop="url">k8s的flexvolume-plugin介绍</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-
-              
-                
-              
-
-              <time title="创建时间：2019-02-02 11:29:26" itemprop="dateCreated datePublished" datetime="2019-02-02T11:29:26+08:00">2019-02-02</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">更新于</span>
-                
-                <time title="修改时间：2019-03-11 21:50:15" itemprop="dateModified" datetime="2019-03-11T21:50:15+08:00">2019-03-11</time>
-              
-            
-          </span>
-
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>k8s的卷管理目前都是in-tree的，也就是写在k8s代码中，实际看了下对国内用户唯一有价值的就ceph相关的cephfs和rbd以及glusterfs，其他基本都不是国内用户在用的。<br>除此之外我们可以扩展的就flexvolomeplugin或者是csi，csi需要高版本的k8s以及有点麻烦，这里就不关注了。还是主要关注flexvolumeplugin</p>
-<p>flexvolume有多个用处：</p>
-<ol>
-<li>用于区分本地的磁盘，分出特定的大小，挂载到容器中，用于动态控制用户可用的空间，而不依赖于docker的配置 </li>
-<li>在有client的情况下，挂载远端的(分布式)文件系统</li>
-</ol>
-<p>我这里的用途主要是用于挂载分布式存储，在实现插件的过程中，顺道看下flexvolume的相关代码<br>首先需要了解的是：我们需要实现一个可执行程序放在/usr/libexec/kubernetes/kubelet-plugins/volume/exec/&lt;vendor~driver&gt;/<driver> 这样的目录, 实现以下接口<br> init：kubelet/kube-controller-manager 初始化存储插件时调用，插件需要返回是否需要要 attach 和 detach 操作<br> attach：将存储卷挂载到 Node 上<br> detach：将存储卷从 Node 上卸载<br> waitforattach： 等待 attach 操作成功（超时时间为 10 分钟）<br> isattached：检查存储卷是否已经挂载<br> mountdevice：将设备挂载到指定目录中以便后续 bind mount 使用<br> unmountdevice：将设备取消挂载<br> mount：将存储卷挂载到指定目录中<br> umount：将存储卷取消挂载<br>具体的可以看官方设计文档<a href="https://github.com/kubernetes/community/blob/master/contributors/devel/sig-storage/flexvolume.md" target="_blank" rel="noopener">https://github.com/kubernetes/community/blob/master/contributors/devel/sig-storage/flexvolume.md</a></driver></p>
-          <!--noindex-->
-          
-            <div class="post-button text-center">
-              <a class="btn" href="/post/flex-volume-plugin/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -1993,7 +1989,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">49</span>
+                    <span class="site-state-item-count">50</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
