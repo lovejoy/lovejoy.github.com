@@ -369,6 +369,505 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/update-order-and-pause-to-deployment/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="lovejoy">
+      <meta itemprop="description" content="今天不开心">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吐核|Core Dump">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/post/update-order-and-pause-to-deployment/" class="post-title-link" itemprop="url">给k8s的deployment实现上线顺序和暂停点功能</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-03-29 10:37:49 / 修改时间：11:13:08" itemprop="dateCreated datePublished" datetime="2019-03-29T10:37:49+08:00">2019-03-29</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>k8s的deployment是通过调整2个rs的副本数来实现容器的升级和更新的：删一个rs里面的pod，扩容新的spec的rs里面的pod。<br>那么上线的顺序可以转化成删除rs的顺序。</p>
+<p>我们看k8s的代码，可以看到rs副本数的调整是以下函数控制的<br><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(rsc *ReplicaSetController)</span> <span class="title">manageReplicas</span><span class="params">(filteredPods []*v1.Pod, rs *apps.ReplicaSet)</span> <span class="title">error</span></span> &#123;</span><br><span class="line"><span class="keyword">if</span> diff &gt; <span class="number">0</span> &#123; <span class="comment">//diff 是当前pod数和rs上的replica数的差，大于0为缩容</span></span><br><span class="line">    <span class="keyword">if</span> diff &gt; rsc.burstReplicas &#123;</span><br><span class="line">      diff = rsc.burstReplicas</span><br><span class="line">    &#125;</span><br><span class="line">    klog.V(<span class="number">2</span>).Infof(<span class="string">"Too many replicas for %v %s/%s, need %d, deleting %d"</span>, rsc.Kind, rs.Namespace, rs.Name, *(rs.Spec.Replicas), diff)</span><br><span class="line">​</span><br><span class="line">    <span class="comment">// Choose which Pods to delete, preferring those in earlier phases of startup.</span></span><br><span class="line">    podsToDelete := getPodsToDelete(filteredPods, diff) <span class="comment">//删pod的顺序在这个里面</span></span><br><span class="line">​</span><br><span class="line">    rsc.expectations.ExpectDeletions(rsKey, getPodKeys(podsToDelete))</span><br><span class="line">​</span><br><span class="line">    errCh := <span class="built_in">make</span>(<span class="keyword">chan</span> error, diff)</span><br><span class="line">    <span class="keyword">var</span> wg sync.WaitGroup</span><br><span class="line">    wg.Add(diff)</span><br><span class="line">    <span class="keyword">for</span> _, pod := <span class="keyword">range</span> podsToDelete &#123;</span><br><span class="line">      <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">(targetPod *v1.Pod)</span></span> &#123;</span><br><span class="line">        <span class="keyword">defer</span> wg.Done()</span><br><span class="line">        <span class="keyword">if</span> err := rsc.podControl.DeletePod(rs.Namespace, targetPod.Name, rs); err != <span class="literal">nil</span> &#123;</span><br><span class="line">          <span class="comment">// Decrement the expected number of deletes because the informer won't observe this deletion</span></span><br><span class="line">          podKey := controller.PodKey(targetPod)</span><br><span class="line">          klog.V(<span class="number">2</span>).Infof(<span class="string">"Failed to delete %v, decrementing expectations for %v %s/%s"</span>, podKey, rsc.Kind, rs.Namespace, rs.Name)</span><br><span class="line">          rsc.expectations.DeletionObserved(rsKey, podKey)</span><br><span class="line">          errCh &lt;- err</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;(pod)</span><br><span class="line">    &#125;</span><br><span class="line">    wg.Wait()</span><br></pre></td></tr></table></figure></p>
+<p>具体看getPodsToDelete的逻辑</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">getPodsToDelete</span><span class="params">(filteredPods []*v1.Pod, diff <span class="keyword">int</span>)</span> []*<span class="title">v1</span>.<span class="title">Pod</span></span> &#123;</span><br><span class="line">	<span class="comment">// No need to sort pods if we are about to delete all of them.</span></span><br><span class="line">	<span class="comment">// diff will always be &lt;= len(filteredPods), so not need to handle &gt; case.</span></span><br><span class="line">	<span class="keyword">if</span> diff &lt; <span class="built_in">len</span>(filteredPods) &#123;</span><br><span class="line">		<span class="comment">// Sort the pods in the order such that not-ready &lt; ready, unscheduled</span></span><br><span class="line">		<span class="comment">// &lt; scheduled, and pending &lt; running. This ensures that we delete pods</span></span><br><span class="line">		<span class="comment">// in the earlier stages whenever possible.</span></span><br><span class="line">		sort.Sort(controller.ActivePods(filteredPods))</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> filteredPods[:diff]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到是找到需要删除的diff数量的pod，具体的顺序是ActivePods sort完的熟悉，我们看下这个类型的自定义排序逻辑<br>并不是随机的，而是有一定的顺序。<br>顺序为unassigned &lt; Pending&lt; Unknown &lt; Not Ready &lt; higher restart counts &lt; new start pod</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s ActivePods)</span> <span class="title">Less</span><span class="params">(i, j <span class="keyword">int</span>)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 1. Unassigned &lt; assigned</span></span><br><span class="line">	<span class="comment">// If only one of the pods is unassigned, the unassigned one is smaller</span></span><br><span class="line">	<span class="keyword">if</span> s[i].Spec.NodeName != s[j].Spec.NodeName &amp;&amp; (<span class="built_in">len</span>(s[i].Spec.NodeName) == <span class="number">0</span> || <span class="built_in">len</span>(s[j].Spec.NodeName) == <span class="number">0</span>) &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="built_in">len</span>(s[i].Spec.NodeName) == <span class="number">0</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 2. PodPending &lt; PodUnknown &lt; PodRunning</span></span><br><span class="line">	m := <span class="keyword">map</span>[v1.PodPhase]<span class="keyword">int</span>&#123;v1.PodPending: <span class="number">0</span>, v1.PodUnknown: <span class="number">1</span>, v1.PodRunning: <span class="number">2</span>&#125;</span><br><span class="line">	<span class="keyword">if</span> m[s[i].Status.Phase] != m[s[j].Status.Phase] &#123;</span><br><span class="line">		<span class="keyword">return</span> m[s[i].Status.Phase] &lt; m[s[j].Status.Phase]</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 3. Not ready &lt; ready</span></span><br><span class="line">	<span class="comment">// If only one of the pods is not ready, the not ready one is smaller</span></span><br><span class="line">	<span class="keyword">if</span> podutil.IsPodReady(s[i]) != podutil.IsPodReady(s[j]) &#123;</span><br><span class="line">		<span class="keyword">return</span> !podutil.IsPodReady(s[i])</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// <span class="doctag">TODO:</span> take availability into account when we push minReadySeconds information from deployment into pods,</span></span><br><span class="line">	<span class="comment">//       see https://github.com/kubernetes/kubernetes/issues/22065</span></span><br><span class="line">	<span class="comment">// 4. Been ready for empty time &lt; less time &lt; more time</span></span><br><span class="line">	<span class="comment">// If both pods are ready, the latest ready one is smaller</span></span><br><span class="line">	<span class="keyword">if</span> podutil.IsPodReady(s[i]) &amp;&amp; podutil.IsPodReady(s[j]) &amp;&amp; !podReadyTime(s[i]).Equal(podReadyTime(s[j])) &#123;</span><br><span class="line">		<span class="keyword">return</span> afterOrZero(podReadyTime(s[i]), podReadyTime(s[j]))</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 5. Pods with containers with higher restart counts &lt; lower restart counts</span></span><br><span class="line">	<span class="keyword">if</span> maxContainerRestarts(s[i]) != maxContainerRestarts(s[j]) &#123;</span><br><span class="line">		<span class="keyword">return</span> maxContainerRestarts(s[i]) &gt; maxContainerRestarts(s[j])</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 6. Empty creation time pods &lt; newer pods &lt; older pods</span></span><br><span class="line">	<span class="keyword">if</span> !s[i].CreationTimestamp.Equal(&amp;s[j].CreationTimestamp) &#123;</span><br><span class="line">		<span class="keyword">return</span> afterOrZero(&amp;s[i].CreationTimestamp, &amp;s[j].CreationTimestamp)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们加个自定义的顺序逻辑，放到最前面 ,这样我们只要给pod打上不同数值的annotation，就可以控制rs删除pod的顺序也就控制了deployment更新pod的顺序，核心代码如下,具体见提交的<a href="https://github.com/kubernetes/kubernetes/pull/75763" target="_blank" rel="noopener">github pr</a><br><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//0. controller.alpha.kubernetes.io/delete-priority=1 &lt; controller.alpha.kubernetes.io/delete-priority=0</span></span><br><span class="line"><span class="comment">//If pod has annotation controller.alpha.kubernetes.io/delete-priority the larger is small</span></span><br><span class="line"><span class="keyword">if</span> s[i].Annotations[DeletePriorityPodAnnotationKey] != s[j].Annotations[DeletePriorityPodAnnotationKey] &#123;</span><br><span class="line">	s1, err1 := strconv.Atoi(s[i].Annotations[DeletePriorityPodAnnotationKey])</span><br><span class="line">	s2, err2 := strconv.Atoi(s[j].Annotations[DeletePriorityPodAnnotationKey])</span><br><span class="line">	<span class="keyword">if</span> err1 == <span class="literal">nil</span> &amp;&amp; err2 == <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> s1 &gt; s2</span><br><span class="line">	&#125;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure></p>
+<p>至于暂停点的功能:<br>目前k8s是通过kubectl rollout pause deployment.v1.apps/nginx-deployment实现的,十分依赖人工操作的时机。我们也可以仿照上面的方法，加个annotation打到pod上，rs删到这个pod的时候调用下上面这个命令的内部调用，暂停下。然后业务层，再提供kubectl rollout resume deployment.v1.apps/nginx-deployment的入口，允许用户继续。</p>
+<p>具体实现我还没写，现招人实现提交给github上，看这篇文章的同学有没有兴趣研究下，没错说的就是你。</p>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/gpu-volunteer-computing/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="lovejoy">
+      <meta itemprop="description" content="今天不开心">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吐核|Core Dump">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/post/gpu-volunteer-computing/" class="post-title-link" itemprop="url">GPU Volunteer Computing</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-03-27 10:45:14" itemprop="dateCreated datePublished" datetime="2019-03-27T10:45:14+08:00">2019-03-27</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-03-29 11:11:11" itemprop="dateModified" datetime="2019-03-29T11:11:11+08:00">2019-03-29</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>首先这是个没有实现的东西，只是我的一个设想，其次虽然不想浪费今天发送的机会，但是今天有点心情不好，按倩姐的说法就是有点丧，所以就简单的描述下。</p>
+<p>这个Idea来源于bvc (百度第一个最高奖，利用空闲的cpu资源来做计算的服务)，我们把这个方案搬到GPU上</p>
+<ol>
+<li><p>需要先实现GPU的共享机制(按之前的文章，包括业界方案已经可以实现)</p>
+</li>
+<li><p>需要有个分布式存储服务用户存储tensorflow的checkpoint文件，用于中断后恢复(也是一大把)</p>
+</li>
+</ol>
+<p>方案：</p>
+<ol>
+<li><p>对于训练服务，我们可以将训练的Pod混布到Serving服务的GPU卡上，这里可能需要实现特殊的调度策略，假设Serving的容器是request 是1个GPU的情况下（但其实资源使用很低），我们需要能把混布的Pod调度过去；</p>
+</li>
+<li><p>需要用Daemonset之类启动个服务监视混布的Pod占用的资源情况，占用值超过设定的值，就把这个pod踢掉，让调度器重新调度</p>
+</li>
+<li><p>只对于算子Worker进行以上设计，PS角色还是尽量保证其稳定性（通常PS也不需要GPU），并且worker存日志到分布式存储上，不然重启就没了</p>
+</li>
+</ol>
+          <!--noindex-->
+          
+            <div class="post-button text-center">
+              <a class="btn" href="/post/gpu-volunteer-computing/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/pid-limit-in-k8s/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="lovejoy">
+      <meta itemprop="description" content="今天不开心">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吐核|Core Dump">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/post/pid-limit-in-k8s/" class="post-title-link" itemprop="url">Kubernetes v1.14中Pid Limit功能实现分析</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-03-26 10:41:53" itemprop="dateCreated datePublished" datetime="2019-03-26T10:41:53+08:00">2019-03-26</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-03-29 10:55:29" itemprop="dateModified" datetime="2019-03-29T10:55:29+08:00">2019-03-29</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>今天看到kubernetes发布了v1.14版本，发布说明中有个PID限制功能，引起了我的兴趣，2方面原因1：之前matrix有这个功能，但是k8s没有 2：有实际场景需求。那么来看下具体是怎么实现的</p>
+<p>找到官方的<a href="https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG-1.14.md" target="_blank" rel="noopener">release note</a>链接，看到</p>
+<p>Pid Limiting is Graduating to Beta (#757)</p>
+<p>Prevents a pod from starving pid resource</p>
+<p>Ability to isolate pid resources pod-to-pod and node-to-pod kubernetes/kubernetes: #73651kubernetes/enhancements: #757 [kep]</p>
+<p>#757 是 <a href="https://github.com/kubernetes/enhancements/issues/757" target="_blank" rel="noopener">https://github.com/kubernetes/enhancements/issues/757</a> 是个需求描述，说要增加这个功能,不是实现。</p>
+<p>#73651 <a href="https://github.com/kubernetes/kubernetes/pull/73651/files" target="_blank" rel="noopener">https://github.com/kubernetes/kubernetes/pull/73651/files</a> 实现了node层面的pid限制，提供了类似之前预留cpu的system-reserved功能，可以预留pid</p>
+<p>还有个release note没写，需要自己找下#57973</p>
+<p><a href="https://github.com/kubernetes/kubernetes/pull/57973" target="_blank" rel="noopener">https://github.com/kubernetes/kubernetes/pull/57973</a> 这个实现了pod层面的pid限制</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> utilfeature.DefaultFeatureGate.Enabled(kubefeatures.SupportPodPidsLimit) &#123;</span><br><span class="line">    supportedSubsystems = <span class="built_in">append</span>(supportedSubsystems, &amp;cgroupfs.PidsGroup&#123;&#125;)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> utilfeature.DefaultFeatureGate.Enabled(kubefeatures.SupportPodPidsLimit) &amp;&amp; cgroupConfig.ResourceParameters.PodPidsLimit != <span class="literal">nil</span> &#123;</span><br><span class="line">    libcontainerCgroupConfig.PidsLimit = *cgroupConfig.ResourceParameters.PodPidsLimit</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> utilfeature.DefaultFeatureGate.Enabled(kubefeatures.SupportPodPidsLimit) &amp;&amp; cgroupConfig.ResourceParameters.PodPidsLimit != <span class="literal">nil</span> &#123;</span><br><span class="line">    libcontainerCgroupConfig.PidsLimit = *cgroupConfig.ResourceParameters.PodPidsLimit</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>好嘛，其实就是利用了pids这个cgroup  <a href="https://www.kernel.org/doc/Documentation/cgroup-v1/pids.txt做了下限制，这个功能怎么这么久才加。。。" target="_blank" rel="noopener">https://www.kernel.org/doc/Documentation/cgroup-v1/pids.txt做了下限制，这个功能怎么这么久才加。。。</a></p>
+<p>再回到#73651</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">  <span class="comment">// Process IDs are not a node allocatable, so we have to do this ad hoc</span></span><br><span class="line">  pidlimits, err := pidlimit.Stats()</span><br><span class="line">  <span class="keyword">if</span> err == <span class="literal">nil</span> &amp;&amp; pidlimits != <span class="literal">nil</span> &amp;&amp; pidlimits.MaxPID != <span class="literal">nil</span> &#123;</span><br><span class="line">    allocatablePIDs = resource.NewQuantity(<span class="keyword">int64</span>(*pidlimits.MaxPID), resource.DecimalSI)</span><br><span class="line">    allocatablePIDs.Sub(resource.MustParse(pids))</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> allocatableCPU, allocatableMemory, allocatablePIDs</span><br><span class="line">&#125;  &#125;</span><br></pre></td></tr></table></figure>
+<p>拿了下机器上总的数减去配置的数量，限制了所有pod总的pid数量，这样给kubelet一类的程序留下了配置的数量。</p>
+<p>总结下有的时候弄久了有些事情反而忘记了，cgroup其实有个pids subsystem的。我还以为是类似于tcp_throttle一样是狼厂自研的呢。</p>
+<p>另外提示个点：这个pids系统限制的是线程+进程数，可以理解成pstree -pl看到的数量。</p>
+<p>与此同时又想到个点，记得之前matrix还做了容器内可以bind端口的限制，不过好像这个在现在的场景是用不到的。另外还有个利用subtreequota 什么的实现的disk space子系统来控制用量，不过这个现在大部分用我之前提过的方案解决了。</p>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/control-gpu-memory/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1442,512 +1941,11 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/control-disk-size-in-docker/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="lovejoy">
-      <meta itemprop="description" content="今天不开心">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="吐核|Core Dump">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/post/control-disk-size-in-docker/" class="post-title-link" itemprop="url">如何实现系列一：如何控制k8s pod中磁盘空间的大小</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-
-              
-                
-              
-
-              <time title="创建时间：2019-03-06 14:55:03" itemprop="dateCreated datePublished" datetime="2019-03-06T14:55:03+08:00">2019-03-06</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">更新于</span>
-                
-                <time title="修改时间：2019-03-11 21:50:15" itemprop="dateModified" datetime="2019-03-11T21:50:15+08:00">2019-03-11</time>
-              
-            
-          </span>
-
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>这2年基于k8s做了大量的工作，其中很多相信业界的同仁也会碰到，打算开个系列来介绍下，相关的东西如何实现，也作为这方面的一些总结</p>
-<p>k8s集群管理必然会遇到的一个问题，磁盘空间控制问题, 业务方的代码跑在容器中，必然会生成日志和临时文件，也必然会遇到磁盘空间控制的问题，不然业务方就直接把磁盘用满了。<br>如果google搜索下的话基本的解决方案是：修改docker的参数 ，添加 –storage-opt dm.basesize= 参数设置为需要的值 😀</p>
-<p>然而这不是一个可以随不同的业务和容器变化的值，即docker daemon启动后，创建的容器的根分区的大小都是这个值。并不满足我们的需求，我们需要的是根据不同的业务设置不同的大小，即我们提供给用户的容器规格除了CPU和MEM之外还有DISK的大小，当然dm.basesize这个值推荐修改(这个值也限制了镜像的大小），默认值是10G，建议修改成20G，虽然目前大部分业务镜像都是在5G之内，但是随着机器学习的兴起，相关的镜像普遍偏大,有超过10G点现象</p>
-<p>回到正题，如何限制磁盘空间：<br>首先我们的容器用的磁盘都是本地盘，那么就需要从本地磁盘的方案来考虑限制。即需要有办法从本地磁盘切分不同的大小：这里推荐2个方法：LVM(lvm相关命令)以及DeviceMapper(dmsetup相关命令)。这2个方案分别在不同的地方实践过，各有利弊。即我们通过一些系统命令，在node上的物理磁盘上分配出相应大小的空间，然后通过flexvolume挂到容器中，实现控制容器磁盘大小的目的(注意这里根分区还是basesize的大小)。FlexVolume的功能请参考<a href="/post/flex-volume-plugin/">前文</a><br>
-          <!--noindex-->
-          
-            <div class="post-button text-center">
-              <a class="btn" href="/post/control-disk-size-in-docker/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          
-          <!--/noindex-->
-        
-      
-    </p></div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/gpu-share-in-k8s/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="lovejoy">
-      <meta itemprop="description" content="今天不开心">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="吐核|Core Dump">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/post/gpu-share-in-k8s/" class="post-title-link" itemprop="url">k8s中的GPU共享功能实现分析</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-
-              
-                
-              
-
-              <time title="创建时间：2019-02-21 17:52:04" itemprop="dateCreated datePublished" datetime="2019-02-21T17:52:04+08:00">2019-02-21</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">更新于</span>
-                
-                <time title="修改时间：2019-03-11 21:50:15" itemprop="dateModified" datetime="2019-03-11T21:50:15+08:00">2019-03-11</time>
-              
-            
-          </span>
-
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>GPU在容器间共享这个功能其实都有需要，但是官方都没有，之前在公司内实现的改动也太过于in-tree，无法opensource，今天看到阿里云开源了个GPU共享的方案，那么顺道借分析下阿里的方案来总结下这方面的事情。</p>
-<p>阿里云的代码在<br><a href="https://github.com/AliyunContainerService/gpushare-scheduler-extender" target="_blank" rel="noopener">https://github.com/AliyunContainerService/gpushare-scheduler-extender</a><br><a href="https://github.com/AliyunContainerService/gpushare-device-plugin" target="_blank" rel="noopener">https://github.com/AliyunContainerService/gpushare-device-plugin</a><br>阿里云实现了一个gpushare的device-plugin，然后实现了相关的调度逻辑</p>
-<p>由于具体的共享逻辑在node上，所以我们先看下device-plugin的实现。<br>之前看过nvidia的官方device-plugin实现，本质很简单，需要实现2个接口 1.listandwatch用于获得机器上的device列表，2. allocate接口用于kubelet分配设备时，这个设备要做的一些事情 这个设计其实不是那么好，这个之前的<a href="/post/nvidia-kubernetes/">nvidia k8s和官方的区别中</a> 有提到,限制了deviceplugin对设备的调度控制能力 (device-plugin相关的实现后面也看下补篇文章)</p>
-<p>入口代码，和nvidia官方本质没什么区别，加载了nvml的库(cgo的)用户获取机器上的gpu的信息<br>创建了个fsNotify去实现deviceplugin要求的相关逻辑<br><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(ngm *sharedGPUManager)</span> <span class="title">Run</span><span class="params">()</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	log.V(<span class="number">1</span>).Infoln(<span class="string">"Loading NVML"</span>)</span><br><span class="line">	<span class="keyword">if</span> err := nvml.Init(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.V(<span class="number">1</span>).Infof(<span class="string">"Failed to initialize NVML: %s."</span>, err)</span><br><span class="line">		log.V(<span class="number">1</span>).Infof(<span class="string">"If this is a GPU node, did you set the docker default runtime to `nvidia`?"</span>)</span><br><span class="line">		<span class="keyword">select</span> &#123;&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123; log.V(<span class="number">1</span>).Infoln(<span class="string">"Shutdown of NVML returned:"</span>, nvml.Shutdown()) &#125;()</span><br><span class="line">	log.V(<span class="number">1</span>).Infoln(<span class="string">"Fetching devices."</span>)</span><br><span class="line">	<span class="keyword">if</span> getDeviceCount() == <span class="keyword">uint</span>(<span class="number">0</span>) &#123;</span><br><span class="line">		log.V(<span class="number">1</span>).Infoln(<span class="string">"No devices found. Waiting indefinitely."</span>)</span><br><span class="line">		<span class="keyword">select</span> &#123;&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	log.V(<span class="number">1</span>).Infoln(<span class="string">"Starting FS watcher."</span>)</span><br><span class="line">	watcher, err := newFSWatcher(pluginapi.DevicePluginPath)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.V(<span class="number">1</span>).Infoln(<span class="string">"Failed to created FS watcher."</span>)</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> watcher.Close()</span><br><span class="line">	log.V(<span class="number">1</span>).Infoln(<span class="string">"Starting OS watcher."</span>)</span><br><span class="line">	sigs := newOSWatcher(syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)</span><br><span class="line">	restart := <span class="literal">true</span></span><br><span class="line">	<span class="keyword">var</span> devicePlugin *NvidiaDevicePlugin</span><br><span class="line">L:</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="keyword">if</span> restart &#123;</span><br><span class="line">			<span class="keyword">if</span> devicePlugin != <span class="literal">nil</span> &#123;</span><br><span class="line">				devicePlugin.Stop()</span><br><span class="line">			&#125;</span><br><span class="line">			devicePlugin = NewNvidiaDevicePlugin(ngm.enableMPS, ngm.healthCheck)</span><br><span class="line">			<span class="keyword">if</span> err := devicePlugin.Serve(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">				log.Warningf(<span class="string">"Failed to start device plugin due to %v"</span>, err)</span><br><span class="line">			&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">				restart = <span class="literal">false</span></span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> event := &lt;-watcher.Events:</span><br><span class="line">			<span class="keyword">if</span> event.Name == pluginapi.KubeletSocket &amp;&amp; event.Op&amp;fsnotify.Create == fsnotify.Create &#123;</span><br><span class="line">				log.V(<span class="number">1</span>).Infof(<span class="string">"inotify: %s created, restarting."</span>, pluginapi.KubeletSocket)</span><br><span class="line">				restart = <span class="literal">true</span></span><br><span class="line">			&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">case</span> err := &lt;-watcher.Errors:</span><br><span class="line">			log.Warningf(<span class="string">"inotify: %s"</span>, err)</span><br><span class="line"></span><br><span class="line">		<span class="keyword">case</span> s := &lt;-sigs:</span><br><span class="line">			<span class="keyword">switch</span> s &#123;</span><br><span class="line">			<span class="keyword">case</span> syscall.SIGHUP:</span><br><span class="line">				log.V(<span class="number">1</span>).Infoln(<span class="string">"Received SIGHUP, restarting."</span>)</span><br><span class="line">				restart = <span class="literal">true</span></span><br><span class="line">			<span class="keyword">case</span> syscall.SIGQUIT:</span><br><span class="line">				t := time.Now()</span><br><span class="line">				timestamp := fmt.Sprint(t.Format(<span class="string">"20060102150405"</span>))</span><br><span class="line">				log.Infoln(<span class="string">"generate core dump"</span>)</span><br><span class="line">				coredump(<span class="string">"/etc/kubernetes/go_"</span> + timestamp + <span class="string">".txt"</span>)</span><br><span class="line">			<span class="keyword">default</span>:</span><br><span class="line">				log.V(<span class="number">1</span>).Infof(<span class="string">"Received signal \"%v\", shutting down."</span>, s)</span><br><span class="line">				devicePlugin.Stop()</span><br><span class="line">				<span class="keyword">break</span> L</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-          <!--noindex-->
-          
-            <div class="post-button text-center">
-              <a class="btn" href="/post/gpu-share-in-k8s/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/nvidia-kubernetes/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="lovejoy">
-      <meta itemprop="description" content="今天不开心">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="吐核|Core Dump">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/post/nvidia-kubernetes/" class="post-title-link" itemprop="url">nvidia kubernetes 和官方k8s的不同</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-
-              
-                
-              
-
-              <time title="创建时间：2019-02-19 10:43:33" itemprop="dateCreated datePublished" datetime="2019-02-19T10:43:33+08:00">2019-02-19</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">更新于</span>
-                
-                <time title="修改时间：2019-03-11 21:50:15" itemprop="dateModified" datetime="2019-03-11T21:50:15+08:00">2019-03-11</time>
-              
-            
-          </span>
-
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>nvidia kubernetes是从官方一个commit 拉出来改的，所有的改动可以通过下面的链接看到<br><a href="https://github.com/NVIDIA/kubernetes/compare/dd5e1a2978fd0b97d9b78e1564398aeea7e7fe92...NVIDIA:master" target="_blank" rel="noopener">https://github.com/NVIDIA/kubernetes/compare/dd5e1a2978fd0b97d9b78e1564398aeea7e7fe92...NVIDIA:master</a></p>
-<p>主要的几个改动</p>
-<ol>
-<li><p>添加了扩展资源的定义，对container上的ExtendedResourceRequest，对podSpec上的extendedResources，selector上的extendedResourceAffinity，node上的ExtendedResources<br><a href="https://github.com/NVIDIA/kubernetes/commit/355aff2ffc31d6403c78b68d94fa263b0de35188" target="_blank" rel="noopener">https://github.com/NVIDIA/kubernetes/commit/355aff2ffc31d6403c78b68d94fa263b0de35188</a> </p>
-</li>
-<li><p>重写了个Device Plugin API，去除了原来的register流程，加了adminPod initContainer接口，实现了对node上添加资源的接口定义 </p>
-<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"> <span class="keyword">struct</span> Device &#123;</span><br><span class="line">    ID: <span class="string">"GPU-fef8089b-4820-abfc-e83e-94318197576e"</span>,</span><br><span class="line">    State: <span class="string">"Healthy"</span>,</span><br><span class="line">    Attributes: &#123;</span><br><span class="line">       <span class="string">"memory"</span>: <span class="string">"8000"</span>,</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>看意思是插件注册到某一个目录下就自动发现了，然后减少了注册的流程，有点像flexvolume插件的感觉，总体的改动感觉不错，原来的流程需要看下，我记得原来的流程分配卡的逻辑是kubelet里面实现的，感觉不太好，这里虽然好像也没改，但是加入了插件可以修改podSpec和containerSpec的逻辑<br><a href="https://github.com/NVIDIA/kubernetes/commit/23d735f02d39fd1c1464e67a355b64642cecfec6?diff=split" target="_blank" rel="noopener">https://github.com/NVIDIA/kubernetes/commit/23d735f02d39fd1c1464e67a355b64642cecfec6?diff=split</a></p>
-</li>
-<li><p>加了个docker hook的功能，看代码的意思是在/usr/share/containers/docker/hooks.d/目录下可以写个json，json里面可以填 </p>
-<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> dockerHook <span class="keyword">struct</span> &#123;</span><br><span class="line">	Runtime     <span class="keyword">string</span>            <span class="string">`json:"runtime"`</span></span><br><span class="line">	Annotations <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span> <span class="string">`json:"annotations"`</span></span><br><span class="line">	Images      []<span class="keyword">string</span>          <span class="string">`json:"images"`</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>则在docker容器运行的时候可以判断容器上有没有annotation或者image是符合hook中所写的，如果是则启动容器的时候用json中所写的runtime来启动，另外加了个默认会看的annotation annotation.io.kubernetes.container.runtime</p>
-</li>
-<li><p>调度器上实现了对于extendResource的调度功能<br><a href="https://github.com/NVIDIA/kubernetes/commit/7e06c18139e44d45bd2c0c2f702dc31716f34fe2" target="_blank" rel="noopener">https://github.com/NVIDIA/kubernetes/commit/7e06c18139e44d45bd2c0c2f702dc31716f34fe2</a><br><a href="https://github.com/NVIDIA/kubernetes/commit/3cebd40083d69e0f65a5040fe4537e74f5a4e529" target="_blank" rel="noopener">https://github.com/NVIDIA/kubernetes/commit/3cebd40083d69e0f65a5040fe4537e74f5a4e529</a><br>感觉不是特别优雅，最好还是把这个资源算在普通资源调度里面比较好，现在实现是每个函数都多加了入参</p>
-</li>
-<li><p>困了没细看 <a href="https://github.com/NVIDIA/kubernetes/commit/df14bc461de5f639d6fd0d1eb6b7450b5a2a816b" target="_blank" rel="noopener">https://github.com/NVIDIA/kubernetes/commit/df14bc461de5f639d6fd0d1eb6b7450b5a2a816b</a> 感觉是重构了下</p>
-</li>
-</ol>
-<p><a href="https://docs.google.com/document/d/1ZgKH_K4SEfdiE_OfxQ836s4yQWxZfSjS288Tq9YIWCA/edit#heading=h.56cb5eq5qgcy" target="_blank" rel="noopener">https://docs.google.com/document/d/1ZgKH_K4SEfdiE_OfxQ836s4yQWxZfSjS288Tq9YIWCA/edit#heading=h.56cb5eq5qgcy</a></p>
-
-          
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/6/">6</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
 
 
@@ -1989,7 +1987,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">50</span>
+                    <span class="site-state-item-count">53</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>

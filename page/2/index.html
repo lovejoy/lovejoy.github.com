@@ -369,6 +369,507 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/control-disk-size-in-docker/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="lovejoy">
+      <meta itemprop="description" content="今天不开心">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吐核|Core Dump">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/post/control-disk-size-in-docker/" class="post-title-link" itemprop="url">如何实现系列一：如何控制k8s pod中磁盘空间的大小</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-03-06 14:55:03" itemprop="dateCreated datePublished" datetime="2019-03-06T14:55:03+08:00">2019-03-06</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-03-11 21:50:15" itemprop="dateModified" datetime="2019-03-11T21:50:15+08:00">2019-03-11</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>这2年基于k8s做了大量的工作，其中很多相信业界的同仁也会碰到，打算开个系列来介绍下，相关的东西如何实现，也作为这方面的一些总结</p>
+<p>k8s集群管理必然会遇到的一个问题，磁盘空间控制问题, 业务方的代码跑在容器中，必然会生成日志和临时文件，也必然会遇到磁盘空间控制的问题，不然业务方就直接把磁盘用满了。<br>如果google搜索下的话基本的解决方案是：修改docker的参数 ，添加 –storage-opt dm.basesize= 参数设置为需要的值 😀</p>
+<p>然而这不是一个可以随不同的业务和容器变化的值，即docker daemon启动后，创建的容器的根分区的大小都是这个值。并不满足我们的需求，我们需要的是根据不同的业务设置不同的大小，即我们提供给用户的容器规格除了CPU和MEM之外还有DISK的大小，当然dm.basesize这个值推荐修改(这个值也限制了镜像的大小），默认值是10G，建议修改成20G，虽然目前大部分业务镜像都是在5G之内，但是随着机器学习的兴起，相关的镜像普遍偏大,有超过10G点现象</p>
+<p>回到正题，如何限制磁盘空间：<br>首先我们的容器用的磁盘都是本地盘，那么就需要从本地磁盘的方案来考虑限制。即需要有办法从本地磁盘切分不同的大小：这里推荐2个方法：LVM(lvm相关命令)以及DeviceMapper(dmsetup相关命令)。这2个方案分别在不同的地方实践过，各有利弊。即我们通过一些系统命令，在node上的物理磁盘上分配出相应大小的空间，然后通过flexvolume挂到容器中，实现控制容器磁盘大小的目的(注意这里根分区还是basesize的大小)。FlexVolume的功能请参考<a href="/post/flex-volume-plugin/">前文</a><br>
+          <!--noindex-->
+          
+            <div class="post-button text-center">
+              <a class="btn" href="/post/control-disk-size-in-docker/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          
+          <!--/noindex-->
+        
+      
+    </p></div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/gpu-share-in-k8s/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="lovejoy">
+      <meta itemprop="description" content="今天不开心">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吐核|Core Dump">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/post/gpu-share-in-k8s/" class="post-title-link" itemprop="url">k8s中的GPU共享功能实现分析</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-02-21 17:52:04" itemprop="dateCreated datePublished" datetime="2019-02-21T17:52:04+08:00">2019-02-21</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-03-11 21:50:15" itemprop="dateModified" datetime="2019-03-11T21:50:15+08:00">2019-03-11</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>GPU在容器间共享这个功能其实都有需要，但是官方都没有，之前在公司内实现的改动也太过于in-tree，无法opensource，今天看到阿里云开源了个GPU共享的方案，那么顺道借分析下阿里的方案来总结下这方面的事情。</p>
+<p>阿里云的代码在<br><a href="https://github.com/AliyunContainerService/gpushare-scheduler-extender" target="_blank" rel="noopener">https://github.com/AliyunContainerService/gpushare-scheduler-extender</a><br><a href="https://github.com/AliyunContainerService/gpushare-device-plugin" target="_blank" rel="noopener">https://github.com/AliyunContainerService/gpushare-device-plugin</a><br>阿里云实现了一个gpushare的device-plugin，然后实现了相关的调度逻辑</p>
+<p>由于具体的共享逻辑在node上，所以我们先看下device-plugin的实现。<br>之前看过nvidia的官方device-plugin实现，本质很简单，需要实现2个接口 1.listandwatch用于获得机器上的device列表，2. allocate接口用于kubelet分配设备时，这个设备要做的一些事情 这个设计其实不是那么好，这个之前的<a href="/post/nvidia-kubernetes/">nvidia k8s和官方的区别中</a> 有提到,限制了deviceplugin对设备的调度控制能力 (device-plugin相关的实现后面也看下补篇文章)</p>
+<p>入口代码，和nvidia官方本质没什么区别，加载了nvml的库(cgo的)用户获取机器上的gpu的信息<br>创建了个fsNotify去实现deviceplugin要求的相关逻辑<br><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(ngm *sharedGPUManager)</span> <span class="title">Run</span><span class="params">()</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	log.V(<span class="number">1</span>).Infoln(<span class="string">"Loading NVML"</span>)</span><br><span class="line">	<span class="keyword">if</span> err := nvml.Init(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.V(<span class="number">1</span>).Infof(<span class="string">"Failed to initialize NVML: %s."</span>, err)</span><br><span class="line">		log.V(<span class="number">1</span>).Infof(<span class="string">"If this is a GPU node, did you set the docker default runtime to `nvidia`?"</span>)</span><br><span class="line">		<span class="keyword">select</span> &#123;&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123; log.V(<span class="number">1</span>).Infoln(<span class="string">"Shutdown of NVML returned:"</span>, nvml.Shutdown()) &#125;()</span><br><span class="line">	log.V(<span class="number">1</span>).Infoln(<span class="string">"Fetching devices."</span>)</span><br><span class="line">	<span class="keyword">if</span> getDeviceCount() == <span class="keyword">uint</span>(<span class="number">0</span>) &#123;</span><br><span class="line">		log.V(<span class="number">1</span>).Infoln(<span class="string">"No devices found. Waiting indefinitely."</span>)</span><br><span class="line">		<span class="keyword">select</span> &#123;&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	log.V(<span class="number">1</span>).Infoln(<span class="string">"Starting FS watcher."</span>)</span><br><span class="line">	watcher, err := newFSWatcher(pluginapi.DevicePluginPath)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.V(<span class="number">1</span>).Infoln(<span class="string">"Failed to created FS watcher."</span>)</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> watcher.Close()</span><br><span class="line">	log.V(<span class="number">1</span>).Infoln(<span class="string">"Starting OS watcher."</span>)</span><br><span class="line">	sigs := newOSWatcher(syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)</span><br><span class="line">	restart := <span class="literal">true</span></span><br><span class="line">	<span class="keyword">var</span> devicePlugin *NvidiaDevicePlugin</span><br><span class="line">L:</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="keyword">if</span> restart &#123;</span><br><span class="line">			<span class="keyword">if</span> devicePlugin != <span class="literal">nil</span> &#123;</span><br><span class="line">				devicePlugin.Stop()</span><br><span class="line">			&#125;</span><br><span class="line">			devicePlugin = NewNvidiaDevicePlugin(ngm.enableMPS, ngm.healthCheck)</span><br><span class="line">			<span class="keyword">if</span> err := devicePlugin.Serve(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">				log.Warningf(<span class="string">"Failed to start device plugin due to %v"</span>, err)</span><br><span class="line">			&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">				restart = <span class="literal">false</span></span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> event := &lt;-watcher.Events:</span><br><span class="line">			<span class="keyword">if</span> event.Name == pluginapi.KubeletSocket &amp;&amp; event.Op&amp;fsnotify.Create == fsnotify.Create &#123;</span><br><span class="line">				log.V(<span class="number">1</span>).Infof(<span class="string">"inotify: %s created, restarting."</span>, pluginapi.KubeletSocket)</span><br><span class="line">				restart = <span class="literal">true</span></span><br><span class="line">			&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">case</span> err := &lt;-watcher.Errors:</span><br><span class="line">			log.Warningf(<span class="string">"inotify: %s"</span>, err)</span><br><span class="line"></span><br><span class="line">		<span class="keyword">case</span> s := &lt;-sigs:</span><br><span class="line">			<span class="keyword">switch</span> s &#123;</span><br><span class="line">			<span class="keyword">case</span> syscall.SIGHUP:</span><br><span class="line">				log.V(<span class="number">1</span>).Infoln(<span class="string">"Received SIGHUP, restarting."</span>)</span><br><span class="line">				restart = <span class="literal">true</span></span><br><span class="line">			<span class="keyword">case</span> syscall.SIGQUIT:</span><br><span class="line">				t := time.Now()</span><br><span class="line">				timestamp := fmt.Sprint(t.Format(<span class="string">"20060102150405"</span>))</span><br><span class="line">				log.Infoln(<span class="string">"generate core dump"</span>)</span><br><span class="line">				coredump(<span class="string">"/etc/kubernetes/go_"</span> + timestamp + <span class="string">".txt"</span>)</span><br><span class="line">			<span class="keyword">default</span>:</span><br><span class="line">				log.V(<span class="number">1</span>).Infof(<span class="string">"Received signal \"%v\", shutting down."</span>, s)</span><br><span class="line">				devicePlugin.Stop()</span><br><span class="line">				<span class="keyword">break</span> L</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+          <!--noindex-->
+          
+            <div class="post-button text-center">
+              <a class="btn" href="/post/gpu-share-in-k8s/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/nvidia-kubernetes/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="lovejoy">
+      <meta itemprop="description" content="今天不开心">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吐核|Core Dump">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/post/nvidia-kubernetes/" class="post-title-link" itemprop="url">nvidia kubernetes 和官方k8s的不同</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-02-19 10:43:33" itemprop="dateCreated datePublished" datetime="2019-02-19T10:43:33+08:00">2019-02-19</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-03-11 21:50:15" itemprop="dateModified" datetime="2019-03-11T21:50:15+08:00">2019-03-11</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>nvidia kubernetes是从官方一个commit 拉出来改的，所有的改动可以通过下面的链接看到<br><a href="https://github.com/NVIDIA/kubernetes/compare/dd5e1a2978fd0b97d9b78e1564398aeea7e7fe92...NVIDIA:master" target="_blank" rel="noopener">https://github.com/NVIDIA/kubernetes/compare/dd5e1a2978fd0b97d9b78e1564398aeea7e7fe92...NVIDIA:master</a></p>
+<p>主要的几个改动</p>
+<ol>
+<li><p>添加了扩展资源的定义，对container上的ExtendedResourceRequest，对podSpec上的extendedResources，selector上的extendedResourceAffinity，node上的ExtendedResources<br><a href="https://github.com/NVIDIA/kubernetes/commit/355aff2ffc31d6403c78b68d94fa263b0de35188" target="_blank" rel="noopener">https://github.com/NVIDIA/kubernetes/commit/355aff2ffc31d6403c78b68d94fa263b0de35188</a> </p>
+</li>
+<li><p>重写了个Device Plugin API，去除了原来的register流程，加了adminPod initContainer接口，实现了对node上添加资源的接口定义 </p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"> <span class="keyword">struct</span> Device &#123;</span><br><span class="line">    ID: <span class="string">"GPU-fef8089b-4820-abfc-e83e-94318197576e"</span>,</span><br><span class="line">    State: <span class="string">"Healthy"</span>,</span><br><span class="line">    Attributes: &#123;</span><br><span class="line">       <span class="string">"memory"</span>: <span class="string">"8000"</span>,</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>看意思是插件注册到某一个目录下就自动发现了，然后减少了注册的流程，有点像flexvolume插件的感觉，总体的改动感觉不错，原来的流程需要看下，我记得原来的流程分配卡的逻辑是kubelet里面实现的，感觉不太好，这里虽然好像也没改，但是加入了插件可以修改podSpec和containerSpec的逻辑<br><a href="https://github.com/NVIDIA/kubernetes/commit/23d735f02d39fd1c1464e67a355b64642cecfec6?diff=split" target="_blank" rel="noopener">https://github.com/NVIDIA/kubernetes/commit/23d735f02d39fd1c1464e67a355b64642cecfec6?diff=split</a></p>
+</li>
+<li><p>加了个docker hook的功能，看代码的意思是在/usr/share/containers/docker/hooks.d/目录下可以写个json，json里面可以填 </p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> dockerHook <span class="keyword">struct</span> &#123;</span><br><span class="line">	Runtime     <span class="keyword">string</span>            <span class="string">`json:"runtime"`</span></span><br><span class="line">	Annotations <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span> <span class="string">`json:"annotations"`</span></span><br><span class="line">	Images      []<span class="keyword">string</span>          <span class="string">`json:"images"`</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>则在docker容器运行的时候可以判断容器上有没有annotation或者image是符合hook中所写的，如果是则启动容器的时候用json中所写的runtime来启动，另外加了个默认会看的annotation annotation.io.kubernetes.container.runtime</p>
+</li>
+<li><p>调度器上实现了对于extendResource的调度功能<br><a href="https://github.com/NVIDIA/kubernetes/commit/7e06c18139e44d45bd2c0c2f702dc31716f34fe2" target="_blank" rel="noopener">https://github.com/NVIDIA/kubernetes/commit/7e06c18139e44d45bd2c0c2f702dc31716f34fe2</a><br><a href="https://github.com/NVIDIA/kubernetes/commit/3cebd40083d69e0f65a5040fe4537e74f5a4e529" target="_blank" rel="noopener">https://github.com/NVIDIA/kubernetes/commit/3cebd40083d69e0f65a5040fe4537e74f5a4e529</a><br>感觉不是特别优雅，最好还是把这个资源算在普通资源调度里面比较好，现在实现是每个函数都多加了入参</p>
+</li>
+<li><p>困了没细看 <a href="https://github.com/NVIDIA/kubernetes/commit/df14bc461de5f639d6fd0d1eb6b7450b5a2a816b" target="_blank" rel="noopener">https://github.com/NVIDIA/kubernetes/commit/df14bc461de5f639d6fd0d1eb6b7450b5a2a816b</a> 感觉是重构了下</p>
+</li>
+</ol>
+<p><a href="https://docs.google.com/document/d/1ZgKH_K4SEfdiE_OfxQ836s4yQWxZfSjS288Tq9YIWCA/edit#heading=h.56cb5eq5qgcy" target="_blank" rel="noopener">https://docs.google.com/document/d/1ZgKH_K4SEfdiE_OfxQ836s4yQWxZfSjS288Tq9YIWCA/edit#heading=h.56cb5eq5qgcy</a></p>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/flex-volume-plugin/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1508,522 +2009,11 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/tensorflow-on-kubeflow/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="lovejoy">
-      <meta itemprop="description" content="今天不开心">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="吐核|Core Dump">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/post/tensorflow-on-kubeflow/" class="post-title-link" itemprop="url">tensorflow-on-kubeflow</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-
-              
-                
-              
-
-              <time title="创建时间：2018-06-29 15:10:41" itemprop="dateCreated datePublished" datetime="2018-06-29T15:10:41+08:00">2018-06-29</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">更新于</span>
-                
-                <time title="修改时间：2019-03-11 21:50:15" itemprop="dateModified" datetime="2019-03-11T21:50:15+08:00">2019-03-11</time>
-              
-            
-          </span>
-
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>需要先弄好kubeflow 主要是tf-operator模块，其他模块都不重要</p>
-<p>先训练<br>
-          <!--noindex-->
-          
-            <div class="post-button text-center">
-              <a class="btn" href="/post/tensorflow-on-kubeflow/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          
-          <!--/noindex-->
-        
-      
-    </p></div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/cka-exam/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="lovejoy">
-      <meta itemprop="description" content="今天不开心">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="吐核|Core Dump">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/post/cka-exam/" class="post-title-link" itemprop="url">CKA考试题详解</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-
-              
-                
-              
-
-              <time title="创建时间：2018-06-26 15:40:29" itemprop="dateCreated datePublished" datetime="2018-06-26T15:40:29+08:00">2018-06-26</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">更新于</span>
-                
-                <time title="修改时间：2019-03-11 21:50:15" itemprop="dateModified" datetime="2019-03-11T21:50:15+08:00">2019-03-11</time>
-              
-            
-          </span>
-
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <h1 id="CKA考试题真题详解"><a href="#CKA考试题真题详解" class="headerlink" title="CKA考试题真题详解"></a>CKA考试题真题详解</h1><p>已经通过了CKA认证，这里大概讲下我遇到的考试题怎么解</p>
-<ul>
-<li>创建一个符合要求的pod</li>
-</ul>
-<p>具体内容不记得了，主要是得找到一个简单的yaml文件改改就好</p>
-<ul>
-<li>ß看某个标签使用cpu最高的pod</li>
-</ul>
-<p>Kubectl top pod -l xxx标签</p>
-<ul>
-<li>创建secret，并且创建2个pod 1个pod mount成文件，一个用环境变量</li>
-</ul>
-<p><a href="https://kubernetes.io/docs/concepts/configuration/secret/" target="_blank" rel="noopener">https://kubernetes.io/docs/concepts/configuration/secret/</a> 从Creating a Secret Manually 开始内容到后面，考题只需要创建一个password字段，mount的路径略有改动，其他和这个页面里面的一样</p>
-<ul>
-<li>oo给定deployment扩容</li>
-</ul>
-<p><a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/" target="_blank" rel="noopener">https://kubernetes.io/docs/concepts/workloads/controllers/deployment/</a></p>
-<p>直接kubectl scale命令<br>
-          <!--noindex-->
-          
-            <div class="post-button text-center">
-              <a class="btn" href="/post/cka-exam/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          
-          <!--/noindex-->
-        
-      
-    </p></div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/cka-related/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="lovejoy">
-      <meta itemprop="description" content="今天不开心">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="吐核|Core Dump">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/post/cka-related/" class="post-title-link" itemprop="url">kubernetes cka考试认证相关介绍</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-
-              
-                
-              
-
-              <time title="创建时间：2018-05-25 14:24:12" itemprop="dateCreated datePublished" datetime="2018-05-25T14:24:12+08:00">2018-05-25</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">更新于</span>
-                
-                <time title="修改时间：2019-03-11 21:50:15" itemprop="dateModified" datetime="2019-03-11T21:50:15+08:00">2019-03-11</time>
-              
-            
-          </span>
-
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>CKA考试相关内容</p>
-<p>在3小时内用命令行进行排障，一共有24题（都是应用题，没有选择填空题）</p>
-<h1 id="需要提前准备的东西"><a href="#需要提前准备的东西" class="headerlink" title="需要提前准备的东西"></a>需要提前准备的东西</h1><ol>
-<li>官方认证证件：需要有照片和Latin字母写的全名（所以看起来可能得是护照，caicloud的人用的是护照）</li>
-<li>考试为在线考试，有监考官，电脑需要有摄像头和麦克风，监考官会和你沟通，让你展示护照之类</li>
-<li>一个没有其他人的空房间，空桌子，不能带手机，不能有书本，监考官会让你拿着电脑展示你周围的所有环境</li>
-</ol>
-<h1 id="检查是否满足硬件要求"><a href="#检查是否满足硬件要求" class="headerlink" title="检查是否满足硬件要求"></a>检查是否满足硬件要求</h1><ol>
-<li>使用Chrome浏览器访问<a href="https://www.examslocal.com/ScheduleExam/Home/CompatibilityCheck" target="_blank" rel="noopener">https://www.examslocal.com/ScheduleExam/Home/CompatibilityCheck</a> 选择&quot;Linux Foundation&quot; as the Exam Sponsor and &quot;CKA&quot; as the Exam根据提示安装一个chrome插件（实测有项网速的检查一直不过，翻墙就好了，所以可能需要有个稳定的翻墙工具）</li>
-</ol>
-<h1 id="考试中能查阅的资源"><a href="#考试中能查阅的资源" class="headerlink" title="考试中能查阅的资源"></a>考试中能查阅的资源</h1>
-          <!--noindex-->
-          
-            <div class="post-button text-center">
-              <a class="btn" href="/post/cka-related/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
+    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/6/">6</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
 
 
@@ -2065,7 +2055,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">50</span>
+                    <span class="site-state-item-count">53</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>

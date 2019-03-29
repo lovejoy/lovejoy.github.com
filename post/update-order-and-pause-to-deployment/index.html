@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link rel="stylesheet" href="//fonts.lug.ustc.edu.cn/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext">
+  
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.0.1">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.0.1">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.0.1">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.0.1">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.0.1" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.0.1',
+    sidebar: {"position":"right","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="k8s的deployment是通过调整2个rs的副本数来实现容器的升级和更新的：删一个rs里面的pod，扩容新的spec的rs里面的pod。那么上线的顺序可以转化成删除rs的顺序。 我们看k8s的代码，可以看到rs副本数的调整是以下函数控制的12345678910111213141516171819202122232425262728func (rsc *ReplicaSetController)">
+<meta name="keywords" content="k8s">
+<meta property="og:type" content="article">
+<meta property="og:title" content="给k8s的deployment实现上线顺序和暂停点功能">
+<meta property="og:url" content="https://blog.spider.im/post/update-order-and-pause-to-deployment/index.html">
+<meta property="og:site_name" content="吐核|Core Dump">
+<meta property="og:description" content="k8s的deployment是通过调整2个rs的副本数来实现容器的升级和更新的：删一个rs里面的pod，扩容新的spec的rs里面的pod。那么上线的顺序可以转化成删除rs的顺序。 我们看k8s的代码，可以看到rs副本数的调整是以下函数控制的12345678910111213141516171819202122232425262728func (rsc *ReplicaSetController)">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-03-29T03:13:08.611Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="给k8s的deployment实现上线顺序和暂停点功能">
+<meta name="twitter:description" content="k8s的deployment是通过调整2个rs的副本数来实现容器的升级和更新的：删一个rs里面的pod，扩容新的spec的rs里面的pod。那么上线的顺序可以转化成删除rs的顺序。 我们看k8s的代码，可以看到rs副本数的调整是以下函数控制的12345678910111213141516171819202122232425262728func (rsc *ReplicaSetController)">
+
+
+
+
+
+
+  <link rel="canonical" href="https://blog.spider.im/post/update-order-and-pause-to-deployment/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>给k8s的deployment实现上线顺序和暂停点功能 | 吐核|Core Dump</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">吐核|Core Dump</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+      
+        <p class="site-subtitle">笔记 随想 吐槽</p>
+      
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/update-order-and-pause-to-deployment/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="lovejoy">
+      <meta itemprop="description" content="今天不开心">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吐核|Core Dump">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">给k8s的deployment实现上线顺序和暂停点功能
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-03-29 10:37:49 / 修改时间：11:13:08" itemprop="dateCreated datePublished" datetime="2019-03-29T10:37:49+08:00">2019-03-29</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>k8s的deployment是通过调整2个rs的副本数来实现容器的升级和更新的：删一个rs里面的pod，扩容新的spec的rs里面的pod。<br>那么上线的顺序可以转化成删除rs的顺序。</p>
+<p>我们看k8s的代码，可以看到rs副本数的调整是以下函数控制的<br><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(rsc *ReplicaSetController)</span> <span class="title">manageReplicas</span><span class="params">(filteredPods []*v1.Pod, rs *apps.ReplicaSet)</span> <span class="title">error</span></span> &#123;</span><br><span class="line"><span class="keyword">if</span> diff &gt; <span class="number">0</span> &#123; <span class="comment">//diff 是当前pod数和rs上的replica数的差，大于0为缩容</span></span><br><span class="line">    <span class="keyword">if</span> diff &gt; rsc.burstReplicas &#123;</span><br><span class="line">      diff = rsc.burstReplicas</span><br><span class="line">    &#125;</span><br><span class="line">    klog.V(<span class="number">2</span>).Infof(<span class="string">"Too many replicas for %v %s/%s, need %d, deleting %d"</span>, rsc.Kind, rs.Namespace, rs.Name, *(rs.Spec.Replicas), diff)</span><br><span class="line">​</span><br><span class="line">    <span class="comment">// Choose which Pods to delete, preferring those in earlier phases of startup.</span></span><br><span class="line">    podsToDelete := getPodsToDelete(filteredPods, diff) <span class="comment">//删pod的顺序在这个里面</span></span><br><span class="line">​</span><br><span class="line">    rsc.expectations.ExpectDeletions(rsKey, getPodKeys(podsToDelete))</span><br><span class="line">​</span><br><span class="line">    errCh := <span class="built_in">make</span>(<span class="keyword">chan</span> error, diff)</span><br><span class="line">    <span class="keyword">var</span> wg sync.WaitGroup</span><br><span class="line">    wg.Add(diff)</span><br><span class="line">    <span class="keyword">for</span> _, pod := <span class="keyword">range</span> podsToDelete &#123;</span><br><span class="line">      <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">(targetPod *v1.Pod)</span></span> &#123;</span><br><span class="line">        <span class="keyword">defer</span> wg.Done()</span><br><span class="line">        <span class="keyword">if</span> err := rsc.podControl.DeletePod(rs.Namespace, targetPod.Name, rs); err != <span class="literal">nil</span> &#123;</span><br><span class="line">          <span class="comment">// Decrement the expected number of deletes because the informer won't observe this deletion</span></span><br><span class="line">          podKey := controller.PodKey(targetPod)</span><br><span class="line">          klog.V(<span class="number">2</span>).Infof(<span class="string">"Failed to delete %v, decrementing expectations for %v %s/%s"</span>, podKey, rsc.Kind, rs.Namespace, rs.Name)</span><br><span class="line">          rsc.expectations.DeletionObserved(rsKey, podKey)</span><br><span class="line">          errCh &lt;- err</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;(pod)</span><br><span class="line">    &#125;</span><br><span class="line">    wg.Wait()</span><br></pre></td></tr></table></figure></p>
+<p>具体看getPodsToDelete的逻辑</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">getPodsToDelete</span><span class="params">(filteredPods []*v1.Pod, diff <span class="keyword">int</span>)</span> []*<span class="title">v1</span>.<span class="title">Pod</span></span> &#123;</span><br><span class="line">	<span class="comment">// No need to sort pods if we are about to delete all of them.</span></span><br><span class="line">	<span class="comment">// diff will always be &lt;= len(filteredPods), so not need to handle &gt; case.</span></span><br><span class="line">	<span class="keyword">if</span> diff &lt; <span class="built_in">len</span>(filteredPods) &#123;</span><br><span class="line">		<span class="comment">// Sort the pods in the order such that not-ready &lt; ready, unscheduled</span></span><br><span class="line">		<span class="comment">// &lt; scheduled, and pending &lt; running. This ensures that we delete pods</span></span><br><span class="line">		<span class="comment">// in the earlier stages whenever possible.</span></span><br><span class="line">		sort.Sort(controller.ActivePods(filteredPods))</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> filteredPods[:diff]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到是找到需要删除的diff数量的pod，具体的顺序是ActivePods sort完的熟悉，我们看下这个类型的自定义排序逻辑<br>并不是随机的，而是有一定的顺序。<br>顺序为unassigned &lt; Pending&lt; Unknown &lt; Not Ready &lt; higher restart counts &lt; new start pod</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s ActivePods)</span> <span class="title">Less</span><span class="params">(i, j <span class="keyword">int</span>)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 1. Unassigned &lt; assigned</span></span><br><span class="line">	<span class="comment">// If only one of the pods is unassigned, the unassigned one is smaller</span></span><br><span class="line">	<span class="keyword">if</span> s[i].Spec.NodeName != s[j].Spec.NodeName &amp;&amp; (<span class="built_in">len</span>(s[i].Spec.NodeName) == <span class="number">0</span> || <span class="built_in">len</span>(s[j].Spec.NodeName) == <span class="number">0</span>) &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="built_in">len</span>(s[i].Spec.NodeName) == <span class="number">0</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 2. PodPending &lt; PodUnknown &lt; PodRunning</span></span><br><span class="line">	m := <span class="keyword">map</span>[v1.PodPhase]<span class="keyword">int</span>&#123;v1.PodPending: <span class="number">0</span>, v1.PodUnknown: <span class="number">1</span>, v1.PodRunning: <span class="number">2</span>&#125;</span><br><span class="line">	<span class="keyword">if</span> m[s[i].Status.Phase] != m[s[j].Status.Phase] &#123;</span><br><span class="line">		<span class="keyword">return</span> m[s[i].Status.Phase] &lt; m[s[j].Status.Phase]</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 3. Not ready &lt; ready</span></span><br><span class="line">	<span class="comment">// If only one of the pods is not ready, the not ready one is smaller</span></span><br><span class="line">	<span class="keyword">if</span> podutil.IsPodReady(s[i]) != podutil.IsPodReady(s[j]) &#123;</span><br><span class="line">		<span class="keyword">return</span> !podutil.IsPodReady(s[i])</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// <span class="doctag">TODO:</span> take availability into account when we push minReadySeconds information from deployment into pods,</span></span><br><span class="line">	<span class="comment">//       see https://github.com/kubernetes/kubernetes/issues/22065</span></span><br><span class="line">	<span class="comment">// 4. Been ready for empty time &lt; less time &lt; more time</span></span><br><span class="line">	<span class="comment">// If both pods are ready, the latest ready one is smaller</span></span><br><span class="line">	<span class="keyword">if</span> podutil.IsPodReady(s[i]) &amp;&amp; podutil.IsPodReady(s[j]) &amp;&amp; !podReadyTime(s[i]).Equal(podReadyTime(s[j])) &#123;</span><br><span class="line">		<span class="keyword">return</span> afterOrZero(podReadyTime(s[i]), podReadyTime(s[j]))</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 5. Pods with containers with higher restart counts &lt; lower restart counts</span></span><br><span class="line">	<span class="keyword">if</span> maxContainerRestarts(s[i]) != maxContainerRestarts(s[j]) &#123;</span><br><span class="line">		<span class="keyword">return</span> maxContainerRestarts(s[i]) &gt; maxContainerRestarts(s[j])</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 6. Empty creation time pods &lt; newer pods &lt; older pods</span></span><br><span class="line">	<span class="keyword">if</span> !s[i].CreationTimestamp.Equal(&amp;s[j].CreationTimestamp) &#123;</span><br><span class="line">		<span class="keyword">return</span> afterOrZero(&amp;s[i].CreationTimestamp, &amp;s[j].CreationTimestamp)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们加个自定义的顺序逻辑，放到最前面 ,这样我们只要给pod打上不同数值的annotation，就可以控制rs删除pod的顺序也就控制了deployment更新pod的顺序，核心代码如下,具体见提交的<a href="https://github.com/kubernetes/kubernetes/pull/75763" target="_blank" rel="noopener">github pr</a><br><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//0. controller.alpha.kubernetes.io/delete-priority=1 &lt; controller.alpha.kubernetes.io/delete-priority=0</span></span><br><span class="line"><span class="comment">//If pod has annotation controller.alpha.kubernetes.io/delete-priority the larger is small</span></span><br><span class="line"><span class="keyword">if</span> s[i].Annotations[DeletePriorityPodAnnotationKey] != s[j].Annotations[DeletePriorityPodAnnotationKey] &#123;</span><br><span class="line">	s1, err1 := strconv.Atoi(s[i].Annotations[DeletePriorityPodAnnotationKey])</span><br><span class="line">	s2, err2 := strconv.Atoi(s[j].Annotations[DeletePriorityPodAnnotationKey])</span><br><span class="line">	<span class="keyword">if</span> err1 == <span class="literal">nil</span> &amp;&amp; err2 == <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> s1 &gt; s2</span><br><span class="line">	&#125;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure></p>
+<p>至于暂停点的功能:<br>目前k8s是通过kubectl rollout pause deployment.v1.apps/nginx-deployment实现的,十分依赖人工操作的时机。我们也可以仿照上面的方法，加个annotation打到pod上，rs删到这个pod的时候调用下上面这个命令的内部调用，暂停下。然后业务层，再提供kubectl rollout resume deployment.v1.apps/nginx-deployment的入口，允许用户继续。</p>
+<p>具体实现我还没写，现招人实现提交给github上，看这篇文章的同学有没有兴趣研究下，没错说的就是你。</p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/k8s/" rel="tag"># k8s</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/post/gpu-volunteer-computing/" rel="next" title="GPU Volunteer Computing">
+                <i class="fa fa-chevron-left"></i> GPU Volunteer Computing
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="gitalk-container">
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <div class="site-overview-wrap sidebar-panel sidebar-panel-active">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">lovejoy</p>
+              <p class="site-description motion-element" itemprop="description">今天不开心</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">53</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">12</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">13</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://github.com/lovejoy" title="Github &rarr; https://github.com/lovejoy" rel="noopener" target="_blank"><i class="fa fa-fw fa-globe"></i>Github</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://twitter.com/liangyongqing" title="Twitter &rarr; https://twitter.com/liangyongqing" rel="noopener" target="_blank"><i class="fa fa-fw fa-globe"></i>Twitter</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+
+      
+
+    </div>
+  </aside>
+  
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lovejoy</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.8.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.0.1</div>
+
+
+
+
+        
+
+
+
+
+  <script>
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//tajs.qq.com/stats?sId=63414042";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/src/utils.js?v=7.0.1"></script>
+
+  <script src="/js/src/motion.js?v=7.0.1"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/src/affix.js?v=7.0.1"></script>
+
+  <script src="/js/src/schemes/pisces.js?v=7.0.1"></script>
+
+
+
+  
+  <script src="/js/src/scrollspy.js?v=7.0.1"></script>
+<script src="/js/src/post-details.js?v=7.0.1"></script>
+
+
+
+  
+
+
+  <script src="/js/src/bootstrap.js?v=7.0.1"></script>
+
+
+  
+  
+
+
+  
+    
+
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+
+
+<script src="//cdn.jsdelivr.net/npm/js-md5@0.7.3/src/md5.min.js"></script>
+
+<script>
+  var gitalk = new Gitalk({
+    clientID: 'e10649a0fb2b6556a966',
+    clientSecret: 'd07a6e94a4768d09ae4fe2febbcdafb5b5d4ef61',
+    repo: 'lovejoy.github.com',
+    owner: 'lovejoy',
+    admin: ['lovejoy'],
+    id: md5(location.pathname),
+    distractionFreeMode: 'false'
+  });
+  gitalk.render('gitalk-container');
+</script>
+
+  
+
+
+  
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
