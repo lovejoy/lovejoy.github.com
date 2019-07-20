@@ -369,6 +369,332 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/k8s-abac/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="lovejoy">
+      <meta itemprop="description" content="今天不开心">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吐核|Core Dump">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/post/k8s-abac/" class="post-title-link" itemprop="url">k8s上abac功能实践</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-12-17 15:42:06" itemprop="dateCreated datePublished" datetime="2018-12-17T15:42:06+08:00">2018-12-17</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-03-11 21:50:15" itemprop="dateModified" datetime="2019-03-11T21:50:15+08:00">2019-03-11</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>k8s提供了2种方式用来权限控制，abac和rbac，abac是基于一堆属性(attribute)描述成的策略(policy)来做的限制。<br>比如限制某个用户只能对某个namespace下的资源操作，就可以写成类似下面的描述<br><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;<span class="attr">"apiVersion"</span>: <span class="string">"abac.authorization.kubernetes.io/v1beta1"</span>, <span class="attr">"kind"</span>: <span class="string">"Policy"</span>, <span class="attr">"spec"</span>: &#123;<span class="attr">"user"</span>: <span class="string">"alice"</span>, <span class="attr">"namespace"</span>: <span class="string">"somenamespace"</span>, <span class="attr">"resource"</span>: <span class="string">"*"</span>, <span class="attr">"apiGroup"</span>: <span class="string">"*"</span>&#125;&#125;</span><br></pre></td></tr></table></figure></p>
+<p>可以看到其实就是user namespace resource apiGroup 等几个选项的排列组合</p>
+<p>要启用ABAC需要修改apiserver的启动参数 加上–authorization-mode=ABAC 和 –authorization-policy-file=SOME_FILENAME，这里的SOME_FILENAME 就是个填写了类似以上json的文件，可以填多行，来做多个组合限制，<a href="https://github.com/kubernetes/kubernetes/blob/master/pkg/auth/authorizer/abac/example_policy_file.jsonl" target="_blank" rel="noopener">点这里看一个具体的文件列子</a><br>
+          <!--noindex-->
+          
+            <div class="post-button text-center">
+              <a class="btn" href="/post/k8s-abac/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          
+          <!--/noindex-->
+        
+      
+    </p></div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/service-account-issue/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="lovejoy">
+      <meta itemprop="description" content="今天不开心">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吐核|Core Dump">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/post/service-account-issue/" class="post-title-link" itemprop="url">service-account-issue</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-10-08 11:07:01" itemprop="dateCreated datePublished" datetime="2018-10-08T11:07:01+08:00">2018-10-08</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-03-11 21:50:15" itemprop="dateModified" datetime="2019-03-11T21:50:15+08:00">2019-03-11</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>在配合使用高版本k8s和低版本k8s的时候遇到了serviceAccount报错的问题 <code>No API token found for service account &quot;default&quot;, retry after the token is automatically created and added to the service account</code></p>
+<p>大概看了眼代码，k8s的apiserver在创建pod的时候会看这个pod有没有自己指定serviceaccount这个项目，如果没有的话就用默认的default serviceaccount ，然后mount到pod的/var/run/secrets/kubernetes.io/serviceaccount </p>
+<p>其中有个步骤是去找这个serviceAccount的secret信息，但是很不幸的是我用的是高版本的apiserver和低版本的controller，没有自动创建这个出来。而且其实我也用不到这个功能<br>
+          <!--noindex-->
+          
+            <div class="post-button text-center">
+              <a class="btn" href="/post/service-account-issue/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          
+          <!--/noindex-->
+        
+      
+    </p></div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/openconnect-server-config/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1671,331 +1997,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/api-security/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="lovejoy">
-      <meta itemprop="description" content="今天不开心">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="吐核|Core Dump">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/post/api-security/" class="post-title-link" itemprop="url">API接口签名验证方案</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-
-              
-                
-              
-
-              <time title="创建时间：2016-10-15 11:23:45" itemprop="dateCreated datePublished" datetime="2016-10-15T11:23:45+08:00">2016-10-15</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">更新于</span>
-                
-                <time title="修改时间：2019-03-11 21:50:15" itemprop="dateModified" datetime="2019-03-11T21:50:15+08:00">2019-03-11</time>
-              
-            
-          </span>
-
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>主要是和外部合作的时候需要考虑的安全性问题，首先是必须走HTTPS不多说，其次是接口上需要添加相应的校验，基本思路是给请求的参数添加个校验参数，不过实际做法各不一样，这里记录下我碰到的几种模式以及我自己的思考</p>
-<h2 id="参数签名模式"><a href="#参数签名模式" class="headerlink" title="参数签名模式"></a>参数签名模式</h2><p>通用接口，仅仅添加一个校验参数，sign值是其他所有参数按照校验算法计算出来的（需要要加个不在URL参数里面带的密钥）这种对 GET 和 POST 都是类似的<br>
-          <!--noindex-->
-          
-            <div class="post-button text-center">
-              <a class="btn" href="/post/api-security/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          
-          <!--/noindex-->
-        
-      
-    </p></div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/speed-hhvm/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="lovejoy">
-      <meta itemprop="description" content="今天不开心">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="吐核|Core Dump">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/post/speed-hhvm/" class="post-title-link" itemprop="url">速度优化HHVM篇</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-
-              
-                
-              
-
-              <time title="创建时间：2016-08-21 22:47:49" itemprop="dateCreated datePublished" datetime="2016-08-21T22:47:49+08:00">2016-08-21</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">更新于</span>
-                
-                <time title="修改时间：2019-03-11 21:50:15" itemprop="dateModified" datetime="2019-03-11T21:50:15+08:00">2019-03-11</time>
-              
-            
-          </span>
-
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>确定的第一个速度优化的项目:</p>
-<p>从PHP5.4切换到HHVM<a href="其实还有个选择是PHP7，业界也有[使用案例](http://www.iteye.com/news/31607),不过百度内部还没release，所以不太好使用，暂时不太想第一个吃螃蟹">^why-not-php7</a>，为什么？因为这个方案效果是已知的好，省CPU，明显提升速度！实践起来简单（不用改代码就能有提升），并且在公司内部也已经经过多年使用，兼容性会有但问题不大。</p>
-<p>HHVM是什么，介绍的文章太多了，这里就不叙述了，参见多益大神<a href="多益大神本身是个FE哦，牛逼人物基本都是FullStack">^duoyi</a>的<a href="http://wuduoyi.com/note/hhvm/" target="_blank" rel="noopener">文章</a>，另外厂内HHVM维护者志广的<a href="http://saiyaren.iteye.com/" target="_blank" rel="noopener">博客</a> 也可以看看，虽然不怎么更新了。</p>
-          <!--noindex-->
-          
-            <div class="post-button text-center">
-              <a class="btn" href="/post/speed-hhvm/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2042,7 +2043,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">54</span>
+                    <span class="site-state-item-count">56</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>

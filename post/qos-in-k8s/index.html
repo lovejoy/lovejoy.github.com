@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link rel="stylesheet" href="//fonts.lug.ustc.edu.cn/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext">
+  
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.0.1">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.0.1">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.0.1">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.0.1">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.0.1" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.0.1',
+    sidebar: {"position":"right","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="按网上的介绍: “Kubernetes做为目前主流的容器集群管理平台，需要整体统筹平台资源使用情况、公平合理的将资源分配给相关pod容器使用，并且要保证容器生命周期内有足够的资源来保证其运行。 与此同时，由于资源发放的独占性，即资源已经分配给了某容器，同样的资源不会在分配给其他容器，对于资源利用率相对较低的容器来说，占用资源却没有实际使用（比如CPU、内存）造成了严重的资源浪费，Kubernete">
+<meta name="keywords" content="k8s">
+<meta property="og:type" content="article">
+<meta property="og:title" content="K8S中的QOS有什么用？">
+<meta property="og:url" content="https://blog.spider.im/post/qos-in-k8s/index.html">
+<meta property="og:site_name" content="吐核|Core Dump">
+<meta property="og:description" content="按网上的介绍: “Kubernetes做为目前主流的容器集群管理平台，需要整体统筹平台资源使用情况、公平合理的将资源分配给相关pod容器使用，并且要保证容器生命周期内有足够的资源来保证其运行。 与此同时，由于资源发放的独占性，即资源已经分配给了某容器，同样的资源不会在分配给其他容器，对于资源利用率相对较低的容器来说，占用资源却没有实际使用（比如CPU、内存）造成了严重的资源浪费，Kubernete">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-07-20T10:54:05.260Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="K8S中的QOS有什么用？">
+<meta name="twitter:description" content="按网上的介绍: “Kubernetes做为目前主流的容器集群管理平台，需要整体统筹平台资源使用情况、公平合理的将资源分配给相关pod容器使用，并且要保证容器生命周期内有足够的资源来保证其运行。 与此同时，由于资源发放的独占性，即资源已经分配给了某容器，同样的资源不会在分配给其他容器，对于资源利用率相对较低的容器来说，占用资源却没有实际使用（比如CPU、内存）造成了严重的资源浪费，Kubernete">
+
+
+
+
+
+
+  <link rel="canonical" href="https://blog.spider.im/post/qos-in-k8s/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>K8S中的QOS有什么用？ | 吐核|Core Dump</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">吐核|Core Dump</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+      
+        <p class="site-subtitle">笔记 随想 吐槽</p>
+      
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/qos-in-k8s/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="lovejoy">
+      <meta itemprop="description" content="今天不开心">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吐核|Core Dump">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">K8S中的QOS有什么用？
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-04-03 13:31:19" itemprop="dateCreated datePublished" datetime="2019-04-03T13:31:19+08:00">2019-04-03</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-07-20 18:54:05" itemprop="dateModified" datetime="2019-07-20T18:54:05+08:00">2019-07-20</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>按网上的介绍: “Kubernetes做为目前主流的容器集群管理平台，需要整体统筹平台资源使用情况、公平合理的将资源分配给相关pod容器使用，并且要保证容器生命周期内有足够的资源来保证其运行。 与此同时，由于资源发放的独占性，即资源已经分配给了某容器，同样的资源不会在分配给其他容器，对于资源利用率相对较低的容器来说，占用资源却没有实际使用（比如CPU、内存）造成了严重的资源浪费，Kubernetes需从优先级与公平性等角度提高资源的利用率。为了实现资源被有效调度和分配的同时提高资源利用率，Kubernetes针对不同服务质量的预期，通过QoS（Quality of Service）来对pod进行服务质量管理，提供了个采用requests和limits两种类型对资源进行分配和使用限制。对于一个pod来说，服务质量体现在两个为2个具体的指标： CPU与内存。实际过程中，当NODE节点上内存资源紧张时，kubernetes会根据预先设置的不同QoS类别进行相应处理”</p>
+<p>再加上Qos这个词，看起来是k8s用来做服务质量保证的一个玩意，那我们具体看下QOS实际是怎么实现的。</p>
+<p>Qos是Pod上的概念,有3种：</p>
+<ol>
+<li>Guaranteed: request=limit, Pod中所有容器都必须统一设置limits，并且设置参数都一致，如果有一个容器要设置requests，那么所有容器都要设置，并设置参数同limits一致，那么这个pod的QoS就是Guaranteed级别。注：如果一个容器只指明limit而未设定request，则request的值等于limit值</li>
+<li>Burstable: requset≠limit, Pod中只要有一个容器的requests和limits的设置不相同，该Pod的QoS即为Burstable</li>
+<li>Best-Effort: request &amp; limit not set, 如果对于全部的resources来说requests与limits均未设置，该Pod的QoS即为Best-Effort</li>
+</ol>
+<p>回顾下背景知识<br>Cgroup中CPU资源的限制原理：</p>
+<ol>
+<li>软限制：cgroup目录下cpu.shares 文件中的值 1024表示1个核心 4096则是4个核心，在所有容器都跑满的情况下，按cpu.shares 的比例分CPU时间片，如果没有用满，则可以用超设置的核心;</li>
+<li>硬限制：<pre><code> #cpu.cfs_quota_us 就是在这期间内可使用的 cpu 时间，默认 -1，即无限制
+ #cpu.cfs_period_us 时间周期，默认为 100000，即百毫秒
+       cpu.cfs_quota_us =  800000;
+       cpu.cfs_period_us = 100000;  
+以上表示8核，在设置了cfs_quota_us的情况下，容器中的进程至多只能用到8核
+</code></pre></li>
+</ol>
+<p>Pod的Request和Limit:</p>
+<ol>
+<li>Request:  对应cpu.shares的值(做相应单位转换)</li>
+<li>Limit:  对应cpu.cfs_quota_us的值(做相应单位转换)</li>
+</ol>
+<p>不过这个本来就是Pod上的设置，跟Qos本身没有太大的关系，这里唯一的体现是在cgroup目录下的文件路径不一样，/sys/fs/cgroup/cpu/kubepods/ 目录下会有besteffort，burstable,guaranteed 3个目录里面放相应Pod的Cgroup文件。</p>
+<p>再实际去看下Qos在k8s中代码相关的逻辑:<br><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">GetContainerOOMScoreAdjust</span><span class="params">(pod *v1.Pod, container *v1.Container, memoryCapacity <span class="keyword">int64</span>)</span> <span class="title">int</span></span> &#123;</span><br><span class="line">	<span class="keyword">switch</span> GetPodQOS(pod) &#123;</span><br><span class="line">	<span class="keyword">case</span> v1.PodQOSGuaranteed:</span><br><span class="line">		<span class="keyword">return</span> guaranteedOOMScoreAdj</span><br><span class="line">	<span class="keyword">case</span> v1.PodQOSBestEffort:</span><br><span class="line">		<span class="keyword">return</span> besteffortOOMScoreAdj</span><br><span class="line">	&#125;</span><br><span class="line">	memoryRequest := container.Resources.Requests.Memory().Value()</span><br><span class="line">	oomScoreAdjust := <span class="number">1000</span> - (<span class="number">1000</span>*memoryRequest)/memoryCapacity</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> <span class="keyword">int</span>(oomScoreAdjust) &lt; (<span class="number">1000</span> + guaranteedOOMScoreAdj) &#123;</span><br><span class="line">		<span class="keyword">return</span> (<span class="number">1000</span> + guaranteedOOMScoreAdj)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> <span class="keyword">int</span>(oomScoreAdjust) == besteffortOOMScoreAdj &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">int</span>(oomScoreAdjust - <span class="number">1</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="keyword">int</span>(oomScoreAdjust)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>只有这里用于计算每个Pod设置的OOMScoreAdj值:<br>对于Guaranteed级别的pod，OOM_ADJ参数设置成了-998，对于BestEffort级别的pod，OOM_ADJ参数设置成了1000，对于Burstable级别的POD，OOM_ADJ参数取值从2到999(根据内存申请量占总内存的比例算的一个值)。对于kuberntes保留资源，比如kubelet，docker，OOM_ADJ参数设置成了-999，表示不会被OOM kill掉。（OOM_ADJ参数设置的越大，通过OOM_ADJ参数计算出来OOM分数越高，当出现资源竞争时会越容易被系统kill掉。)</p>
+<p>不过这里设置的这个值，只有在整个Node用完了全部内存时才会触发，但是通常情况下容器里面用超都会被自己的Cgroup的内存限制住，OOM掉。所以感觉也没什么明显的用处。</p>
+<p>另外一个是kubelet上的preempt逻辑，这里比较诡，是kubelet重启后，发现有个Pod是自己的，但处于pending状态，然后node上会走调度器的逻辑把这个Pod GeneralPredicates下，但也是失败(正常这种调度就过不来，猜测可能是多调度器导致的)，并且发现pending的原因是资源不满足类的，就看下有没有别的pod可以踢掉换成这个Pod，好诡异的逻辑。没碰到过。需要再细看下。而且这种踢pod的逻辑正常需要关掉比较好。</p>
+<p>还有个东西在高版本的k8s代码中和Qos相关，高版本中如果开启了cpuManager功能，会针对Guaranteed的Pod进行绑核的操作。</p>
+<p>总结下 QOS的功能 1. oom_score_adj 2. cpumanager绑定核心 3.kubelet上preempt 删pod排序(不是调度器里面那个)</p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/k8s/" rel="tag"># k8s</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/post/enviroment-in-docker/" rel="next" title="容器的环境变量问题">
+                <i class="fa fa-chevron-left"></i> 容器的环境变量问题
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/post/fix-rsyslog-in-docker/" rel="prev" title="解决rsyslogd在容器中无法正常使用的问题">
+                解决rsyslogd在容器中无法正常使用的问题 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="gitalk-container">
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <div class="site-overview-wrap sidebar-panel sidebar-panel-active">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">lovejoy</p>
+              <p class="site-description motion-element" itemprop="description">今天不开心</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">56</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">12</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">13</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://github.com/lovejoy" title="Github &rarr; https://github.com/lovejoy" rel="noopener" target="_blank"><i class="fa fa-fw fa-globe"></i>Github</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://twitter.com/liangyongqing" title="Twitter &rarr; https://twitter.com/liangyongqing" rel="noopener" target="_blank"><i class="fa fa-fw fa-globe"></i>Twitter</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+
+      
+
+    </div>
+  </aside>
+  
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lovejoy</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.8.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.0.1</div>
+
+
+
+
+        
+
+
+
+
+  <script>
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//tajs.qq.com/stats?sId=63414042";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/src/utils.js?v=7.0.1"></script>
+
+  <script src="/js/src/motion.js?v=7.0.1"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/src/affix.js?v=7.0.1"></script>
+
+  <script src="/js/src/schemes/pisces.js?v=7.0.1"></script>
+
+
+
+  
+  <script src="/js/src/scrollspy.js?v=7.0.1"></script>
+<script src="/js/src/post-details.js?v=7.0.1"></script>
+
+
+
+  
+
+
+  <script src="/js/src/bootstrap.js?v=7.0.1"></script>
+
+
+  
+  
+
+
+  
+    
+
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+
+
+<script src="//cdn.jsdelivr.net/npm/js-md5@0.7.3/src/md5.min.js"></script>
+
+<script>
+  var gitalk = new Gitalk({
+    clientID: 'e10649a0fb2b6556a966',
+    clientSecret: 'd07a6e94a4768d09ae4fe2febbcdafb5b5d4ef61',
+    repo: 'lovejoy.github.com',
+    owner: 'lovejoy',
+    admin: ['lovejoy'],
+    id: md5(location.pathname),
+    distractionFreeMode: 'false'
+  });
+  gitalk.render('gitalk-container');
+</script>
+
+  
+
+
+  
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

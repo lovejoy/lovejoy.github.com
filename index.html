@@ -520,6 +520,368 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/qos-in-k8s/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="lovejoy">
+      <meta itemprop="description" content="今天不开心">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吐核|Core Dump">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/post/qos-in-k8s/" class="post-title-link" itemprop="url">K8S中的QOS有什么用？</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-04-03 13:31:19" itemprop="dateCreated datePublished" datetime="2019-04-03T13:31:19+08:00">2019-04-03</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-07-20 18:54:05" itemprop="dateModified" datetime="2019-07-20T18:54:05+08:00">2019-07-20</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>按网上的介绍: “Kubernetes做为目前主流的容器集群管理平台，需要整体统筹平台资源使用情况、公平合理的将资源分配给相关pod容器使用，并且要保证容器生命周期内有足够的资源来保证其运行。 与此同时，由于资源发放的独占性，即资源已经分配给了某容器，同样的资源不会在分配给其他容器，对于资源利用率相对较低的容器来说，占用资源却没有实际使用（比如CPU、内存）造成了严重的资源浪费，Kubernetes需从优先级与公平性等角度提高资源的利用率。为了实现资源被有效调度和分配的同时提高资源利用率，Kubernetes针对不同服务质量的预期，通过QoS（Quality of Service）来对pod进行服务质量管理，提供了个采用requests和limits两种类型对资源进行分配和使用限制。对于一个pod来说，服务质量体现在两个为2个具体的指标： CPU与内存。实际过程中，当NODE节点上内存资源紧张时，kubernetes会根据预先设置的不同QoS类别进行相应处理”</p>
+<p>再加上Qos这个词，看起来是k8s用来做服务质量保证的一个玩意，那我们具体看下QOS实际是怎么实现的。</p>
+<p>Qos是Pod上的概念,有3种：</p>
+<ol>
+<li>Guaranteed: request=limit, Pod中所有容器都必须统一设置limits，并且设置参数都一致，如果有一个容器要设置requests，那么所有容器都要设置，并设置参数同limits一致，那么这个pod的QoS就是Guaranteed级别。注：如果一个容器只指明limit而未设定request，则request的值等于limit值</li>
+<li>Burstable: requset≠limit, Pod中只要有一个容器的requests和limits的设置不相同，该Pod的QoS即为Burstable</li>
+<li>Best-Effort: request &amp; limit not set, 如果对于全部的resources来说requests与limits均未设置，该Pod的QoS即为Best-Effort</li>
+</ol>
+<p>回顾下背景知识<br>Cgroup中CPU资源的限制原理：</p>
+<ol>
+<li>软限制：cgroup目录下cpu.shares 文件中的值 1024表示1个核心 4096则是4个核心，在所有容器都跑满的情况下，按cpu.shares 的比例分CPU时间片，如果没有用满，则可以用超设置的核心;</li>
+<li>硬限制：<pre><code> #cpu.cfs_quota_us 就是在这期间内可使用的 cpu 时间，默认 -1，即无限制
+ #cpu.cfs_period_us 时间周期，默认为 100000，即百毫秒
+       cpu.cfs_quota_us =  800000;
+       cpu.cfs_period_us = 100000;  
+以上表示8核，在设置了cfs_quota_us的情况下，容器中的进程至多只能用到8核
+</code></pre></li>
+</ol>
+<p>Pod的Request和Limit:</p>
+<ol>
+<li>Request:  对应cpu.shares的值(做相应单位转换)</li>
+<li>Limit:  对应cpu.cfs_quota_us的值(做相应单位转换)</li>
+</ol>
+<p>不过这个本来就是Pod上的设置，跟Qos本身没有太大的关系，这里唯一的体现是在cgroup目录下的文件路径不一样，/sys/fs/cgroup/cpu/kubepods/ 目录下会有besteffort，burstable,guaranteed 3个目录里面放相应Pod的Cgroup文件。</p>
+<p>再实际去看下Qos在k8s中代码相关的逻辑:<br><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">GetContainerOOMScoreAdjust</span><span class="params">(pod *v1.Pod, container *v1.Container, memoryCapacity <span class="keyword">int64</span>)</span> <span class="title">int</span></span> &#123;</span><br><span class="line">	<span class="keyword">switch</span> GetPodQOS(pod) &#123;</span><br><span class="line">	<span class="keyword">case</span> v1.PodQOSGuaranteed:</span><br><span class="line">		<span class="keyword">return</span> guaranteedOOMScoreAdj</span><br><span class="line">	<span class="keyword">case</span> v1.PodQOSBestEffort:</span><br><span class="line">		<span class="keyword">return</span> besteffortOOMScoreAdj</span><br><span class="line">	&#125;</span><br><span class="line">	memoryRequest := container.Resources.Requests.Memory().Value()</span><br><span class="line">	oomScoreAdjust := <span class="number">1000</span> - (<span class="number">1000</span>*memoryRequest)/memoryCapacity</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> <span class="keyword">int</span>(oomScoreAdjust) &lt; (<span class="number">1000</span> + guaranteedOOMScoreAdj) &#123;</span><br><span class="line">		<span class="keyword">return</span> (<span class="number">1000</span> + guaranteedOOMScoreAdj)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> <span class="keyword">int</span>(oomScoreAdjust) == besteffortOOMScoreAdj &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">int</span>(oomScoreAdjust - <span class="number">1</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="keyword">int</span>(oomScoreAdjust)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>只有这里用于计算每个Pod设置的OOMScoreAdj值:<br>对于Guaranteed级别的pod，OOM_ADJ参数设置成了-998，对于BestEffort级别的pod，OOM_ADJ参数设置成了1000，对于Burstable级别的POD，OOM_ADJ参数取值从2到999(根据内存申请量占总内存的比例算的一个值)。对于kuberntes保留资源，比如kubelet，docker，OOM_ADJ参数设置成了-999，表示不会被OOM kill掉。（OOM_ADJ参数设置的越大，通过OOM_ADJ参数计算出来OOM分数越高，当出现资源竞争时会越容易被系统kill掉。)</p>
+<p>不过这里设置的这个值，只有在整个Node用完了全部内存时才会触发，但是通常情况下容器里面用超都会被自己的Cgroup的内存限制住，OOM掉。所以感觉也没什么明显的用处。</p>
+<p>另外一个是kubelet上的preempt逻辑，这里比较诡，是kubelet重启后，发现有个Pod是自己的，但处于pending状态，然后node上会走调度器的逻辑把这个Pod GeneralPredicates下，但也是失败(正常这种调度就过不来，猜测可能是多调度器导致的)，并且发现pending的原因是资源不满足类的，就看下有没有别的pod可以踢掉换成这个Pod，好诡异的逻辑。没碰到过。需要再细看下。而且这种踢pod的逻辑正常需要关掉比较好。</p>
+<p>还有个东西在高版本的k8s代码中和Qos相关，高版本中如果开启了cpuManager功能，会针对Guaranteed的Pod进行绑核的操作。</p>
+<p>总结下 QOS的功能 1. oom_score_adj 2. cpumanager绑定核心 3.kubelet上preempt 删pod排序(不是调度器里面那个)</p>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/enviroment-in-docker/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="lovejoy">
+      <meta itemprop="description" content="今天不开心">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吐核|Core Dump">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/post/enviroment-in-docker/" class="post-title-link" itemprop="url">容器的环境变量问题</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-04-02 11:05:22" itemprop="dateCreated datePublished" datetime="2019-04-02T11:05:22+08:00">2019-04-02</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-07-20 18:54:05" itemprop="dateModified" datetime="2019-07-20T18:54:05+08:00">2019-07-20</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>今天mei问容器里面怎么拿环境变量，让我想起了之前帮广告部门查的一个ssh后环境变量丢失的问题，那就顺道总结下。</p>
+<h3 id="首先我们的目标是："><a href="#首先我们的目标是：" class="headerlink" title="首先我们的目标是："></a>首先我们的目标是：</h3><p>容器里的环境变量，对于跑在容器内的程序按理，应该直接就可以获得，即直接从各种语言的读取环境变量的方式就可以了。<br>docker帮我们实现了：启动的时候entrypoint拿到的是正确的环境变量，并且docker exec进入的时候环境变量是正确的，可获取到的。<br>但是用户有2种方式可能导致环境变量丢失:<br>可能用su - username的方式切换了账户导致环境变量丢失,注意这里虽然su - 的语义就是丢弃环境变量，但是我们认为k8s pod上设置的环境变量是全局可用的，我们也保证这样切换后设置的环境变量可用，当然你也可以不这么干<br>使用ssh的方式进入,这里又有两种 ssh进去进入login bash，或者就是ssh $ip xxxcommand 执行一个命令，进入一个nointeractive nologinbash的方式<br>这里2种其实都和bash对于环境变量文件的加载问题有关，所以看下bash这里的逻辑</p>
+<h3 id="背景知识"><a href="#背景知识" class="headerlink" title="背景知识:"></a>背景知识:</h3><p>bash有2种大的类型或者区别(这里不知道怎么描述)</p>
+<ol>
+<li>login：就是你登陆进去后获得的(第一个!)bash</li>
+<li>interactive：就是有终端提示符，可以敲命令那种。</li>
+</ol>
+<p>相应的也有取非的情况，两两排列组合，bash一共有4种模式</p>
+<ol>
+<li>login+interactive 就是你ssh 登陆进去后那个</li>
+<li>login+nointeractive 不常见，主要是bash -l script.sh 有时候我们在某些系统的运行脚本设置里面会这么写(比如监控的自定义命令监控)</li>
+<li>interactive+nologin 就是你开的各种终端模拟器开的那些 比如gnome-terminal那些标签页</li>
+<li>nointeractive+nologin 这种其实容易被遗忘，但这就是上次查问题所在 ssh $ip xxxxcommand 的情况</li>
+</ol>
+<p>与此同时，系统有一堆文件，bash会去读，具体就不一个个说明了，总结如下：<br>bash的每种模式会读取其所在列的内容，首先执行A，然后是B，C。而B1，B2和B3表示只会执行第一个存在的文件：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">+----------------+--------+-----------+---------------+</span><br><span class="line">|                | login  |interactive|non-interactive|</span><br><span class="line">|                |        |non-login  |non-login      |</span><br><span class="line">+----------------+--------+-----------+---------------+</span><br><span class="line">|/etc/profile    |   A    |           |               |</span><br><span class="line">+----------------+--------+-----------+---------------+</span><br><span class="line">|/etc/bash.bashrc|        |    A      |               |</span><br><span class="line">+----------------+--------+-----------+---------------+</span><br><span class="line">|~/.bashrc       |        |    B      |               |</span><br><span class="line">+----------------+--------+-----------+---------------+</span><br><span class="line">|~/.bash_profile |   B1   |           |               |</span><br><span class="line">+----------------+--------+-----------+---------------+</span><br><span class="line">|~/.bash_login   |   B2   |           |               |</span><br><span class="line">+----------------+--------+-----------+---------------+</span><br><span class="line">|~/.profile      |   B3   |           |               |</span><br><span class="line">+----------------+--------+-----------+---------------+</span><br><span class="line">|BASH_ENV        |        |           |       A       |</span><br><span class="line">+----------------+--------+-----------+---------------+</span><br></pre></td></tr></table></figure></p>
+<p>另外通常情况下~/.bash_profile 里面都会加载~/.bashrc ,~/.bashrc里面又会加载/etc/bashrc 所以你平常加的时候，看起来到处加了都生效，但其实是上面的顺序。<br>除此之外login bash中B1 B2 B3 是有一个就不执行另外一个，所以通常不建议使用.bash_login 然后其实.profile 的目的是兼容非bash的，比如csh之类的，优雅点，可以.bash_profile里面写bash相关的,然后在.bash_profile里面自己主动加载下.profile(考虑到这个时候bash看到有.bash_profile是不会去加载.profile的)</p>
+<h3 id="回到正题"><a href="#回到正题" class="headerlink" title="回到正题:"></a>回到正题:</h3><p>对于切换账户的情况，我们不可能一个个去改每个账户下的.bash_profile 所以我们统一在/etc/profile 里面处理。<br>处理方式2种：</p>
+<ol>
+<li>如这里所说 cat /proc/1/environ | tr ‘\0’ ‘\n’ 然后再逐行加载的方式(我不推荐，我从不认为在有系统命令的情况下，自己去解析一个文件是个好方案） </li>
+<li>系统启动的时候执行的脚本中导出下环境变量到另外一个文件中  然后/etc/profile写上去加载这个文件</li>
+</ol>
+<p>对于ssh 直接执行命令的情况：<br>  可以看到表中只认BASH_ENV指定的文件，意思是你ssh前先export BASH_ENV=/etc/profile 然后执行ssh $ip xxcommand bash会去加载这个文件，但是又有2个问题，一个是用户操作麻烦，另外一个是如果用户脚本的shebang没写bash又不认这个玩意。。。所以我们用pam_env.so的方案来解决。具体看<a href="https://linux.die.net/man/8/pam_env" target="_blank" rel="noopener">https://linux.die.net/man/8/pam_env</a><br>  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#需要修改 /etc/pam.d/password-auth 成</span></span><br><span class="line">auth        required      pam_env.so envfile=/etc/environment</span><br></pre></td></tr></table></figure></p>
+<p>这个时候会发现有个系统提供好的路径/etc/environment 来放环境变量，那么对于切账户的问题中的环境变量也刚好用这个文件，多么的优雅。</p>
+<p>再留个问题，对于crontab 又是个什么情况呢？ 欢迎评论</p>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/update-order-and-pause-to-deployment/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1611,325 +1973,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/step-search-for-k8s/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="lovejoy">
-      <meta itemprop="description" content="今天不开心">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="吐核|Core Dump">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/post/step-search-for-k8s/" class="post-title-link" itemprop="url">k8s调度器优化之步长+有限个数node的调度</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-
-              
-                
-              
-
-              <time title="创建时间：2019-03-11 14:27:47 / 修改时间：21:50:15" itemprop="dateCreated datePublished" datetime="2019-03-11T14:27:47+08:00">2019-03-11</time>
-            
-
-            
-              
-
-              
-            
-          </span>
-
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>当k8s的node数量变大的时候，k8s调度器中的2个调度环节会变的很长，可能会造成总体超过秒级别，这显然是不可接受的，所以我们会对调度的环节进行优化。<br>比如我们对findNodesThatFit进行优化<br>这个函数真正干活的一行代码workqueue.Parallelize(16, len(nodes), checkNode)</p>
-<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Parallelize is a very simple framework that allow for parallelizing</span></span><br><span class="line"><span class="comment">// N independent pieces of work.</span></span><br><span class="line"><span class="comment">//以下代码就是实现了启动workers个协程并发运行，然后从toProcess里面取数字，丢给doWorkPiece运行</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Parallelize</span><span class="params">(workers, pieces <span class="keyword">int</span>, doWorkPiece DoWorkPieceFunc)</span></span> &#123;</span><br><span class="line">	toProcess := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>, pieces)</span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; pieces; i++ &#123;</span><br><span class="line">		toProcess &lt;- i</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="built_in">close</span>(toProcess)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> pieces &lt; workers &#123;</span><br><span class="line">		workers = pieces</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	wg := sync.WaitGroup&#123;&#125;</span><br><span class="line">	wg.Add(workers)</span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; workers; i++ &#123;</span><br><span class="line">		<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">			<span class="keyword">defer</span> utilruntime.HandleCrash()</span><br><span class="line">			<span class="keyword">defer</span> wg.Done()</span><br><span class="line">			<span class="keyword">for</span> piece := <span class="keyword">range</span> toProcess &#123;</span><br><span class="line">				doWorkPiece(piece)</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;()</span><br><span class="line">	&#125;</span><br><span class="line">	wg.Wait()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>那么其实我们就可以有个最大想法就是我们其实没用必要遍历所有的节点，而可以设计成遍历部分节点，并且能找到我们需要的个数个的节点停止就可以了，对这个函数进行改造<br><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// ParallelizeUntil is a framework that allows for parallelizing N</span></span><br><span class="line"><span class="comment">// independent pieces of work until done or the context is canceled.</span></span><br><span class="line"><span class="comment">//当ctx被取消的时候我们就停止，然后可以在doWorkPiece中实现当找到对的node的数量到我们设定的值的时候就取消</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">ParallelizeUntil</span><span class="params">(ctx context.Context, workers, pieces <span class="keyword">int</span>, doWorkPiece DoWorkPieceFunc)</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> stop &lt;-<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line">	<span class="keyword">if</span> ctx != <span class="literal">nil</span> &#123;</span><br><span class="line">		stop = ctx.Done()</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	toProcess := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>, pieces)</span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; pieces; i++ &#123;</span><br><span class="line">		toProcess &lt;- i</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="built_in">close</span>(toProcess)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> pieces &lt; workers &#123;</span><br><span class="line">		workers = pieces</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	wg := sync.WaitGroup&#123;&#125;</span><br><span class="line">	wg.Add(workers)</span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; workers; i++ &#123;</span><br><span class="line">		<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">			<span class="keyword">defer</span> utilruntime.HandleCrash()</span><br><span class="line">			<span class="keyword">defer</span> wg.Done()</span><br><span class="line">			<span class="keyword">for</span> piece := <span class="keyword">range</span> toProcess &#123;</span><br><span class="line">				<span class="keyword">select</span> &#123;</span><br><span class="line">				<span class="keyword">case</span> &lt;-stop: <span class="comment">//注意这里</span></span><br><span class="line">					<span class="keyword">return</span></span><br><span class="line">				<span class="keyword">default</span>:</span><br><span class="line">					doWorkPiece(piece)</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;()</span><br><span class="line">	&#125;</span><br><span class="line">	wg.Wait()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>并且修改checkNode中<br><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">length := atomic.AddInt32(&amp;filteredLen, <span class="number">1</span>)</span><br><span class="line">				<span class="keyword">if</span> length &gt; numNodesToFind &#123;</span><br><span class="line">					cancel() <span class="comment">//这里cancel掉</span></span><br><span class="line">					atomic.AddInt32(&amp;filteredLen, <span class="number">-1</span>)</span><br><span class="line">				&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">					filtered[length<span class="number">-1</span>] = g.cachedNodeInfoMap[nodeName].Node()</span><br><span class="line">				&#125;</span><br></pre></td></tr></table></figure></p>
-<p>以上功能，其实在官方实现之前就实现了，同事们没有提交PR，看到官方也有这个功能了，那么可以对外写写这个东西。<br>至于我的标题步长的是什么意思呢，其实关注了下社区的PR，发现之前也有类似的实现过程中的问题，我们的实现是先找一定数量的机器，找到满足数量个的之后就退出，否则继续找下个步长个的机器。官方其实也经历了类似的实现过程，不过最终改成了上面的代码，巧妙的利用了context，去掉了要分步长的逻辑，值得学习.</p>
-
-          
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/my-desirable-k8s-paas/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="lovejoy">
-      <meta itemprop="description" content="今天不开心">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="吐核|Core Dump">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/post/my-desirable-k8s-paas/" class="post-title-link" itemprop="url">我想象中的理想的k8s-paas平台方案</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-
-              
-                
-              
-
-              <time title="创建时间：2019-03-07 15:21:45" itemprop="dateCreated datePublished" datetime="2019-03-07T15:21:45+08:00">2019-03-07</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">更新于</span>
-                
-                <time title="修改时间：2019-03-11 21:50:15" itemprop="dateModified" datetime="2019-03-11T21:50:15+08:00">2019-03-11</time>
-              
-            
-          </span>
-
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>“k8s现在发展越来越成熟了，大家可以思考一下，如果让你来设计基于k8s的PaaS平台，要怎么做？k8s是作为PaaS的内核。” </p>
-<p>今天组内leader提了个这个问题，刚好这块之前也有些想法，尤其是这些年在百度的Noah，京东云的云翼，商城的JDOS都有过相关维护也有过从零开发的研发经历，也作为业务方深度使用过相关的PAAS平台（Matrix JPAAS ORP ORCP等），看过各种不同的思路，加上我自己的想法和抉择，打算记录下，形成一个比较好的实践说明，后面不断补充。</p>
-<p>PAAS我觉得至少要有3块 </p>
-<ol>
-<li>CMDB(机器管理+实例管理+权限管理) </li>
-<li>部署系统(编译构建+分级) 扩展加上包/镜像管理，编排上线等 </li>
-<li>监控系统(物理监控+业务监控) 扩展出趋势图,故障分析等<br>以及一些周边系统比如网络和域名管理(负载均衡和域名)，安全管理(堡垒机+操作审计)，作业平台等</li>
-</ol>
-<h3 id="CMDB"><a href="#CMDB" class="headerlink" title="CMDB"></a>CMDB</h3><p>首推Noah服务树的模式,资料可以参考<a href="http://noops.me/?p=1536" target="_blank" rel="noopener">这里</a>第八页（目前业界多家互联网公司都用了类似的模式）。简单来说就是以树形结构展示资源信息，每个叶子节点下是具体的机器或者实例列表，每个节点上都可以加入配置信息。</p>
-<h4 id="配置管理上："><a href="#配置管理上：" class="headerlink" title="配置管理上："></a>配置管理上：</h4><p>一般会根据公司组织架构划分1 2级节点，或者按运维团队划分。要求公司管理的所有机器都在树上可查，可快速查到机器的归属关系，配置信息等等。除了界面入口外，一般会提供命令行工具给运维团队快速查询节点和机器的相互对应关系，如查询某个节点a.b.c 下的机器列表，或者查询某个机器的归属节点等。并且界面上也有方便的导入导出工具，减少目前部分团队用excel来管理机器的简陋模式，也能方便IDC，安全等团队，查询机器归属时使用，避免不必要的误操作。</p>
-<h4 id="权限管理上："><a href="#权限管理上：" class="headerlink" title="权限管理上："></a>权限管理上：</h4><p>每个节点上都可以设置权限，权限有继承关系，即有上级节点权限的人有权限操作下级节点，以及下级节点上的人员设置，这个后续会和登陆系统(门神)，堡垒机系统等打通。即有权限的同学就可以登陆自己的机器，会根据设置的角色，控制权限，比如只有只读账户权限，还是可以sudo其他账户的权限，这里还可以根据公司要求设置审批流.</p>
-<h3 id="部署系统"><a href="#部署系统" class="headerlink" title="部署系统"></a>部署系统</h3><p>部署系统目前这个时间点来看，可以分为非镜像的部署(k8s出现前的情况)，以及镜像的部署。这2套系统应该是相辅相成的，不应该只有一套系统，另外一套系统没有用同样的用户体验来实现。<br>
-          <!--noindex-->
-          
-            <div class="post-button text-center">
-              <a class="btn" href="/post/my-desirable-k8s-paas/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          
-          <!--/noindex-->
-        
-      
-    </p></div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -1976,7 +2019,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">54</span>
+                    <span class="site-state-item-count">56</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>

@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link rel="stylesheet" href="//fonts.lug.ustc.edu.cn/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext">
+  
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.0.1">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.0.1">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.0.1">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.0.1">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.0.1" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.0.1',
+    sidebar: {"position":"right","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="今天mei问容器里面怎么拿环境变量，让我想起了之前帮广告部门查的一个ssh后环境变量丢失的问题，那就顺道总结下。 首先我们的目标是：容器里的环境变量，对于跑在容器内的程序按理，应该直接就可以获得，即直接从各种语言的读取环境变量的方式就可以了。docker帮我们实现了：启动的时候entrypoint拿到的是正确的环境变量，并且docker exec进入的时候环境变量是正确的，可获取到的。但是用户有2">
+<meta name="keywords" content="k8s">
+<meta property="og:type" content="article">
+<meta property="og:title" content="容器的环境变量问题">
+<meta property="og:url" content="https://blog.spider.im/post/enviroment-in-docker/index.html">
+<meta property="og:site_name" content="吐核|Core Dump">
+<meta property="og:description" content="今天mei问容器里面怎么拿环境变量，让我想起了之前帮广告部门查的一个ssh后环境变量丢失的问题，那就顺道总结下。 首先我们的目标是：容器里的环境变量，对于跑在容器内的程序按理，应该直接就可以获得，即直接从各种语言的读取环境变量的方式就可以了。docker帮我们实现了：启动的时候entrypoint拿到的是正确的环境变量，并且docker exec进入的时候环境变量是正确的，可获取到的。但是用户有2">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-07-20T10:54:05.259Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="容器的环境变量问题">
+<meta name="twitter:description" content="今天mei问容器里面怎么拿环境变量，让我想起了之前帮广告部门查的一个ssh后环境变量丢失的问题，那就顺道总结下。 首先我们的目标是：容器里的环境变量，对于跑在容器内的程序按理，应该直接就可以获得，即直接从各种语言的读取环境变量的方式就可以了。docker帮我们实现了：启动的时候entrypoint拿到的是正确的环境变量，并且docker exec进入的时候环境变量是正确的，可获取到的。但是用户有2">
+
+
+
+
+
+
+  <link rel="canonical" href="https://blog.spider.im/post/enviroment-in-docker/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>容器的环境变量问题 | 吐核|Core Dump</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">吐核|Core Dump</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+      
+        <p class="site-subtitle">笔记 随想 吐槽</p>
+      
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://blog.spider.im/post/enviroment-in-docker/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="lovejoy">
+      <meta itemprop="description" content="今天不开心">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吐核|Core Dump">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">容器的环境变量问题
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-04-02 11:05:22" itemprop="dateCreated datePublished" datetime="2019-04-02T11:05:22+08:00">2019-04-02</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-07-20 18:54:05" itemprop="dateModified" datetime="2019-07-20T18:54:05+08:00">2019-07-20</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>今天mei问容器里面怎么拿环境变量，让我想起了之前帮广告部门查的一个ssh后环境变量丢失的问题，那就顺道总结下。</p>
+<h3 id="首先我们的目标是："><a href="#首先我们的目标是：" class="headerlink" title="首先我们的目标是："></a>首先我们的目标是：</h3><p>容器里的环境变量，对于跑在容器内的程序按理，应该直接就可以获得，即直接从各种语言的读取环境变量的方式就可以了。<br>docker帮我们实现了：启动的时候entrypoint拿到的是正确的环境变量，并且docker exec进入的时候环境变量是正确的，可获取到的。<br>但是用户有2种方式可能导致环境变量丢失:<br>可能用su - username的方式切换了账户导致环境变量丢失,注意这里虽然su - 的语义就是丢弃环境变量，但是我们认为k8s pod上设置的环境变量是全局可用的，我们也保证这样切换后设置的环境变量可用，当然你也可以不这么干<br>使用ssh的方式进入,这里又有两种 ssh进去进入login bash，或者就是ssh $ip xxxcommand 执行一个命令，进入一个nointeractive nologinbash的方式<br>这里2种其实都和bash对于环境变量文件的加载问题有关，所以看下bash这里的逻辑</p>
+<h3 id="背景知识"><a href="#背景知识" class="headerlink" title="背景知识:"></a>背景知识:</h3><p>bash有2种大的类型或者区别(这里不知道怎么描述)</p>
+<ol>
+<li>login：就是你登陆进去后获得的(第一个!)bash</li>
+<li>interactive：就是有终端提示符，可以敲命令那种。</li>
+</ol>
+<p>相应的也有取非的情况，两两排列组合，bash一共有4种模式</p>
+<ol>
+<li>login+interactive 就是你ssh 登陆进去后那个</li>
+<li>login+nointeractive 不常见，主要是bash -l script.sh 有时候我们在某些系统的运行脚本设置里面会这么写(比如监控的自定义命令监控)</li>
+<li>interactive+nologin 就是你开的各种终端模拟器开的那些 比如gnome-terminal那些标签页</li>
+<li>nointeractive+nologin 这种其实容易被遗忘，但这就是上次查问题所在 ssh $ip xxxxcommand 的情况</li>
+</ol>
+<p>与此同时，系统有一堆文件，bash会去读，具体就不一个个说明了，总结如下：<br>bash的每种模式会读取其所在列的内容，首先执行A，然后是B，C。而B1，B2和B3表示只会执行第一个存在的文件：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">+----------------+--------+-----------+---------------+</span><br><span class="line">|                | login  |interactive|non-interactive|</span><br><span class="line">|                |        |non-login  |non-login      |</span><br><span class="line">+----------------+--------+-----------+---------------+</span><br><span class="line">|/etc/profile    |   A    |           |               |</span><br><span class="line">+----------------+--------+-----------+---------------+</span><br><span class="line">|/etc/bash.bashrc|        |    A      |               |</span><br><span class="line">+----------------+--------+-----------+---------------+</span><br><span class="line">|~/.bashrc       |        |    B      |               |</span><br><span class="line">+----------------+--------+-----------+---------------+</span><br><span class="line">|~/.bash_profile |   B1   |           |               |</span><br><span class="line">+----------------+--------+-----------+---------------+</span><br><span class="line">|~/.bash_login   |   B2   |           |               |</span><br><span class="line">+----------------+--------+-----------+---------------+</span><br><span class="line">|~/.profile      |   B3   |           |               |</span><br><span class="line">+----------------+--------+-----------+---------------+</span><br><span class="line">|BASH_ENV        |        |           |       A       |</span><br><span class="line">+----------------+--------+-----------+---------------+</span><br></pre></td></tr></table></figure></p>
+<p>另外通常情况下~/.bash_profile 里面都会加载~/.bashrc ,~/.bashrc里面又会加载/etc/bashrc 所以你平常加的时候，看起来到处加了都生效，但其实是上面的顺序。<br>除此之外login bash中B1 B2 B3 是有一个就不执行另外一个，所以通常不建议使用.bash_login 然后其实.profile 的目的是兼容非bash的，比如csh之类的，优雅点，可以.bash_profile里面写bash相关的,然后在.bash_profile里面自己主动加载下.profile(考虑到这个时候bash看到有.bash_profile是不会去加载.profile的)</p>
+<h3 id="回到正题"><a href="#回到正题" class="headerlink" title="回到正题:"></a>回到正题:</h3><p>对于切换账户的情况，我们不可能一个个去改每个账户下的.bash_profile 所以我们统一在/etc/profile 里面处理。<br>处理方式2种：</p>
+<ol>
+<li>如这里所说 cat /proc/1/environ | tr ‘\0’ ‘\n’ 然后再逐行加载的方式(我不推荐，我从不认为在有系统命令的情况下，自己去解析一个文件是个好方案） </li>
+<li>系统启动的时候执行的脚本中导出下环境变量到另外一个文件中  然后/etc/profile写上去加载这个文件</li>
+</ol>
+<p>对于ssh 直接执行命令的情况：<br>  可以看到表中只认BASH_ENV指定的文件，意思是你ssh前先export BASH_ENV=/etc/profile 然后执行ssh $ip xxcommand bash会去加载这个文件，但是又有2个问题，一个是用户操作麻烦，另外一个是如果用户脚本的shebang没写bash又不认这个玩意。。。所以我们用pam_env.so的方案来解决。具体看<a href="https://linux.die.net/man/8/pam_env" target="_blank" rel="noopener">https://linux.die.net/man/8/pam_env</a><br>  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#需要修改 /etc/pam.d/password-auth 成</span></span><br><span class="line">auth        required      pam_env.so envfile=/etc/environment</span><br></pre></td></tr></table></figure></p>
+<p>这个时候会发现有个系统提供好的路径/etc/environment 来放环境变量，那么对于切账户的问题中的环境变量也刚好用这个文件，多么的优雅。</p>
+<p>再留个问题，对于crontab 又是个什么情况呢？ 欢迎评论</p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/k8s/" rel="tag"># k8s</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/post/update-order-and-pause-to-deployment/" rel="next" title="给k8s的deployment实现上线顺序和暂停点功能">
+                <i class="fa fa-chevron-left"></i> 给k8s的deployment实现上线顺序和暂停点功能
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/post/qos-in-k8s/" rel="prev" title="K8S中的QOS有什么用？">
+                K8S中的QOS有什么用？ <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="gitalk-container">
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">lovejoy</p>
+              <p class="site-description motion-element" itemprop="description">今天不开心</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">56</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">12</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">13</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://github.com/lovejoy" title="Github &rarr; https://github.com/lovejoy" rel="noopener" target="_blank"><i class="fa fa-fw fa-globe"></i>Github</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://twitter.com/liangyongqing" title="Twitter &rarr; https://twitter.com/liangyongqing" rel="noopener" target="_blank"><i class="fa fa-fw fa-globe"></i>Twitter</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#首先我们的目标是："><span class="nav-number">1.</span> <span class="nav-text">首先我们的目标是：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#背景知识"><span class="nav-number">2.</span> <span class="nav-text">背景知识:</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#回到正题"><span class="nav-number">3.</span> <span class="nav-text">回到正题:</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+  
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lovejoy</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.8.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.0.1</div>
+
+
+
+
+        
+
+
+
+
+  <script>
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//tajs.qq.com/stats?sId=63414042";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/src/utils.js?v=7.0.1"></script>
+
+  <script src="/js/src/motion.js?v=7.0.1"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/src/affix.js?v=7.0.1"></script>
+
+  <script src="/js/src/schemes/pisces.js?v=7.0.1"></script>
+
+
+
+  
+  <script src="/js/src/scrollspy.js?v=7.0.1"></script>
+<script src="/js/src/post-details.js?v=7.0.1"></script>
+
+
+
+  
+
+
+  <script src="/js/src/bootstrap.js?v=7.0.1"></script>
+
+
+  
+  
+
+
+  
+    
+
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+
+
+<script src="//cdn.jsdelivr.net/npm/js-md5@0.7.3/src/md5.min.js"></script>
+
+<script>
+  var gitalk = new Gitalk({
+    clientID: 'e10649a0fb2b6556a966',
+    clientSecret: 'd07a6e94a4768d09ae4fe2febbcdafb5b5d4ef61',
+    repo: 'lovejoy.github.com',
+    owner: 'lovejoy',
+    admin: ['lovejoy'],
+    id: md5(location.pathname),
+    distractionFreeMode: 'false'
+  });
+  gitalk.render('gitalk-container');
+</script>
+
+  
+
+
+  
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
